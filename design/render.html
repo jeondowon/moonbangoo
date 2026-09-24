@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>asset render</title>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: var(--bg, #2a241d); }
+  #out svg { display: block; width: 100vw; height: auto; }
+</style>
+</head>
+<body>
+<!-- 단일 에셋을 창 폭에 맞춰 렌더 (확대 검수 / 추후 텍스처 PNG 추출용)
+     ?a=pack-front | pack-back | card-back | card&id=<prize id>  [&bg=transparent] -->
+<div id="out"></div>
+<script type="module">
+  import { loadLogo } from './lib/logo.js';
+  import { packFront, packBack } from './lib/pack.js';
+  import { cardFront, cardBack } from './lib/card.js';
+  import { PRIZES, RARITY_ORDER } from './lib/data.js';
+
+  const q = new URLSearchParams(location.search);
+  if (q.get('bg')) document.body.style.setProperty('--bg', q.get('bg'));
+  await loadLogo();
+  const a = q.get('a') || 'pack-front';
+  const sorted = [...PRIZES].sort((x, y) => RARITY_ORDER.indexOf(x.rarity) - RARITY_ORDER.indexOf(y.rarity));
+  const i = sorted.findIndex((p) => p.id === q.get('id'));
+  const svg = {
+    'pack-front': () => packFront(),
+    'pack-back': () => packBack(),
+    'card-back': () => cardBack(),
+    card: () => cardFront(sorted[i], { index: i + 1, total: sorted.length }),
+  }[a]();
+  document.getElementById('out').innerHTML = svg;
+  await document.fonts.ready;
+  for (const t of document.querySelectorAll('text[data-maxw]')) {
+    const max = +t.dataset.maxw;
+    if (t.getComputedTextLength() > max) { t.setAttribute('textLength', max); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
+  }
+  document.body.dataset.ready = '1';
+</script>
+</body>
+</html>
