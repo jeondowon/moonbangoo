@@ -6,10 +6,9 @@
 //   [data-layer=print]   일반 인쇄 텍스트
 //   [data-layer=shading] 2D 시안 전용 입체감 (3D에서는 실제 조명이 대신하므로 제외)
 import {
-  INK, METALS, linGrad, radGrad, grainFilter, pressFilter, raysPath, wavePath,
-  notchedRect, cornerFans, divider,
+  INK, METALS, linGrad, grainFilter, pressFilter, wavePath, divider,
 } from './common.js';
-import { logoMarkup, logoPoint, LOGO_BOX, LOGO_SUN } from './logo.js';
+import { logoMarkup, LOGO_BOX } from './logo.js';
 
 export const PACK = {
   W: 600,
@@ -49,11 +48,8 @@ export function packFront({ uid = 'pf' } = {}) {
   const u = (s) => `url(#${id(s)})`;
 
   const logo = { x: 100, y: 196, width: 400 };
-  const [sx, sy] = logoPoint(logo, LOGO_SUN.x, LOGO_SUN.y); // 해 중심 → 방사선 중심
-  const frame = { x0: 24, y0: 152, x1: W - 24, y1: H - 78 };
-  const inner = { x0: frame.x0 + 7, y0: frame.y0 + 7, x1: frame.x1 - 7, y1: frame.y1 - 7 };
+  const inner = { x0: 0, x1: W };
   const wy = 806; // 물결 시작
-  const medal = { x: W / 2, y: 894 };
 
   const defs = `
 ${linGrad(id('base'), [[0, INK.paperHi], [0.45, INK.paper], [1, '#EADFCB']], 0, 0, W, H)}
@@ -61,22 +57,19 @@ ${linGrad(id('pearl'), [[0, '#f6d6e2', 0], [0.3, '#f6d6e2', 0.55], [0.5, '#d8efe
 ${linGrad(id('crimp'), [[0, '#EDE3D2'], [0.5, '#F7F1E6'], [1, '#E4D7C0']], 0, 0, W, 0)}
 ${linGrad(id('foil'), METALS.gold, 0, 0, W, H * 0.62)}
 ${linGrad(id('foil-logo'), METALS.gold, LOGO_BOX.x, LOGO_BOX.y, LOGO_BOX.x + LOGO_BOX.w, LOGO_BOX.y + LOGO_BOX.h)}
-${radGrad(id('rayfade'), [[0, '#fff', 1], [0.55, '#fff', 0.55], [1, '#fff', 0]], sx, sy, 560)}
 ${linGrad(id('side'), [[0, '#5b4424', 0.16], [0.09, '#5b4424', 0], [0.91, '#5b4424', 0], [1, '#5b4424', 0.16]], 0, 0, W, 0)}
 ${linGrad(id('gloss'), [[0, '#fff', 0], [0.36, '#fff', 0], [0.46, '#fff', 0.28], [0.56, '#fff', 0], [1, '#fff', 0]], 0, 0, W, H)}
 ${grainFilter(id('grain'))}
 ${pressFilter(id('press'))}
 ${pressFilter(id('press-logo'), 0.75)}
 <clipPath id="${id('clip')}"><path d="${packOutline()}"/></clipPath>
-<clipPath id="${id('inner')}"><path d="${notchedRect(inner.x0, inner.y0, inner.x1, inner.y1, 14)}"/></clipPath>
-<mask id="${id('raymask')}"><rect width="${W}" height="${H}" fill="${u('rayfade')}"/></mask>`;
+<clipPath id="${id('inner')}"><rect x="${inner.x0}" y="0" width="${inner.x1 - inner.x0}" height="${H}"/></clipPath>`;
 
   const paper = `
 <g data-layer="paper">
   <rect width="${W}" height="${H}" fill="${u('base')}"/>
   <rect width="${W}" height="${H}" fill="${u('pearl')}" opacity=".35"/>
   <g clip-path="${u('inner')}">
-    <path d="${raysPath(sx, sy, 900, 72)}" fill="${INK.tone}" opacity=".7" mask="${u('raymask')}"/>
     <path d="${wavePath(inner.x0, inner.x1, wy + 20, 9, 150, 30, H)}" fill="#EFE5D3"/>
     <path d="${wavePath(inner.x0, inner.x1, wy + 58, 8, 118, 80, H)}" fill="#E8DCC6"/>
     <path d="${wavePath(inner.x0, inner.x1, wy + 96, 7, 96, 10, H)}" fill="#E1D3BA"/>
@@ -91,21 +84,12 @@ ${pressFilter(id('press-logo'), 0.75)}
     <text x="${W / 2}" y="${(crimp + tear) / 2 + 5}" text-anchor="middle" stroke="none"
       font-family="Cormorant Garamond, serif" font-weight="700" font-size="15.5" letter-spacing="5">EOREUN MUNGBANGGU · SPECIAL CARD PACK</text>
     <path d="M20 ${tear}H${W - 20}" fill="none" stroke-width="1.6" stroke-dasharray="6 5" stroke-linecap="round"/>
-    <rect x="${frame.x0}" y="${frame.y0}" width="${frame.x1 - frame.x0}" height="${frame.y1 - frame.y0}" fill="none" stroke-width="1.6"/>
-    <path d="${notchedRect(inner.x0, inner.y0, inner.x1, inner.y1, 14)}" fill="none" stroke-width=".9"/>
-    ${cornerFans(inner.x0, inner.y0, inner.x1, inner.y1)}
     <text x="${W / 2}" y="614" text-anchor="middle" stroke="none"
       font-family="Cormorant Garamond, serif" font-weight="700" font-size="17" letter-spacing="7">EVENT BOOSTER PACK</text>
     <text x="${W / 2}" y="670" text-anchor="middle" stroke="none"
       font-family="Gowun Batang, serif" font-weight="700" font-size="48" letter-spacing="2">스페셜 카드팩</text>
     ${divider(W / 2, 702, 74, 14, 4.5, 1)}
     <path d="${wavePath(inner.x0, inner.x1, wy + 20, 9, 150, 30)}" fill="none" stroke-width=".9" opacity=".75"/>
-    <circle cx="${medal.x}" cy="${medal.y}" r="37" fill="${INK.paperHi}" stroke-width="1.6"/>
-    <circle cx="${medal.x}" cy="${medal.y}" r="31.5" fill="none" stroke-width=".8"/>
-    <text x="${medal.x}" y="${medal.y + 5}" text-anchor="middle" stroke="none"
-      font-family="Gowun Batang, serif" font-weight="700" font-size="30">5</text>
-    <text x="${medal.x}" y="${medal.y + 20}" text-anchor="middle" stroke="none"
-      font-family="Cormorant Garamond, serif" font-weight="700" font-size="9.5" letter-spacing="3">CARDS</text>
   </g>
   ${logoMarkup({ uid: id('logo'), paint: u('foil-logo'), ...logo, filter: id('press-logo') })}
 </g>`;
