@@ -1,14 +1,19 @@
 // 3D 카드팩: 앞·뒤 두 장의 곡면이 좌우 접힌 가장자리와 상·하단 봉합부에서 만나는 "베개" 형태.
-// M2(절취)에서 윗부분/본체를 나누기 쉽도록 곡면은 v 구간을 받아 만들 수 있게 해 둔다.
+// 절취선 기준으로 윗조각(top)과 본체(body)로 나뉘어 있고, 둘은 같은 찢김 곡선에서 맞물린다 (tearShader.ts).
 import {
   BufferAttribute,
   BufferGeometry,
   Group,
   Mesh,
   MeshPhysicalMaterial,
+  MeshStandardMaterial,
+  type Object3D,
   Vector2,
+  Vector3,
 } from 'three';
 import { PACK } from '../../design/lib/pack.js';
+import { TEAR_V, TearState } from './tear';
+import { applyTear, createTearUniforms, type TearPiece, type TearUniforms } from './tearShader';
 import type { PackTextures, SideTextures } from './textures';
 
 /** 월드 단위 팩 크기 (높이 2) */
@@ -26,7 +31,7 @@ const smooth = (a: number, b: number, x: number) => {
 };
 
 /** 표면 높이 (u: 0=왼쪽, v: 0=위쪽) */
-function thickness(u: number, v: number) {
+export function thickness(u: number, v: number) {
   const c = PACK.crimp / PACK.H;
   const d = Math.min(u, 1 - u);
   const fx = d >= FOLD ? 1 : Math.sqrt(1 - (1 - d / FOLD) ** 2);
@@ -40,12 +45,20 @@ function thickness(u: number, v: number) {
 /** 가장자리 쪽에 정점을 더 촘촘히 (접힌 곡면 해상도 확보) */
 const denseEdges = (t: number) => t - (0.55 * Math.sin(2 * Math.PI * t)) / (2 * Math.PI);
 
-export function packSurface(side: 1 | -1, v0 = 0, v1 = 1, segX = 72, segY = 140): BufferGeometry {
-  const ny = Math.max(2, Math.round(segY * (v1 - v0)));
+const SEG_X = 72;
+const SEG_Y = 140;
+
+/**
+ * 팩 곡면 (v0~v1 구간). 행은 전역 격자(1/SEG_Y)에 맞춘다
+ * → 윗조각·본체가 겹치는 구간의 삼각형이 완전히 같아서, 찢김 곡선 양쪽이 픽셀 단위로 딱 맞물린다.
+ */
+export function packSurface(side: 1 | -1, v0 = 0, v1 = 1, segX = SEG_X, segY = SEG_Y): BufferGeometry {
+  const j0 = Math.floor(v0 * segY);
+  const ny = Math.ceil(v1 * segY) - j0;
   const pos = new Float32Array((segX + 1) * (ny + 1) * 3);
   const uv = new Float32Array((segX + 1) * (ny + 1) * 2);
   for (let j = 0, p = 0, q = 0; j <= ny; j++) {
-    const v = v0 + ((v1 - v0) * j) / ny;
+    const v = (j0 + j) / segY;
     for (let i = 0; i <= segX; i++) {
       const u = denseEdges(i / segX);
       pos[p++] = (u - 0.5) * PACK_W;
@@ -99,14 +112,94 @@ function packMaterial(t: SideTextures) {
   });
 }
 
+/** 윗조각·본체가 겹쳐 만들어지는 여유 폭 (찢김 요철 + 틈보다 넉넉히) */
+const OVERLAP = 0.03;
+const GRAVITY = 14;
+
+/** 팩 좌표 (u, v) → 팩 로컬 x, y */
+export const packX = (u: number) => (u - 0.5) * PACK_W;
+export const packY = (v: number) => (0.5 - v) * PACK_H;
+
+/** 절취선 높이에서 앞면 표면의 z (입력 판정용 평면) */
+export const TEAR_Z = thickness(0.5, TEAR_V);
+
+interface Flight {
+  pivot: Group;
+  vel: Vector3;
+  spin: Vector3;
+  age: number;
+}
+
 export class Pack {
+  /** 팩 전체 (무대의 자식) */
   readonly root = new Group();
-  readonly front: Mesh;
-  readonly back: Mesh;
+  /** 절취선 위 조각 — 개봉 완료 시 날아간다 */
+  readonly top = new Group();
+  readonly body = new Group();
+  readonly tear = new TearState();
+  readonly uniforms: TearUniforms;
+  private flight: Flight | null = null;
 
   constructor(tex: PackTextures) {
-    this.front = new Mesh(packSurface(1), packMaterial(tex.front));
-    this.back = new Mesh(packSurface(-1), packMaterial(tex.back));
-    this.root.add(this.front, this.back);
+    this.uniforms = createTearUniforms(this.tear.texture);
+    const surface = (side: 1 | -1, piece: TearPiece) => {
+      const [v0, v1] = piece === 'top' ? [0, TEAR_V + OVERLAP] : [TEAR_V - OVERLAP, 1];
+      const mat = packMaterial(side === 1 ? tex.front : tex.back);
+      applyTear(mat, this.uniforms, { piece, flipU: side === -1, side, guide: side === 1 });
+      return new Mesh(packSurface(side, v0, v1), mat);
+    };
+    this.top.add(surface(1, 'top'), surface(-1, 'top'));
+    this.body.add(surface(1, 'body'), surface(-1, 'body'));
+
+    // 속지: 틈 사이로 보이는 팩 안쪽 (실물처럼 은박 안감)
+    const lining = new MeshStandardMaterial({ color: '#b9b4ac', metalness: 1, roughness: 0.38 });
+    applyTear(lining, this.uniforms, { piece: 'body', flipU: false, side: 0, guide: false });
+    const inside = new Mesh(flatStrip(TEAR_V - OVERLAP, TEAR_V + 0.06), lining);
+    this.body.add(inside);
+
+    this.root.add(this.top, this.body);
   }
+
+  get opened() {
+    return this.flight !== null;
+  }
+
+  /**
+   * 윗조각을 떼어 world(보통 scene)로 옮기고 날려 보낸다.
+   * vel: 월드 속도, spin: 각속도(rad/s, 로컬 x·y·z)
+   */
+  detachTop(world: Object3D, vel: Vector3, spin: Vector3) {
+    if (this.flight) return;
+    // 윗조각 중심을 회전축으로
+    const pivot = new Group();
+    pivot.position.set(0, packY(TEAR_V / 2), TEAR_Z * 0.5);
+    this.root.add(pivot);
+    pivot.attach(this.top);
+    world.attach(pivot);
+    this.flight = { pivot, vel: vel.clone(), spin: spin.clone(), age: 0 };
+  }
+
+  update(dt: number, time: number) {
+    this.tear.update(time);
+    this.uniforms.uTime.value = time;
+    const f = this.flight;
+    if (!f || !f.pivot.visible) return;
+    f.age += dt;
+    f.vel.y -= GRAVITY * dt;
+    f.vel.multiplyScalar(Math.exp(-0.25 * dt)); // 공기 저항
+    f.pivot.position.addScaledVector(f.vel, dt);
+    f.pivot.rotateX(f.spin.x * dt);
+    f.pivot.rotateY(f.spin.y * dt);
+    f.pivot.rotateZ(f.spin.z * dt);
+    if (f.age > 3) f.pivot.visible = false;
+  }
+}
+
+/** 두 장 사이 z=0에 놓이는 평평한 띠 (팩과 같은 uv 규칙) */
+function flatStrip(v0: number, v1: number) {
+  const g = packSurface(1, v0, v1, 36, SEG_Y);
+  const pos = g.getAttribute('position');
+  for (let i = 0; i < pos.count; i++) pos.setZ(i, 0);
+  g.computeVertexNormals();
+  return g;
 }

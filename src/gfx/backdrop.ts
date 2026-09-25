@@ -37,10 +37,12 @@ export function createBackdrop() {
         vec3 col = mix(uCenter, uMid, smoothstep(0.0, 0.45, r));
         col = mix(col, uEdge, smoothstep(0.35, 1.05, r));
         col += uGlow * 0.35 * exp(-r * r * 9.0);
+        // 밴딩 방지 디더: 최종 출력(sRGB 8비트) 한 단계 크기로 흔든다.
+        // 후처리 때문에 여기서는 선형 값으로 출력하므로 sRGB로 바꿔 흔든 뒤 다시 선형으로.
+        vec3 s = pow(col, vec3(1.0 / 2.2)) + (hash(gl_FragCoord.xy) - 0.5) / 255.0;
+        col = pow(max(s, 0.0), vec3(2.2));
         gl_FragColor = vec4(col, 1.0);
         #include <colorspace_fragment>
-        // 밴딩 방지 디더
-        gl_FragColor.rgb += (hash(gl_FragCoord.xy) - 0.5) / 255.0;
       }`,
     depthTest: false,
     depthWrite: false,

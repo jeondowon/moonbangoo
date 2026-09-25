@@ -20,6 +20,8 @@ export class TiltInput {
   y = 0;
   /** 사용자가 최근에 직접 조작했는지 (자동 흔들림 억제용) */
   idleTime = 0;
+  /** true를 돌려주면 이 포인터로는 기울이기 드래그를 시작하지 않음 (절취 등 다른 조작에 양보) */
+  shouldIgnore?: (e: PointerEvent) => boolean;
 
   private hover = { on: false, x: 0, y: 0 };
   private drag = { id: -1, sx: 0, sy: 0, x: 0, y: 0 };
@@ -89,7 +91,7 @@ export class TiltInput {
   };
 
   private onDown = (e: PointerEvent) => {
-    if (this.dragging) return;
+    if (this.dragging || this.shouldIgnore?.(e)) return;
     this.el.setPointerCapture(e.pointerId);
     this.drag.id = e.pointerId;
     this.drag.sx = e.clientX;
