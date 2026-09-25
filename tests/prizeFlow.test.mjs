@@ -56,7 +56,7 @@ for (let chosen = 0; chosen < prizes.length; chosen++) {
     get('confirm-prize').click(); get('confirm-prize').click();
     get('change-prize').click(); buttons[(chosen + 2) % 5].click();
     assert.equal(fx.calls, 1, 'only one confirmation effect');
-    assert.equal(sound.calls, 1, 'only one confirmation sound');
+    assert.deepEqual(sound.rarities, [prizes[chosen].rarity], 'selected rarity sounds only once');
     tick(2);
     assert.equal(get('prize-result').hidden, false);
     assert.equal(get('prize-preview').hidden, true);

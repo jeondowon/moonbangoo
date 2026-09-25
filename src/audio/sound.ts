@@ -1,4 +1,6 @@
 // M9 핵심 효과음. AudioContext는 브라우저의 첫 사용자 입력에서만 생성한다.
+import type { RarityCode } from '../card/holo';
+
 type Clip = 'tear' | 'swipe' | 'confirm';
 
 const URLS: Record<Clip, string> = {
@@ -10,6 +12,13 @@ const URLS: Record<Clip, string> = {
 const CLIPS: Clip[] = ['tear', 'swipe', 'confirm'];
 const GRAIN_LENGTH = 0.12;
 const GRAIN_INTERVAL = 0.045;
+// 공통 카드 소리는 유지하고, 공개·확정 순간에만 짧은 등급별 음형을 얹는다.
+const RARITY_NOTES: Record<RarityCode, readonly number[]> = {
+  C: [],
+  R: [880],
+  SR: [659.25, 880],
+  UR: [783.99, 1046.5, 1318.51],
+};
 
 export class SoundEffects {
   private context: AudioContext | null = null;
@@ -105,7 +114,36 @@ export class SoundEffects {
   }
 
   swipe() { this.play('swipe', 0.16); }
-  confirm() { this.play('confirm', 0.045); }
+  reveal(rarity: RarityCode) {
+    this.play('swipe', 0.07, 1.3);
+    this.playRarityNotes(rarity, false);
+  }
+  confirm(rarity: RarityCode) {
+    this.play('confirm', 0.045);
+    this.playRarityNotes(rarity, true);
+  }
+
+  private playRarityNotes(rarity: RarityCode, confirmed: boolean) {
+    const context = this.context;
+    if (!context || context.state !== 'running' || !this.master) return;
+    const notes = RARITY_NOTES[rarity];
+    const now = context.currentTime;
+    notes.forEach((pitch, index) => {
+      const start = now + 0.035 + index * (confirmed ? 0.09 : 0.075);
+      const end = start + (confirmed ? 0.28 : 0.2);
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = rarity === 'SR' ? 'triangle' : 'sine';
+      oscillator.frequency.value = pitch;
+      oscillator.connect(gain).connect(this.master!);
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(confirmed ? 0.032 : 0.022, start + 0.018);
+      gain.gain.linearRampToValueAtTime(0, end);
+      oscillator.start(start);
+      oscillator.stop(end);
+      oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+    });
+  }
 
   private stopCut() {
     const context = this.context;

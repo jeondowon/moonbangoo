@@ -59,7 +59,7 @@ export class PrizeFlow {
     private readonly camera: PerspectiveCamera,
     private readonly prizes: Prize[],
     private readonly fx: RevealFx,
-    private readonly onConfirm?: () => void,
+    private readonly onConfirm?: (rarity: RarityCode) => void,
   ) {
     this.confirm.addEventListener('click', () => this.commit());
     this.change.addEventListener('click', () => this.back());
@@ -168,7 +168,7 @@ export class PrizeFlow {
     const chosen = this.items[this.selected];
     chosen.scale.velocity += chosen.scale.value * 0.7;
     this.fx.play(chosen.card.root, chosen.card.rarity, true);
-    this.onConfirm?.();
+    this.onConfirm?.(chosen.card.rarity);
     // 미리보기 뒤에 남아 있던 4장이 각각 바깥쪽으로 흩어져 나간다.
     this.items.forEach((item, i) => {
       if (i === this.selected) return;

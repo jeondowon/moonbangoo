@@ -131,7 +131,7 @@ async function prepare() {
   deck.setViewScale(viewScale);
   pack.root.add(deck.root);
   setupDeck(deck);
-  prizeFlow = new PrizeFlow(canvas, camera, result.cards, reveal, () => sound.confirm());
+  prizeFlow = new PrizeFlow(canvas, camera, result.cards, reveal, (rarity) => sound.confirm(rarity));
   // 팩·카드 텍스처를 로딩 중에 GPU로 올려 둔다 (팩 등장 첫 프레임에 한꺼번에 올리며 끊기지 않게)
   for (const side of [tex.front, tex.back]) for (const t of Object.values(side)) renderer.initTexture(t);
   for (const t of [cardTex.back, ...cardTex.fronts]) renderer.initTexture(t);
@@ -214,7 +214,21 @@ function setupDeck(d: Deck) {
   d.onFlip = () => {
     everFlipped = true;
   };
-  d.onReveal = (card) => reveal.play(card.root, card.rarity);
+  d.onReveal = (card) => {
+    reveal.play(card.root, card.rarity);
+    // 앞면이 충분히 돌아와 읽을 수 있고, 그 화면이 한 프레임 그려진 뒤에만 소리를 낸다.
+    const afterFrontIsVisible = () => {
+      if (d.cards[d.current] !== card) return;
+      if (card.flipProgress < 0.9) {
+        requestAnimationFrame(afterFrontIsVisible);
+        return;
+      }
+      requestAnimationFrame(() => {
+        if (d.cards[d.current] === card) sound.reveal(card.rarity);
+      });
+    };
+    requestAnimationFrame(afterFrontIsVisible);
+  };
   d.onAdvance = () => {
     everSwiped = true;
     sound.swipe();
