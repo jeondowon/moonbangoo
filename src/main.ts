@@ -412,8 +412,13 @@ function updateDeckShadow(d: Deck) {
   deckShadow.material.opacity = 0.5 * Math.min(1, Math.max(0, grow));
 }
 
+// 120Hz 이상 화면에서는 한 프레임씩 걸러 약 60fps로 (명세 5.3 목표 60fps, GPU 부담 절반).
+// 걸러 그리므로 프레임 간격이 일정하다. 60·90Hz 화면은 그대로 매 프레임 그린다.
+// 스프링은 고정 서브스텝이고 입력은 coalesced 이벤트라 프레임이 줄어도 움직임·절취 판정은 같다.
+const MIN_FRAME_MS = 10;
 let last = performance.now();
 renderer.setAnimationLoop((now) => {
+  if (now - last < MIN_FRAME_MS) return;
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
   frame(dt);
