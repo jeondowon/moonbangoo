@@ -1,4 +1,4 @@
-// 1차: 인트로 → 팩 등장 → 기울여 보기 / 탭해서 뒤집기 → 절취 개봉 (M1~M2).
+// 1차: 인트로 → 팩 등장 → 기울여 보기 / 탭해서 뒤집기 → 절취 개봉 → 카드 뭉치 등장 → 한 장씩 넘기기 (M1~M3).
 import {
   Group,
   HalfFloatType,
@@ -15,6 +15,9 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import './style.css';
+import { CARD_H, CARD_W } from './card/card';
+import { Deck } from './card/deck';
+import { buildCardTextures } from './card/textures';
 import { Spring } from './core/spring';
 import { TiltInput } from './core/tilt';
 import { drawPack, type PackResult } from './data/draw';
@@ -58,12 +61,16 @@ scene.add(stage);
 const shadow = createShadow(PACK_W, PACK_H);
 shadow.position.z = -0.45;
 scene.add(shadow);
+const deckShadow = createShadow(CARD_W, CARD_H);
+deckShadow.position.z = -0.45;
+deckShadow.visible = false;
+scene.add(deckShadow);
 const fx = new CutFx();
 scene.add(fx.group);
 
 const tilt = new TiltInput(canvas);
 
-/** 이번 참여의 결과. 카드 등장(M3)부터 사용 */
+/** 이번 참여의 결과 (카드 5장) */
 const session: { result: PackResult | null } = { result: null };
 
 // 기울기 (입력 추종) + 등장 연출 + 뒤집기 + 절취 중 흔들림 스프링
@@ -79,6 +86,9 @@ const guide = new Spring(0, 1.5, 1);
 
 let pack: Pack | null = null;
 let cutter: Cutter | null = null;
+let deck: Deck | null = null;
+/** 카드를 보여줄 때 덱 배율 (화면 비율에 맞춰 resize에서 계산) */
+let viewScale = 1;
 let started = false;
 let time = 0;
 let startedAt = 0;
@@ -86,6 +96,10 @@ let cutTouched = false; // 한 번이라도 잘랐는지 (안내 문구·반짝�
 let detachAt = -1; // 윗조각을 날려 보낼 시각
 let flyVel = new Vector3();
 let flySpin = new Vector3();
+let openedAt = -1; // 윗조각이 날아간 시각
+let packFall: { y: number; v: number } | null = null; // 카드가 빠져나온 뒤 팩 본체 퇴장
+let everFlipped = false; // 안내 문구: 카드를 한 번이라도 뒤집었는지
+let everSwiped = false; // 안내 문구: 카드를 한 번이라도 넘겼는지
 
 function resize() {
   const w = canvas.clientWidth;
@@ -102,6 +116,10 @@ function resize() {
   camera.updateProjectionMatrix();
   backdrop.resize(camera.aspect);
   fx.setScale((h * renderer.getPixelRatio()) / (2 * t));
+  // 카드는 화면 높이의 66%, 폭의 80%를 넘지 않게
+  const visH = 2 * t * camera.position.z;
+  viewScale = Math.min((0.66 * visH) / CARD_H, (0.8 * visH * camera.aspect) / CARD_W);
+  deck?.setViewScale(viewScale);
 }
 window.addEventListener('resize', resize);
 resize();
@@ -110,11 +128,23 @@ let ready = false;
 let wantsStart = false;
 
 async function prepare() {
-  const [tex, result] = await Promise.all([buildPackTextures(renderer), drawPack()]);
+  const drawn = drawPack();
+  const [tex, result, cardTex] = await Promise.all([
+    buildPackTextures(renderer),
+    drawn,
+    drawn.then((r) => buildCardTextures(renderer, r.cards)),
+  ]);
   session.result = result;
   pack = new Pack(tex);
   stage.add(pack.root);
   setupCutter(pack);
+  // 카드 뭉치는 처음부터 팩 안에 뒷면으로 들어 있다
+  deck = new Deck(canvas, camera, result.cards, cardTex.fronts, cardTex.back);
+  deck.setViewScale(viewScale);
+  pack.root.add(deck.root);
+  setupDeck(deck);
+  // 카드 텍스처 6장을 로딩 중에 GPU로 올려 둔다 (팩 등장 첫 프레임에 한꺼번에 올리며 끊기지 않게)
+  for (const t of [cardTex.back, ...cardTex.fronts]) renderer.initTexture(t);
   // 첫 등장 때 셰이더 컴파일로 끊기지 않도록 미리 컴파일 (보이는 오브젝트만 컴파일되므로 숨기기 전에)
   await renderer.compileAsync(scene, camera);
   stage.visible = shadow.visible = false;
@@ -154,7 +184,8 @@ function setupCutter(p: Pack) {
   const c = new Cutter(canvas, camera, p.root, p.tear, () => time);
   cutter = c;
   // 절취선 근처를 누르면 기울이기 대신 절취
-  tilt.shouldIgnore = (e) => c.active || c.wants(e);
+  // 개봉한 뒤에는 드래그가 카드 넘기기용 (기울이기는 마우스 호버만)
+  tilt.shouldIgnore = (e) => p.opened || c.active || c.wants(e);
 
   c.onCut = (du, dir, speed) => {
     cutTouched = true;
@@ -181,6 +212,37 @@ function setupCutter(p: Pack) {
 const headTmp = new Vector3();
 function headWorld(u: number) {
   return pack!.root.localToWorld(headTmp.set(packX(u), packY(TEAR_V), TEAR_Z + 0.012));
+}
+
+// ── 카드 ─────────────────────────────────────────
+function setupDeck(d: Deck) {
+  d.onFlip = () => {
+    everFlipped = true;
+  };
+  d.onAdvance = () => {
+    everSwiped = true;
+  };
+  d.onFinish = () => {
+    everSwiped = true;
+  };
+}
+
+/** 개봉 후: 카드 뭉치가 팩 입구로 빠져나오고 → 팩은 아래로 떨어져 퇴장 → 뭉치는 화면 중앙으로 (명세 R2) */
+function updateOpening(p: Pack, d: Deck, dt: number) {
+  if (openedAt < 0) return;
+  if (d.state === 'packed' && time - openedAt > 0.35) {
+    p.lining.visible = false;
+    d.slideOut();
+  }
+  if (d.state === 'rising' && d.riseTime > 0.75) {
+    d.present(scene);
+    packFall = { y: 0, v: -0.5 };
+  }
+  if (packFall && stage.visible) {
+    packFall.v -= 9 * dt;
+    packFall.y += packFall.v * dt;
+    if (packFall.y < -6) stage.visible = shadow.visible = false;
+  }
 }
 
 // ── 탭해서 뒤집기 ─────────────────────────────────
@@ -215,10 +277,24 @@ function setHint(main: string | null, sub = '') {
 }
 
 function updateHint() {
-  if (!pack || !started || pack.opened || detachAt >= 0 || time - startedAt < 1.4) return;
+  if (!pack || !started || time - startedAt < 1.4) return;
+  if (deck && deck.state !== 'packed' && deck.state !== 'rising') {
+    updateCardHint(deck);
+    return;
+  }
+  if (pack.opened || detachAt >= 0) return;
   if (flip.target !== 0) setHint('뒷면이에요', '팩을 톡 누르면 다시 앞면으로');
   else if (cutTouched) setHint(null);
   else setHint('점선을 따라 옆으로 그어 개봉하세요', '팩을 톡 누르면 뒷면을 볼 수 있어요');
+}
+
+function updateCardHint(d: Deck) {
+  const top = d.top;
+  if (d.state === 'done') setHint('5장을 모두 확인했어요');
+  else if (d.state !== 'ready' || !top) setHint(null);
+  else if (!top.faceUp && !everFlipped) setHint('카드를 톡 눌러 뒤집어 보세요');
+  else if (top.faceUp && top.flipProgress > 0.9 && !everSwiped) setHint('옆으로 밀어서 다음 카드 보기');
+  else setHint(null);
 }
 
 // ── 프레임 ───────────────────────────────────────
@@ -232,7 +308,8 @@ function frame(dt: number) {
 
   if (started && pack && cutter) {
     // 자르는 동안에는 팩을 정면으로 붙잡아 절취선이 흔들리지 않게
-    tiltGain.target = cutter.active ? 0.12 : 1;
+    // 카드가 빠져나오는 동안에도 팩을 거의 정면으로
+    tiltGain.target = cutter.active ? 0.12 : pack.opened ? 0.3 : 1;
     tilt.update(dt);
     const idle = cutter.active ? 0 : Math.min(1, Math.max(0, (tilt.idleTime - 1.5) / 2));
     const sway = autoSway(time, idle);
@@ -248,18 +325,22 @@ function frame(dt: number) {
     const float = Math.sin(time * 1.1) * 0.012;
     // 뒤집을 때 화면 쪽으로 살짝 떠올랐다 돌아옴
     const lift = Math.sin(Math.min(Math.PI, Math.abs(flip.value))) * 0.45;
-    stage.position.set(0, enterY.value + float, lift);
+    // 퇴장: 아래로 떨어지면서 뒤로 살짝 젖혀짐
+    const fall = packFall?.y ?? 0;
+    stage.position.set(0, enterY.value + float + fall, lift + fall * 0.08);
     stage.rotation.set(
-      rx.value + enterPitch.value,
+      rx.value + enterPitch.value - fall * 0.1,
       ry.value + enterSpin.value + flip.value,
       roll.value + Math.sin(time * 0.7) * 0.006,
     );
     // 그림자는 기울기 반대쪽으로 살짝 밀리고, 팩과 함께 움직인다
     shadow.position.x = stage.position.x - ry.value * 0.25;
     shadow.position.y = stage.position.y - 0.07 + rx.value * 0.25;
+    shadow.material.opacity = 0.55 * Math.max(0, 1 + fall / 1.2);
 
     if (detachAt >= 0 && time >= detachAt && !pack.opened) {
       pack.detachTop(scene, flyVel, flySpin);
+      openedAt = time;
       // 본체는 반동으로 살짝 아래로
       enterY.velocity -= 0.9;
       rx.velocity += 0.5;
@@ -270,8 +351,33 @@ function frame(dt: number) {
     pack.update(dt, time);
     updateHint();
     fx.update(dt, cutter.active ? headWorld(cutter.headU) : null, !cutter.inBand);
+
+    if (deck) {
+      updateOpening(pack, deck, dt);
+      if (deck.state !== 'packed' && deck.state !== 'rising') {
+        // 카드도 기울여 볼 수 있음 (명세 R10 — 마우스 호버 + 가만히 있으면 자동 흔들림). 넘기는 중에는 약하게
+        const k = MAX_TILT * 0.8 * (deck.dragging ? 0.25 : 1);
+        deck.setTilt(-k * (tilt.y + sway.y), k * (tilt.x + sway.x));
+      }
+      deck.update(dt);
+      updateDeckShadow(deck);
+    }
   }
   composer.render(dt);
+}
+
+/** 화면 중앙으로 나온 카드 뭉치 아래 그림자 */
+function updateDeckShadow(d: Deck) {
+  const inScene = d.root.parent === scene;
+  deckShadow.visible = inScene && d.state !== 'done';
+  if (!deckShadow.visible) return;
+  const s = d.root.scale.x;
+  deckShadow.scale.setScalar(s);
+  deckShadow.position.x = d.root.position.x - d.root.rotation.y * 0.25 * s;
+  deckShadow.position.y = d.root.position.y - 0.07 * s + d.root.rotation.x * 0.25 * s;
+  // 중앙으로 올수록(커질수록) 진해짐
+  const grow = viewScale - 1 > 0.05 ? (s - 1) / (viewScale - 1) : 1;
+  deckShadow.material.opacity = 0.5 * Math.min(1, Math.max(0, grow));
 }
 
 let last = performance.now();

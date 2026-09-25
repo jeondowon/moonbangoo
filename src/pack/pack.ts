@@ -138,6 +138,8 @@ export class Pack {
   readonly body = new Group();
   readonly tear = new TearState();
   readonly uniforms: TearUniforms;
+  /** 틈 사이로 보이는 속지 (카드가 빠져나올 때는 숨김) */
+  readonly lining: Mesh;
   private flight: Flight | null = null;
 
   constructor(tex: PackTextures) {
@@ -154,8 +156,8 @@ export class Pack {
     // 속지: 틈 사이로 보이는 팩 안쪽 (실물처럼 은박 안감)
     const lining = new MeshStandardMaterial({ color: '#b9b4ac', metalness: 1, roughness: 0.38 });
     applyTear(lining, this.uniforms, { piece: 'body', flipU: false, side: 0, guide: false });
-    const inside = new Mesh(flatStrip(TEAR_V - OVERLAP, TEAR_V + 0.06), lining);
-    this.body.add(inside);
+    this.lining = new Mesh(flatStrip(TEAR_V - OVERLAP, TEAR_V + 0.06), lining);
+    this.body.add(this.lining);
 
     this.root.add(this.top, this.body);
   }
