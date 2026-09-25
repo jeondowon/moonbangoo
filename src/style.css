@@ -129,3 +129,111 @@ html, body {
   color: var(--muted);
 }
 .hint-sub:empty { display: none; }
+
+/* ── 요약 · 선택 · 쿠폰 (M5) ───────────────── */
+[hidden] { display: none !important; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; }
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 5px;
+}
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+.prize-flow { position: fixed; inset: 0; pointer-events: none; }
+.flow-summary, .flow-preview {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center;
+  padding: max(24px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+}
+.flow-heading { text-align: center; flex: none; }
+.flow-eyebrow {
+  margin: 0 0 8px; color: var(--gold);
+  font: 700 12px 'Cormorant Garamond', serif;
+  letter-spacing: .28em;
+}
+.flow-heading h1 {
+  font: 700 clamp(22px, 5.8vw, 30px) 'Gowun Batang', serif;
+  margin: 0; outline: none;
+}
+.flow-heading > p:last-child:not(.flow-eyebrow) { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
+.prize-grid {
+  width: min(100%, 680px, calc((100svh - 240px) * 1.04));
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 24px 14px; margin: auto 0;
+}
+.prize-option {
+  flex: 0 0 calc((100% - 28px) / 3); min-width: 0;
+  display: flex; flex-direction: column; align-items: stretch;
+  border: 0; padding: 0; background: none; color: var(--text);
+  cursor: pointer; pointer-events: auto; border-radius: 8px;
+}
+.prize-option:disabled { cursor: default; }
+.card-space { display: block; width: 100%; aspect-ratio: 630 / 880; }
+.prize-option-name { margin-top: 10px; font-size: clamp(11px, 2.9vw, 14px); font-weight: 600; line-height: 1.4; }
+.prize-option-rarity { margin-top: 4px; color: var(--muted); font-size: 11px; }
+.flow-footnote { margin: 12px 0 0; font-size: 12px; line-height: 1.65; color: var(--muted); text-align: center; }
+.flow-summary.is-background { pointer-events: none; }
+.flow-summary.is-background .flow-heading,
+.flow-summary.is-background .flow-footnote,
+.flow-summary.is-background .prize-option-name,
+.flow-summary.is-background .prize-option-rarity { visibility: hidden; }
+.flow-summary.is-background .prize-option { pointer-events: none; }
+.flow-preview { gap: 12px; }
+.focus-card { width: min(100%, 520px); min-height: 90px; flex: 1; touch-action: none; pointer-events: auto; }
+.preview-details { width: min(100%, 380px); text-align: center; flex: none; }
+.prize-rarity { margin: 0 0 5px; color: var(--gold); font-size: 12px; letter-spacing: .06em; }
+.preview-details h2, .coupon-ticket h2 { margin: 0; font: 700 25px 'Gowun Batang', serif; }
+.prize-description { margin: 10px 0 0; color: var(--muted); white-space: pre-line; font-size: 13px; line-height: 1.6; }
+.preview-condition { margin: 14px 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.preview-condition strong { color: var(--text); }
+.preview-actions { display: grid; gap: 6px; }
+.flow-primary, .flow-secondary {
+  min-height: 46px; border-radius: 6px; cursor: pointer; pointer-events: auto;
+  border: 1px solid rgba(217, 184, 114, .3); padding: 12px 18px; font-size: 14px; font-weight: 600;
+}
+.flow-primary { background: #dfc28c; color: #352716; }
+.flow-primary:hover { background: #ebd3a5; }
+.flow-secondary { border-color: transparent; background: transparent; color: var(--text); }
+.flow-secondary:hover { background: rgba(217, 184, 114, .08); }
+.flow-primary:disabled, .flow-secondary:disabled { cursor: default; opacity: .6; }
+.flow-preview.is-confirming .focus-card { pointer-events: none; }
+.flow-result { position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; pointer-events: auto; touch-action: pan-y; }
+.result-content { max-width: 520px; margin: 0 auto; padding: max(28px, env(safe-area-inset-top)) 20px max(36px, env(safe-area-inset-bottom)); }
+.flow-result .focus-card { height: clamp(190px, 34svh, 310px); margin-top: 18px; }
+.card-tilt-hint { text-align: center; font-size: 11px; color: var(--muted); margin: 2px 0 24px; }
+.coupon-ticket { padding: 25px 24px 0; border: 1px solid #bc9a62; border-radius: 10px; background: #f4ede0; color: #4a3a28; text-align: center; }
+.coupon-ticket .prize-rarity { color: #7a5520; margin-top: 16px; }
+.coupon-ticket .prize-description { color: #75624c; }
+.coupon-badge { display: inline-block; margin: 0; padding: 5px 10px; border: 1px solid #c7b38e; border-radius: 20px; color: #7a5520; font-size: 11px; }
+.coupon-terms { margin: 22px 0; text-align: left; font-size: 13px; line-height: 1.8; }
+.coupon-terms > div { display: grid; grid-template-columns: 64px 1fr; gap: 8px; margin-top: 12px; }
+.coupon-terms dt { color: #75624c; }
+.coupon-terms dd { margin: 0; overflow-wrap: anywhere; }
+.coupon-code-area { border-top: 1px dashed #cbb895; padding: 20px 0; }
+.coupon-code-area p { margin: 0 0 10px; font-size: 11px; line-height: 1.6; color: #75624c; }
+.coupon-code-area p:last-child { margin: 12px 0 0; }
+.coupon-code-area code { font-size: clamp(18px, 5vw, 24px); letter-spacing: .06em; user-select: text; -webkit-user-select: text; }
+.store-info { margin: 24px 0 0; padding: 0 4px; font-size: 13px; line-height: 1.7; }
+.store-info h2 { font-size: 15px; margin: 0 0 10px; }
+.store-info h2 span { margin-left: 8px; font-size: 11px; font-weight: 400; color: var(--muted); }
+.store-info p { margin: 4px 0; color: var(--muted); }
+.store-info a { display: inline-block; color: var(--gold); padding: 12px 0; text-underline-offset: 4px; }
+@media (max-height: 680px) {
+  .flow-summary, .flow-preview { padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+  .flow-preview { gap: 8px; }
+  .preview-details h2 { font-size: 22px; }
+  .preview-details .prize-description { font-size: 12px; margin-top: 6px; }
+  .preview-condition { margin: 8px 0; }
+  .flow-footnote { margin-top: 6px; font-size: 11px; }
+}
+@media (min-aspect-ratio: 7 / 5) {
+  .prize-grid { width: min(100%, 1060px, calc((100svh - 200px) * 3.58)); flex-wrap: nowrap; }
+  .prize-option { flex-basis: calc((100% - 56px) / 5); }
+  .flow-preview { display: grid; grid-template: auto 1fr / 1fr 1fr; max-width: 920px; margin: 0 auto; gap: 12px 32px; }
+  .flow-preview .flow-heading { grid-column: 1 / -1; }
+  .flow-preview .focus-card { height: 100%; }
+  .preview-details { align-self: center; }
+}

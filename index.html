@@ -33,6 +33,71 @@
   <p class="hint-sub"></p>
 </div>
 
+<!-- M5: 카드는 같은 WebGL 장면에서 그리며, DOM은 배치·조작·읽을 수 있는 안내를 담당한다. -->
+<main id="prize-flow" class="prize-flow" hidden>
+  <section id="summary" class="flow-summary" aria-labelledby="summary-title">
+    <header class="flow-heading">
+      <p class="flow-eyebrow">YOUR COLLECTION</p>
+      <h1 id="summary-title" tabindex="-1">어떤 선물이 마음에 드세요?</h1>
+      <p>5장 중 원하는 경품 1개를 골라 주세요.</p>
+    </header>
+    <div id="prize-grid" class="prize-grid" aria-label="경품 후보 5장"></div>
+    <p class="flow-footnote">카드를 누르면 크게 볼 수 있어요.<br>결정하기 전까지 자유롭게 바꿀 수 있어요.</p>
+  </section>
+
+  <section id="prize-preview" class="flow-preview" aria-labelledby="preview-title" hidden>
+    <header class="flow-heading">
+      <p class="flow-eyebrow">YOUR CHOICE</p>
+      <h1 id="preview-title" tabindex="-1">마음에 드는 한 장</h1>
+    </header>
+    <div id="preview-card" class="focus-card" role="img" aria-label="선택한 경품 카드"></div>
+    <div class="preview-details">
+      <p id="preview-rarity" class="prize-rarity"></p>
+      <h2 id="preview-name"></h2>
+      <p id="preview-description" class="prize-description"></p>
+      <p class="preview-condition">교환 조건 · <strong id="preview-condition"></strong></p>
+      <div class="preview-actions">
+        <button id="confirm-prize" class="flow-primary" type="button">이 상품으로 결정</button>
+        <button id="change-prize" class="flow-secondary" type="button">다른 카드 보기</button>
+      </div>
+      <p id="confirm-notice" class="flow-footnote">결정 후에는 변경할 수 없어요.</p>
+    </div>
+  </section>
+
+  <section id="prize-result" class="flow-result" aria-labelledby="result-title" hidden>
+    <div class="result-content">
+      <header class="flow-heading">
+        <p class="flow-eyebrow">A GIFT FOR YOU</p>
+        <h1 id="result-title" tabindex="-1">나만의 선물을 골랐어요</h1>
+      </header>
+      <div id="result-card" class="focus-card" role="img" aria-label="획득한 경품 카드"></div>
+      <p class="card-tilt-hint">카드를 움직여 빛을 비춰 보세요</p>
+      <article class="coupon-ticket">
+        <p class="coupon-badge">시연용 쿠폰</p>
+        <p id="result-rarity" class="prize-rarity"></p>
+        <h2 id="result-name"></h2>
+        <p id="result-description" class="prize-description"></p>
+        <dl class="coupon-terms">
+          <div><dt>교환 조건</dt><dd id="result-condition"></dd></div>
+          <div><dt>방문 기한</dt><dd><strong>14일 이내 매장 방문</strong><br><time id="result-expiry"></time>까지</dd></div>
+        </dl>
+        <div class="coupon-code-area">
+          <p>쿠폰 코드 · 목업</p>
+          <code id="result-code"></code>
+          <p>체험용으로 실제 경품 교환에는 사용할 수 없어요.</p>
+        </div>
+      </article>
+      <aside class="store-info" aria-labelledby="store-title">
+        <h2 id="store-title">어른뭉방구 <span>매장 안내 · 예시</span></h2>
+        <p>경북 포항시 ○○구 ○○로 00, 1층</p>
+        <p>매일 10:00 – 21:00 <span>(예시)</span></p>
+        <a href="https://map.naver.com/p/search/%ED%8F%AC%ED%95%AD%20%EC%96%B4%EB%A5%B8%EB%AD%89%EB%B0%A9%EA%B5%AC" target="_blank" rel="noopener noreferrer">지도에서 매장 검색 <span aria-hidden="true">↗</span></a>
+      </aside>
+    </div>
+  </section>
+  <p id="flow-status" class="sr-only" role="status" aria-live="polite"></p>
+</main>
+
 <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

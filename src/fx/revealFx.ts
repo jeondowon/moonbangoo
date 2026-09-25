@@ -206,8 +206,12 @@ export class RevealFx {
   }
 
   /** 카드가 앞면으로 드러나는 순간 호출. card: 뒤집히는 카드의 root */
-  play(card: Object3D, rarity: RarityCode) {
-    const st = STYLE[rarity];
+  play(card: Object3D, rarity: RarityCode, selection = false) {
+    // 선택 확정은 등급과 무관하게 절제된 금빛 반짝임·입자 + 짧은 빛 번짐.
+    // 기존에 제외한 카드 뒤 광선·후광은 다시 넣지 않는다.
+    const st: RevealStyle | null = selection
+      ? { glints: 20, color: new Color(1.9, 1.45, 0.65), rainbow: false, flash: 0.12, special: true }
+      : STYLE[rarity];
     this.style = st;
     if (!st) return;
     card.add(this.group);
@@ -242,7 +246,7 @@ export class RevealFx {
 
     // 최고등급 특수 연출: 카드 테두리에서 사방으로 빛 입자가 분출
     if (st.special) {
-      const n = 90;
+      const n = selection ? 48 : 90;
       for (let i = 0; i < n; i++) {
         const a = Math.random() * Math.PI * 2;
         const cx = Math.cos(a);
@@ -256,7 +260,7 @@ export class RevealFx {
     this.motes.commit();
 
     this.ring.material.uniforms.uRingA.value = 0;
-    this.ring.visible = st.special;
+    this.ring.visible = st.special && !selection;
   }
 
   /** 카드를 넘겼을 때: 남아 있는 반짝임·입자를 빠르게 거둔다 */

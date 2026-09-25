@@ -1,4 +1,4 @@
-// 1차: 인트로 → 팩 등장 → 기울여 보기 / 탭해서 뒤집기 → 절취 개봉 → 카드 뭉치 등장 → 한 장씩 뒤집고(등급별 등장 연출) 넘기기 (M1~M4).
+// 1차: 인트로 → 팩 개봉 → 카드 5장 확인 → 요약·선택 → 목업 쿠폰 (M1~M5).
 import {
   Group,
   HalfFloatType,
@@ -17,6 +17,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import './style.css';
 import { CARD_H, CARD_W } from './card/card';
 import { Deck, RISE_TOP } from './card/deck';
+import { PrizeFlow } from './card/prizeFlow';
 import { buildCardTextures } from './card/textures';
 import { updateHoloTime } from './card/holo';
 import { Spring } from './core/spring';
@@ -100,6 +101,8 @@ const openDrop = new Spring(0, 1.6, 0.9);
 let pack: Pack | null = null;
 let cutter: Cutter | null = null;
 let deck: Deck | null = null;
+let prizeFlow: PrizeFlow | null = null;
+let summaryAt = -1;
 /** 카드를 보여줄 때 덱 배율 (화면 비율에 맞춰 resize에서 계산) */
 let viewScale = 1;
 /** 카드가 빠져나올 때 팩이 내려가는 거리 (화면 비율에 맞춰 resize에서 계산) */
@@ -165,6 +168,7 @@ async function prepare() {
   deck.setViewScale(viewScale);
   pack.root.add(deck.root);
   setupDeck(deck);
+  prizeFlow = new PrizeFlow(canvas, camera, result.cards, reveal);
   // 팩·카드 텍스처를 로딩 중에 GPU로 올려 둔다 (팩 등장 첫 프레임에 한꺼번에 올리며 끊기지 않게)
   for (const side of [tex.front, tex.back]) for (const t of Object.values(side)) renderer.initTexture(t);
   for (const t of [cardTex.back, ...cardTex.fronts]) renderer.initTexture(t);
@@ -252,6 +256,7 @@ function setupDeck(d: Deck) {
   d.onFinish = () => {
     everSwiped = true;
     reveal.stop();
+    summaryAt = time + 0.7; // 마지막 카드가 화면 밖으로 나간 뒤 요약 카드들을 착지시킨다
   };
 }
 
@@ -306,6 +311,10 @@ function setHint(main: string | null, sub = '') {
 }
 
 function updateHint() {
+  if (prizeFlow?.active) {
+    setHint(null);
+    return;
+  }
   if (!pack || !started || time - startedAt < 1.4) return;
   if (deck && deck.state !== 'packed' && deck.state !== 'rising') {
     updateCardHint(deck);
@@ -384,12 +393,17 @@ function frame(dt: number) {
 
     if (deck) {
       updateOpening(pack, deck, dt);
-      if (deck.state !== 'packed' && deck.state !== 'rising') {
+      if (summaryAt >= 0 && time >= summaryAt && prizeFlow && !prizeFlow.active) {
+        prizeFlow.start(deck.cards, scene);
+        setHint(null);
+      }
+      if (!prizeFlow?.active && deck.state !== 'packed' && deck.state !== 'rising') {
         // 카드도 기울여 볼 수 있음 (명세 R10 — 마우스 호버 + 가만히 있으면 자동 흔들림). 넘기는 중에는 약하게
         const k = MAX_TILT * 0.8 * (deck.dragging ? 0.25 : 1);
         deck.setTilt(-k * (tilt.y + sway.y), k * (tilt.x + sway.x));
       }
-      deck.update(dt);
+      if (prizeFlow?.active) prizeFlow.update(dt, renderer.getPixelRatio());
+      else deck.update(dt);
       reveal.update(dt);
       updateDeckShadow(deck);
     }
