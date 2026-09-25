@@ -129,8 +129,10 @@ function resize() {
   dropBy = Math.max(0, RISE_TOP + RISE_MARGIN - visH / 2);
   if (deck && deck.state !== 'packed') openDrop.target = -dropBy;
 }
-window.addEventListener('resize', resize);
-resize();
+// 인앱 브라우저(인스타그램 등)는 최초 진입 시 주소창이 접히며 실제 뷰포트가
+// 바뀌어도 window resize 이벤트를 안정적으로 쏘지 않는 경우가 있어,
+// 캔버스의 실제 레이아웃 크기 변화를 직접 관찰한다.
+new ResizeObserver(resize).observe(canvas);
 
 let ready = false;
 let wantsStart = false;
