@@ -18,6 +18,7 @@ import './style.css';
 import { CARD_H, CARD_W } from './card/card';
 import { Deck, RISE_TOP } from './card/deck';
 import { buildCardTextures } from './card/textures';
+import { updateHoloTime } from './card/holo';
 import { Spring } from './core/spring';
 import { TiltInput } from './core/tilt';
 import { drawPack, type PackResult } from './data/draw';
@@ -316,6 +317,7 @@ function autoSway(t: number, weight: number) {
 
 function frame(dt: number) {
   time += dt;
+  updateHoloTime(time);
 
   if (started && pack && cutter) {
     // 자르는 동안에는 팩을 정면으로 붙잡아 절취선이 흔들리지 않게

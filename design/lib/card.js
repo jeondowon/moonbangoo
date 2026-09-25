@@ -10,6 +10,8 @@ import { icon, CATEGORY_LABEL } from './icons.js';
 import { RARITIES, VISIT_DAYS } from './data.js';
 
 export const CARD = { W: 630, H: 880, R: 26 };
+/** 일러스트 창 위치 (src/card/holo.ts에서 홀로 마스크 영역으로 재사용) */
+export const WINDOW_BOX = { x: 42, y: 110, w: 546, h: 356 };
 
 const SANS = 'Pretendard Variable, Pretendard, sans-serif';
 const SERIF = 'Gowun Batang, serif';
@@ -95,7 +97,7 @@ export function cardFront(prize, { uid = `cf-${prize.id}`, index = 1, total = 5 
   const r = RARITIES[prize.rarity];
   const metal = METALS[r.metal];
   const u = (s) => `url(#${uid}-${s})`;
-  const win = { x: 42, y: 110, w: 546, h: 356 };
+  const win = WINDOW_BOX;
   const panel = { x: 40, y: 530, w: 550, h: 252 };
   const no = `${String(index).padStart(2, '0')}/${String(total).padStart(2, '0')}`;
   const pill = { w: r.code.length > 1 ? 56 : 42, h: 30 };

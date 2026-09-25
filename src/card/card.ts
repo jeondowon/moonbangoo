@@ -12,6 +12,7 @@ import {
 } from 'three';
 import { CARD } from '../../design/lib/card.js';
 import { Spring } from '../core/spring';
+import { applyHoloFront, applyRimGlow, RARITY_STYLE, type RarityCode } from './holo';
 
 /** 월드 단위 카드 크기 (팩 안에 들어가는 크기 기준. 보여줄 때는 덱 전체를 키운다) */
 export const CARD_W = 1;
@@ -95,17 +96,23 @@ function cardGeometry(w: number, h: number, r: number, t: number, seg = 8): Buff
 
 let sharedGeometry: BufferGeometry | null = null;
 let sharedEdge: Material | null = null;
-const backMaterials = new WeakMap<Texture, Material>();
+/** 뒷면 텍스처는 모든 카드가 공유하지만, 테두리 암시 발광은 등급별로 달라 재질은 (텍스처, 등급) 쌍으로 캐시 */
+const backMaterials = new Map<string, Material>();
 
-/** 인쇄 카드 재질 (M3 임시: 코팅된 종이. 등급별 금속·홀로는 M4) */
-function printMaterial(map: Texture) {
-  return new MeshPhysicalMaterial({
+/** 등급별 인쇄 카드 재질 (명세 R6·R9, M4): 금속감·클리어코트 + 홀로/테두리 발광 */
+function printMaterial(map: Texture, rarity: RarityCode, face: 'front' | 'back') {
+  const style = RARITY_STYLE[rarity];
+  const mat = new MeshPhysicalMaterial({
     map,
-    roughness: 0.46,
-    metalness: 0,
-    clearcoat: 0.45,
-    clearcoatRoughness: 0.22,
+    roughness: style.roughness,
+    metalness: style.metalness,
+    clearcoat: style.clearcoat,
+    clearcoatRoughness: style.clearcoatRoughness,
+    emissive: 0x000000,
   });
+  if (face === 'front') applyHoloFront(mat, rarity);
+  else applyRimGlow(mat, rarity);
+  return mat;
 }
 
 export class Card {
@@ -129,12 +136,13 @@ export class Card {
   /** 넘겨져 화면 밖으로 날아가는 중 (덱 로컬 속도, 카드 폭/초) */
   flight: { vx: number; vy: number; age: number } | null = null;
 
-  constructor(front: Texture, back: Texture) {
+  constructor(front: Texture, back: Texture, rarity: RarityCode) {
     sharedGeometry ??= cardGeometry(CARD_W, CARD_H, RADIUS, CARD_T);
     sharedEdge ??= new MeshStandardMaterial({ color: '#e8dcc6', roughness: 0.75 });
-    let backMat = backMaterials.get(back);
-    if (!backMat) backMaterials.set(back, (backMat = printMaterial(back)));
-    this.mesh = new Mesh(sharedGeometry, [printMaterial(front), backMat, sharedEdge]);
+    const backKey = `${back.uuid}:${rarity}`;
+    let backMat = backMaterials.get(backKey);
+    if (!backMat) backMaterials.set(backKey, (backMat = printMaterial(back, rarity, 'back')));
+    this.mesh = new Mesh(sharedGeometry, [printMaterial(front, rarity, 'front'), backMat, sharedEdge]);
     this.flipper.rotation.y = Math.PI;
     this.flipper.add(this.mesh);
     this.root.add(this.flipper);

@@ -7,6 +7,7 @@ import { Spring } from '../core/spring';
 import type { Prize } from '../data/draw';
 import { packY } from '../pack/pack';
 import { Card, CARD_H, CARD_W } from './card';
+import type { RarityCode } from './holo';
 
 const GAP = 0.0055; // 카드 사이 z 간격
 const IN_TOP_V = 0.16; // 팩 안에서 카드 윗변 위치 (팩 위에서부터 비율, 절취선 아래)
@@ -94,7 +95,7 @@ export class Deck {
   constructor(el: HTMLElement, camera: Camera, prizes: Prize[], fronts: Texture[], back: Texture) {
     this.el = el;
     this.camera = camera;
-    this.cards = prizes.map((_, i) => new Card(fronts[i], back));
+    this.cards = prizes.map((p, i) => new Card(fronts[i], back, p.rarity as RarityCode));
     this.cards.forEach((c) => this.root.add(c.root));
     this.layout(true);
     this.place();
