@@ -54,6 +54,14 @@ npm run typecheck  # 타입 체크만
 - 앱: `http://localhost:5173/`
 - 2D 디자인 시안: `http://localhost:5173/design/` (개발 서버에서 같이 열림)
 
+## 배포
+
+`main`에 푸시하면 GitHub Actions(`.github/workflows/deploy.yml`)가 빌드해 GitHub Pages로 배포합니다.
+
+- 주소: https://jeondowon.github.io/moonbangoo/
+- 폰의 기울기 센서는 HTTPS에서만 동작하므로, 자이로 확인은 로컬 개발 서버(http)가 아니라 배포 주소에서 합니다.
+- 하위 경로(`/moonbangoo/`)에서 서비스되므로 `vite.config.ts`에서 빌드 시 `base`를 맞춰 둡니다.
+
 ## 주요 결정과 주의사항
 
 - 이벤트는 포켓몬 카드게임의 개봉 경험에서 상호작용과 분위기만 참고합니다.
