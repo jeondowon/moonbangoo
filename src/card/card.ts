@@ -7,6 +7,7 @@ import {
   Mesh,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
+  type IUniform,
   type Material,
   type Texture,
 } from 'three';
@@ -100,7 +101,7 @@ let sharedEdge: Material | null = null;
 const backMaterials = new Map<string, Material>();
 
 /** 등급별 인쇄 카드 재질 (명세 R6·R9, M4): 금속감·클리어코트 + 홀로/테두리 발광 */
-function printMaterial(map: Texture, rarity: RarityCode, face: 'front' | 'back') {
+function printMaterial(map: Texture, rarity: RarityCode, face: 'front' | 'back', brightness?: IUniform<number>) {
   const style = RARITY_STYLE[rarity];
   const mat = new MeshPhysicalMaterial({
     map,
@@ -112,6 +113,19 @@ function printMaterial(map: Texture, rarity: RarityCode, face: 'front' | 'back')
   });
   if (face === 'front') applyHoloFront(mat, rarity);
   else applyRimGlow(mat, rarity);
+  if (brightness) {
+    const compile = mat.onBeforeCompile;
+    const cacheKey = mat.customProgramCacheKey();
+    mat.onBeforeCompile = (shader, renderer) => {
+      compile.call(mat, shader, renderer);
+      shader.uniforms.uCardBrightness = brightness;
+      // 기본색이 아니라 반사·홀로까지 계산된 빛을 낮춘다. 재질 재컴파일 없이 유니폼만 갱신.
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform float uCardBrightness;')
+        .replace('#include <opaque_fragment>', 'outgoingLight *= uCardBrightness;\n#include <opaque_fragment>');
+    };
+    mat.customProgramCacheKey = () => `${cacheKey}-brightness`;
+  }
   return mat;
 }
 
@@ -120,6 +134,8 @@ export class Card {
   readonly flipper = new Group();
   readonly mesh: Mesh;
   readonly rarity: RarityCode;
+  /** 선형 색 공간의 앞면 밝기. 1이면 기존 재질 그대로. */
+  readonly brightness = { value: 1 };
 
   // 덱 기준 위치·기울기
   readonly x = new Spring(0, 2.6, 0.72);
@@ -144,7 +160,7 @@ export class Card {
     const backKey = `${back.uuid}:${rarity}`;
     let backMat = backMaterials.get(backKey);
     if (!backMat) backMaterials.set(backKey, (backMat = printMaterial(back, rarity, 'back')));
-    this.mesh = new Mesh(sharedGeometry, [printMaterial(front, rarity, 'front'), backMat, sharedEdge]);
+    this.mesh = new Mesh(sharedGeometry, [printMaterial(front, rarity, 'front', this.brightness), backMat, sharedEdge]);
     this.flipper.rotation.y = Math.PI;
     this.flipper.add(this.mesh);
     this.root.add(this.flipper);

@@ -402,8 +402,10 @@ function frame(dt: number) {
         const k = MAX_TILT * 0.8 * (deck.dragging ? 0.25 : 1);
         deck.setTilt(-k * (tilt.y + sway.y), k * (tilt.x + sway.x));
       }
-      if (prizeFlow?.active) prizeFlow.update(dt, renderer.getPixelRatio());
-      else deck.update(dt);
+      if (prizeFlow?.active) {
+        prizeFlow.update(dt, renderer.getPixelRatio());
+        backdrop.setBrightness(prizeFlow.backgroundBrightness);
+      } else deck.update(dt);
       reveal.update(dt);
       updateDeckShadow(deck);
     }

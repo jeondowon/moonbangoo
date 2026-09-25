@@ -181,7 +181,7 @@ button:focus-visible, a:focus-visible {
 .flow-summary.is-background .prize-option-name,
 .flow-summary.is-background .prize-option-rarity { visibility: hidden; }
 .flow-summary.is-background .prize-option { pointer-events: none; }
-.flow-preview { gap: 12px; }
+.flow-preview { gap: 12px; --muted: #c6b9a4; }
 .focus-card { width: min(100%, 520px); min-height: 90px; flex: 1; touch-action: none; pointer-events: auto; }
 .preview-details { width: min(100%, 380px); text-align: center; flex: none; }
 .prize-rarity { margin: 0 0 5px; color: var(--gold); font-size: 12px; letter-spacing: .06em; }
@@ -197,7 +197,11 @@ button:focus-visible, a:focus-visible {
 .flow-primary { background: #dfc28c; color: #352716; }
 .flow-primary:hover { background: #ebd3a5; }
 .flow-secondary { border-color: transparent; background: transparent; color: var(--text); }
-.flow-secondary:hover { background: rgba(217, 184, 114, .08); }
+.flow-secondary:hover:not(:disabled) {
+  background: #302419;
+  border-color: #80633d;
+  color: #f3dfb6;
+}
 .flow-primary:disabled, .flow-secondary:disabled { cursor: default; opacity: .6; }
 .flow-preview.is-confirming .focus-card { pointer-events: none; }
 .flow-result { position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; pointer-events: auto; touch-action: pan-y; }

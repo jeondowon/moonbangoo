@@ -1,6 +1,6 @@
 // M5: 넘긴 카드 5장을 재사용해 요약 → 미리보기 → 확정 → 쿠폰으로 연결한다.
 // DOM의 빈 카드 영역을 월드 좌표로 옮겨 같은 WebGL 장면 안에서 배치한다.
-import { Group, type MeshPhysicalMaterial, type PerspectiveCamera, type Scene } from 'three';
+import { Group, type PerspectiveCamera, type Scene } from 'three';
 import { RARITIES } from '../../design/lib/data.js';
 import { Spring } from '../core/spring';
 import { TiltInput } from '../core/tilt';
@@ -31,6 +31,7 @@ export class PrizeFlow {
   private coupon: MockCoupon | null = null;
   private items: DisplayCard[] = [];
   private dirty = true;
+  private readonly background = new Spring(1, 2.5, 1);
   private readonly root = new Group();
   private readonly ui = el('prize-flow');
   private readonly summary = el('summary');
@@ -65,6 +66,7 @@ export class PrizeFlow {
   }
 
   get active() { return this.state !== 'inactive'; }
+  get backgroundBrightness() { return this.background.value; }
 
   /** 마지막 스와이프가 화면 밖으로 나간 뒤 호출. 이후 카드 갱신은 덱 대신 이 화면이 담당한다. */
   start(cards: Card[], scene: Scene) {
@@ -216,6 +218,7 @@ export class PrizeFlow {
   private layout(snap = false) {
     if (!this.active) return;
     this.dirty = false;
+    this.background.target = this.state === 'preview' || this.state === 'confirming' ? 0.22 : 1;
     this.items.forEach((item, i) => {
       const focused = this.state !== 'summary' && this.state !== 'entering';
       const chosen = focused && i === this.selected;
@@ -224,7 +227,8 @@ export class PrizeFlow {
       } else if (this.state !== 'confirming' && this.state !== 'result') {
         this.place(item, item.slot, focused ? 0.86 : 1);
       }
-      item.shade.target = focused && !chosen ? 0.18 : 1;
+      // 선형 밝기 1.2% → 출력 화면에서는 윤곽만 은은하게 남는다. 선택 카드의 반사는 그대로.
+      item.shade.target = focused && !chosen ? (this.state === 'confirming' ? 0 : 0.012) : 1;
       item.card.z.target = chosen ? 0.025 : 0;
     });
   }
@@ -233,6 +237,7 @@ export class PrizeFlow {
     if (!this.active) return;
     this.age += dt;
     if (this.dirty) this.layout();
+    this.background.step(dt);
     if (this.state === 'entering' && this.age > 1.15) {
       this.state = 'summary';
       this.items.forEach((item) => { item.button.disabled = false; });
@@ -251,8 +256,7 @@ export class PrizeFlow {
       const focus = i === this.selected && (this.state === 'preview' || this.state === 'result');
       item.card.pitch.target = focus ? -input.y * Math.PI / 10 : 0;
       item.card.lean.target = focus ? input.x * Math.PI / 10 : 0;
-      const material = (item.card.mesh.material as MeshPhysicalMaterial[])[0];
-      material.color.setScalar(item.shade.step(dt));
+      item.card.brightness.value = item.shade.step(dt);
       item.card.step(dt);
     });
     if (this.selected >= 0) {
