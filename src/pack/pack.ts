@@ -12,6 +12,7 @@ import {
   Vector3,
 } from 'three';
 import { PACK } from '../../design/lib/pack.js';
+import { smooth } from '../core/math';
 import { TEAR_V, TearState } from './tear';
 import { applyTear, createTearUniforms, type TearPiece, type TearUniforms } from './tearShader';
 import type { PackTextures, SideTextures } from './textures';
@@ -24,11 +25,6 @@ const HALF_THICK = 0.034; // 가운데 부푼 두께의 절반 (실물 약 4% �
 const FOLD = 0.055; // 좌우 접힌 가장자리의 둥근 폭 (u 비율)
 const TAPER = 0.1; // 봉합부에서 최대 두께까지 부풀어 오르는 구간 (v 비율)
 const SEAL_GAP = 0.0012; // 봉합부 앞뒤 사이 틈 (z 파이팅 방지)
-
-const smooth = (a: number, b: number, x: number) => {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-  return t * t * (3 - 2 * t);
-};
 
 /** 표면 높이 (u: 0=왼쪽, v: 0=위쪽) */
 export function thickness(u: number, v: number) {

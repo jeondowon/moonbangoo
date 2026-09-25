@@ -42,7 +42,9 @@ const intro = document.querySelector<HTMLElement>('#intro')!;
 const hint = document.querySelector<HTMLElement>('#hint')!;
 const flashEl = document.querySelector<HTMLElement>('#flash')!;
 
-const renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+// 장면은 composer의 MSAA 타깃에 그리고 캔버스에는 전체 화면 사각형 하나만 그리므로 캔버스 자체 안티앨리어싱은 끈다
+// (켜 두면 화면 크기만 한 멀티샘플 버퍼가 따로 잡혀 GPU 메모리만 차지한다)
+const renderer = new WebGLRenderer({ canvas, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
 renderer.toneMapping = NeutralToneMapping; // 인쇄 색(시안 팔레트)을 최대한 그대로 유지
 renderer.toneMappingExposure = 1;
@@ -58,7 +60,11 @@ const composer = new EffectComposer(renderer, new WebGLRenderTarget(1, 1, { type
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new Vector2(1, 1), 0.7, 0.45, 1.0);
 composer.addPass(bloom);
-composer.addPass(new OutputPass());
+const output = new OutputPass();
+// 마지막 패스는 화면에 바로 그리므로 버퍼를 바꿀 필요가 없다. 바꾸면 매 프레임 두 타깃을 번갈아 써서
+// 화면 크기의 MSAA 하프플로트 타깃이 하나 더 GPU에 잡힌다
+output.needsSwap = false;
+composer.addPass(output);
 
 const stage = new Group(); // 팩 위치·회전 담당
 scene.add(stage);
@@ -159,7 +165,8 @@ async function prepare() {
   deck.setViewScale(viewScale);
   pack.root.add(deck.root);
   setupDeck(deck);
-  // 카드 텍스처 6장을 로딩 중에 GPU로 올려 둔다 (팩 등장 첫 프레임에 한꺼번에 올리며 끊기지 않게)
+  // 팩·카드 텍스처를 로딩 중에 GPU로 올려 둔다 (팩 등장 첫 프레임에 한꺼번에 올리며 끊기지 않게)
+  for (const side of [tex.front, tex.back]) for (const t of Object.values(side)) renderer.initTexture(t);
   for (const t of [cardTex.back, ...cardTex.fronts]) renderer.initTexture(t);
   // 첫 등장 때 셰이더 컴파일로 끊기지 않도록 미리 컴파일 (보이는 오브젝트만 컴파일되므로 숨기기 전에)
   reveal.warmup(scene);
@@ -387,7 +394,8 @@ function frame(dt: number) {
       updateDeckShadow(deck);
     }
   }
-  composer.render(dt);
+  // 시작 전에는 불투명한 인트로가 캔버스를 덮고 있으므로 그리지 않는다 (로딩 중 텍스처 생성과 경쟁하지 않게)
+  if (started) composer.render(dt);
 }
 
 /** 화면 중앙으로 나온 카드 뭉치 아래 그림자 */

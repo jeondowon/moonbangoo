@@ -2,12 +2,12 @@
 //   albedo : 색 + 알파(톱니 외곽). 2D 전용 음영 레이어는 빼고, 박은 평평한 금색으로 (반사는 3D 조명이 담당)
 //   orm    : G = 거칠기, B = 금속도 (three.js roughnessMap / metalnessMap 채널 규칙)
 //   normal : 박 눌림 + 크림프 골 + 뒷면 봉합선 골 + 종이결 + 포장지 주름
-import { CanvasTexture, NoColorSpace, SRGBColorSpace, type Texture, type WebGLRenderer } from 'three';
+import type { Texture, WebGLRenderer } from 'three';
 import { loadLogo } from '../../design/lib/logo.js';
 import { PACK, packBack, packFront } from '../../design/lib/pack.js';
 import { embeddedFontCss } from '../gfx/fonts';
 import { boxBlur, HeightField, readChannel, valueNoise, whiteNoise } from '../gfx/surface';
-import { parseSvg, rasterize, svgText } from '../gfx/svg';
+import { parseSvg, rasterize, svgText, toTexture } from '../gfx/svg';
 
 /** 텍스처 해상도 배율 (SVG 600×1040 → 900×1560). 화면에서 팩 높이가 1500px를 넘을 일이 드물다 */
 const SCALE = 1.5;
@@ -46,13 +46,6 @@ function variant(markup: string, mode: Variant): SVGSVGElement {
     svg.querySelectorAll('[data-layer]:not([data-layer="foil"])').forEach((n) => n.remove());
   }
   return svg;
-}
-
-function toTexture(canvas: HTMLCanvasElement, renderer: WebGLRenderer, srgb: boolean): Texture {
-  const t = new CanvasTexture(canvas);
-  t.colorSpace = srgb ? SRGBColorSpace : NoColorSpace;
-  t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  return t;
 }
 
 /**

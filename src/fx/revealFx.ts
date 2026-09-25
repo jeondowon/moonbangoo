@@ -18,6 +18,7 @@ import {
   type Object3D,
 } from 'three';
 import type { RarityCode } from '../card/holo';
+import { smooth } from '../core/math';
 
 const MAX_MOTES = 320;
 
@@ -38,11 +39,6 @@ const STYLE: Record<RarityCode, RevealStyle | null> = {
   R: { glints: 16, color: new Color(1.6, 1.75, 2), rainbow: false, flash: 0, special: false },
   SR: { glints: 24, color: new Color(1.9, 1.45, 0.65), rainbow: false, flash: 0, special: false },
   UR: { glints: 26, color: new Color(1.6, 1.6, 1.6), rainbow: true, flash: 0.45, special: true },
-};
-
-const smooth = (a: number, b: number, x: number) => {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-  return t * t * (3 - 2 * t);
 };
 
 /**

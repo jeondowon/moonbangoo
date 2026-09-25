@@ -1,11 +1,11 @@
 // 카드 텍스처: design/lib/card.js의 SVG(M0 확정 시안)를 래스터화한다.
 // M3은 색(albedo)만 — 등급별 금속·홀로 재질 분리는 M4에서.
-import { CanvasTexture, SRGBColorSpace, type Texture, type WebGLRenderer } from 'three';
+import type { Texture, WebGLRenderer } from 'three';
 import { CARD, cardBack, cardFront } from '../../design/lib/card.js';
 import { loadLogo } from '../../design/lib/logo.js';
 import type { Prize } from '../data/draw';
 import { embeddedFontCss } from '../gfx/fonts';
-import { parseSvg, rasterize, svgText } from '../gfx/svg';
+import { parseSvg, rasterize, svgText, toTexture } from '../gfx/svg';
 
 /** 630×880 → 788×1100. 폰에서 카드가 화면 높이의 약 2/3 (DPR 2 기준 1000px 남짓) */
 const SCALE = 1.25;
@@ -48,13 +48,6 @@ async function fitTexts(svg: SVGSVGElement) {
   } finally {
     host.remove();
   }
-}
-
-function toTexture(canvas: HTMLCanvasElement, renderer: WebGLRenderer): Texture {
-  const t = new CanvasTexture(canvas);
-  t.colorSpace = SRGBColorSpace;
-  t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  return t;
 }
 
 export async function buildCardTextures(renderer: WebGLRenderer, cards: Prize[]): Promise<CardTextures> {

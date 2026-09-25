@@ -24,8 +24,6 @@ export class Cutter {
   headU = 0.5;
   /** 마지막 입력이 허용 밴드 안인지 */
   inBand = false;
-  /** 이번 제스처에서 잘린 칸 수 (탭 판정용) */
-  gestureCut = 0;
 
   onCut?: (du: number, dir: number, speed: number) => void;
   /** velocity: 마지막 약 0.1초간 손가락 속도 (팩 로컬 단위/s) */
@@ -86,7 +84,6 @@ export class Cutter {
     if (!this.wants(e)) return;
     this.el.setPointerCapture(e.pointerId);
     this.id = e.pointerId;
-    this.gestureCut = 0;
     this.samples = [];
     this.lastIn = false;
     this.sample(e.clientX, e.clientY, e.timeStamp);
@@ -113,7 +110,6 @@ export class Cutter {
       if (this.lastIn) {
         const n = this.tear.cut(this.lastU, p.u, this.now());
         if (n > 0) {
-          this.gestureCut += n;
           const prev = this.samples[this.samples.length - 1];
           const dtS = prev ? Math.max(1e-3, (t - prev.t) / 1000) : 1 / 60;
           this.onCut?.(n / TEAR_BINS, Math.sign(p.u - this.lastU), Math.abs(p.u - this.lastU) / dtS);

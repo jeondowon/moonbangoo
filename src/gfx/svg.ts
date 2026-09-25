@@ -1,4 +1,5 @@
 // design/lib의 SVG 문자열 → 캔버스(텍스처 원본).
+import { CanvasTexture, NoColorSpace, SRGBColorSpace, type Texture, type WebGLRenderer } from 'three';
 
 const parser = new DOMParser();
 const serializer = new XMLSerializer();
@@ -60,4 +61,12 @@ export async function rasterize(
   } finally {
     URL.revokeObjectURL(url);
   }
+}
+
+/** 캔버스 → 텍스처. srgb: 색 텍스처면 true, 거칠기·노멀처럼 데이터 텍스처면 false */
+export function toTexture(canvas: HTMLCanvasElement, renderer: WebGLRenderer, srgb = true): Texture {
+  const t = new CanvasTexture(canvas);
+  t.colorSpace = srgb ? SRGBColorSpace : NoColorSpace;
+  t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  return t;
 }

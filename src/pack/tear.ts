@@ -54,14 +54,22 @@ export class TearState {
   }
 
   update(time: number) {
+    let changed = false;
     for (let i = 0; i < BINS; i++) {
       const age = time - this.cutAt[i];
       const cut = this.cutAt[i] >= 0 && age >= 0;
       const open = cut ? Math.min(1, age / OPEN_TIME) : 0;
       const glow = cut ? Math.exp(-age / GLOW_TIME) : 0;
-      this.data[i * 4] = open * 255;
-      this.data[i * 4 + 1] = glow * 255;
+      // Uint8Array에 저장될 값(소수점 버림)으로 비교
+      const r = Math.trunc(open * 255);
+      const g = Math.trunc(glow * 255);
+      if (this.data[i * 4] !== r || this.data[i * 4 + 1] !== g) {
+        this.data[i * 4] = r;
+        this.data[i * 4 + 1] = g;
+        changed = true;
+      }
     }
-    this.texture.needsUpdate = true;
+    // 값이 바뀐 프레임에만 GPU로 올린다 (자르기 전·잔광이 다 식은 뒤에는 그대로)
+    if (changed) this.texture.needsUpdate = true;
   }
 }

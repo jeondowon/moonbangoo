@@ -5,9 +5,9 @@
 //   - 드래그: 누른 지점에서 이동한 거리 (터치·마우스 공통), 떼면 0으로
 // 폰 기울기 센서(자이로)는 쓰지 않음 (2026-09-25 결정)
 
-const DRAG_FULL = 0.28; // 화면 짧은 변 대비 이만큼 끌면 최대치
+import { clamp } from './math';
 
-const clamp = (v: number, a = -1, b = 1) => Math.min(b, Math.max(a, v));
+const DRAG_FULL = 0.28; // 화면 짧은 변 대비 이만큼 끌면 최대치
 
 export class TiltInput {
   x = 0;
@@ -44,13 +44,13 @@ export class TiltInput {
   private onMove = (e: PointerEvent) => {
     if (e.pointerId === this.drag.id) {
       const s = Math.min(window.innerWidth, window.innerHeight) * DRAG_FULL;
-      this.drag.x = clamp((e.clientX - this.drag.sx) / s);
-      this.drag.y = clamp(-(e.clientY - this.drag.sy) / s);
+      this.drag.x = clamp((e.clientX - this.drag.sx) / s, -1, 1);
+      this.drag.y = clamp(-(e.clientY - this.drag.sy) / s, -1, 1);
     } else if (e.pointerType === 'mouse') {
       const r = this.el.getBoundingClientRect();
       this.hover.on = true;
-      this.hover.x = clamp(((e.clientX - r.left) / r.width) * 2 - 1);
-      this.hover.y = clamp(-(((e.clientY - r.top) / r.height) * 2 - 1));
+      this.hover.x = clamp(((e.clientX - r.left) / r.width) * 2 - 1, -1, 1);
+      this.hover.y = clamp(-(((e.clientY - r.top) / r.height) * 2 - 1), -1, 1);
     }
   };
 

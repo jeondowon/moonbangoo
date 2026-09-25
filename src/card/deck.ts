@@ -3,6 +3,7 @@
 //   - 앞면 카드: 손가락을 1:1로 따라오고, 놓을 때 충분히 빠르거나 멀리 밀었으면 날아가고, 아니면 스프링으로 복귀
 //   - 드래그 중 이동 방향으로 기울어짐 (명세 R7)
 import { Group, Matrix4, Raycaster, Vector2, Vector3, type Camera, type Object3D, type Texture } from 'three';
+import { clamp, smooth } from '../core/math';
 import { Spring } from '../core/spring';
 import type { Prize } from '../data/draw';
 import { packY } from '../pack/pack';
@@ -27,11 +28,6 @@ const TURN_DIST = 0.1; // 뒷면 카드를 이만큼 밀면 뒤집힘
 const TURN_SPEED = 0.9;
 const BACK_DRAG = 0.35; // 뒷면 카드는 손가락을 덜 따라옴 (고무줄)
 
-const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
-const smooth = (a: number, b: number, x: number) => {
-  const t = clamp((x - a) / (b - a), 0, 1);
-  return t * t * (3 - 2 * t);
-};
 /** 카드별로 고정된 작은 흐트러짐 (쌓인 뭉치가 기계적으로 반듯하지 않게) */
 const jitter = (i: number, k: number) => (Math.sin(i * 12.9898 + k * 78.233) * 43758.5453) % 1;
 
@@ -240,11 +236,16 @@ export class Deck {
   }
 
   // ── 입력 ─────────────────────────────────────
-  /** 화면 좌표 → 덱 로컬 평면(z = 0) 좌표 */
-  private project(clientX: number, clientY: number): Vector3 | null {
+  /** 화면 좌표를 지나는 카메라 광선을 this.ray에 설정 */
+  private aim(clientX: number, clientY: number) {
     const r = this.el.getBoundingClientRect();
     this.ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
     this.ray.setFromCamera(this.ndc, this.camera);
+  }
+
+  /** 화면 좌표 → 덱 로컬 평면(z = 0) 좌표 */
+  private project(clientX: number, clientY: number): Vector3 | null {
+    this.aim(clientX, clientY);
     this.root.updateWorldMatrix(true, false);
     const ray = this.ray.ray.applyMatrix4(this.inv.copy(this.root.matrixWorld).invert());
     if (Math.abs(ray.direction.z) < 1e-6) return null;
@@ -256,9 +257,7 @@ export class Deck {
   private hitsTop(clientX: number, clientY: number) {
     const top = this.top;
     if (!top) return false;
-    const r = this.el.getBoundingClientRect();
-    this.ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
-    this.ray.setFromCamera(this.ndc, this.camera);
+    this.aim(clientX, clientY);
     return this.ray.intersectObject(top.mesh, false).length > 0;
   }
 

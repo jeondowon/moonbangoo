@@ -41,6 +41,8 @@ class Sparks {
   private readonly span = new Float32Array(MAX_SPARKS);
   private readonly size = new Float32Array(MAX_SPARKS);
   private next = 0;
+  /** 살아 있는 불티가 있는지 (없으면 매 프레임 갱신·업로드를 건너뜀) */
+  private alive = false;
   private readonly material: ShaderMaterial;
 
   constructor() {
@@ -102,13 +104,19 @@ class Sparks {
       this.life[i] = 1;
       this.size[i] = 0.012 + Math.random() * 0.02;
     }
+    this.alive = true;
+    // 크기는 방출할 때만 바뀐다
+    this.points.geometry.getAttribute('aSize').needsUpdate = true;
   }
 
   update(dt: number) {
+    if (!this.alive) return;
+    this.alive = false;
     const drag = Math.exp(-2.2 * dt);
     for (let i = 0; i < MAX_SPARKS; i++) {
       if (this.life[i] <= 0) continue;
       this.life[i] = Math.max(0, this.life[i] - dt / this.span[i]);
+      if (this.life[i] > 0) this.alive = true;
       this.vel[i * 3 + 1] -= 5.5 * dt;
       for (let k = 0; k < 3; k++) {
         this.vel[i * 3 + k] *= drag;
@@ -118,7 +126,6 @@ class Sparks {
     const g = this.points.geometry;
     g.getAttribute('position').needsUpdate = true;
     g.getAttribute('aLife').needsUpdate = true;
-    g.getAttribute('aSize').needsUpdate = true;
   }
 }
 
