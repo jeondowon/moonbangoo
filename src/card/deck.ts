@@ -12,6 +12,8 @@ const GAP = 0.0055; // 카드 사이 z 간격
 const IN_TOP_V = 0.16; // 팩 안에서 카드 윗변 위치 (팩 위에서부터 비율, 절취선 아래)
 const IN_Y = packY(IN_TOP_V) - CARD_H / 2;
 const RISE = 1; // 팩 입구 위로 빠져나오는 거리
+/** 빠져나올 때 카드 윗변의 최고 높이 (팩 로컬) — 끝에서 튕기는 만큼(약 6%) 포함 */
+export const RISE_TOP = packY(IN_TOP_V) + RISE * 1.07;
 const HOLD = 0.3; // 팩이 떨어져 나가는 동안 뭉치가 제자리에 머무는 시간 (커지면서 팩을 뚫고 나오지 않게)
 const SETTLE = 0.75; // 중앙으로 옮겨 가는 동안 입력을 받지 않는 시간
 

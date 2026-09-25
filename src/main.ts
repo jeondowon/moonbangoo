@@ -16,7 +16,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import './style.css';
 import { CARD_H, CARD_W } from './card/card';
-import { Deck } from './card/deck';
+import { Deck, RISE_TOP } from './card/deck';
 import { buildCardTextures } from './card/textures';
 import { Spring } from './core/spring';
 import { TiltInput } from './core/tilt';
@@ -33,6 +33,7 @@ const MAX_TILT = (18 * Math.PI) / 180; // 명세 R10: 최대 ±15~20°
 const FOV = 26;
 const TAP_MOVE = 10; // px — 이보다 적게 움직이고
 const TAP_TIME = 350; // ms — 이보다 빨리 떼면 탭
+const RISE_MARGIN = 0.15; // 빠져나오는 카드 윗변과 화면 윗끝 사이 여백
 
 const canvas = document.querySelector<HTMLCanvasElement>('#stage')!;
 const intro = document.querySelector<HTMLElement>('#intro')!;
@@ -83,12 +84,16 @@ const enterSpin = new Spring(-1.1, 1.2, 0.58);
 const enterPitch = new Spring(0.55, 1.4, 0.7);
 const flip = new Spring(0, 1.5, 0.68);
 const guide = new Spring(0, 1.5, 1);
+// 카드가 빠져나오는 동안 팩이 내려감 (카드가 화면 위로 잘리지 않게). 되튀지 않도록 감쇠 높게
+const openDrop = new Spring(0, 1.6, 0.9);
 
 let pack: Pack | null = null;
 let cutter: Cutter | null = null;
 let deck: Deck | null = null;
 /** 카드를 보여줄 때 덱 배율 (화면 비율에 맞춰 resize에서 계산) */
 let viewScale = 1;
+/** 카드가 빠져나올 때 팩이 내려가는 거리 (화면 비율에 맞춰 resize에서 계산) */
+let dropBy = 0;
 let started = false;
 let time = 0;
 let startedAt = 0;
@@ -120,6 +125,9 @@ function resize() {
   const visH = 2 * t * camera.position.z;
   viewScale = Math.min((0.66 * visH) / CARD_H, (0.8 * visH * camera.aspect) / CARD_W);
   deck?.setViewScale(viewScale);
+  // 빠져나오는 카드 윗변이 화면 윗끝 아래에 머물 만큼 팩을 내림
+  dropBy = Math.max(0, RISE_TOP + RISE_MARGIN - visH / 2);
+  if (deck && deck.state !== 'packed') openDrop.target = -dropBy;
 }
 window.addEventListener('resize', resize);
 resize();
@@ -233,6 +241,7 @@ function updateOpening(p: Pack, d: Deck, dt: number) {
   if (d.state === 'packed' && time - openedAt > 0.35) {
     p.lining.visible = false;
     d.slideOut();
+    openDrop.target = -dropBy;
   }
   if (d.state === 'rising' && d.riseTime > 0.75) {
     d.present(scene);
@@ -316,7 +325,7 @@ function frame(dt: number) {
     const g = tiltGain.step(dt);
     ry.target = MAX_TILT * (tilt.x + sway.x) * g;
     rx.target = -MAX_TILT * (tilt.y + sway.y) * g;
-    for (const s of [rx, ry, roll, enterY, enterSpin, enterPitch, flip]) s.step(dt);
+    for (const s of [rx, ry, roll, enterY, enterSpin, enterPitch, flip, openDrop]) s.step(dt);
 
     // 앞면이 정면을 향하고, 등장이 끝났고, 아직 안 열었을 때만 자를 수 있음
     cutter.enabled =
@@ -327,7 +336,7 @@ function frame(dt: number) {
     const lift = Math.sin(Math.min(Math.PI, Math.abs(flip.value))) * 0.45;
     // 퇴장: 아래로 떨어지면서 뒤로 살짝 젖혀짐
     const fall = packFall?.y ?? 0;
-    stage.position.set(0, enterY.value + float + fall, lift + fall * 0.08);
+    stage.position.set(0, enterY.value + openDrop.value + float + fall, lift + fall * 0.08);
     stage.rotation.set(
       rx.value + enterPitch.value - fall * 0.1,
       ry.value + enterSpin.value + flip.value,
