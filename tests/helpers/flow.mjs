@@ -68,7 +68,8 @@ export function setup(width = 390, height = 844) {
   const scene = new Scene();
   const cards = prizes.map(p => new Card(new Texture(), new Texture(), p.rarity));
   const fx = { calls: 0, scale: 0, play() { this.calls++; }, stop() {}, setScale(value) { this.scale = value; } };
-  const flow = new PrizeFlow(get('stage'), camera, prizes, fx);
+  const sound = { calls: 0 };
+  const flow = new PrizeFlow(get('stage'), camera, prizes, fx, () => { sound.calls++; });
   const tick = seconds => {
     for (let t = 0; t < seconds; t += 1 / 60) flow.update(1 / 60, 2);
   };
@@ -80,5 +81,5 @@ export function setup(width = 390, height = 844) {
     };
   });
   resize();
-  return { get, flow, cards, fx, buttons, tick, camera, resize };
+  return { get, flow, cards, fx, sound, buttons, tick, camera, resize };
 }

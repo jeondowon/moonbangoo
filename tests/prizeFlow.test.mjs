@@ -35,7 +35,7 @@ test('정지된 미리보기 프레임은 DOM 크기를 재조회하지 않고 �
 // 실제 브라우저의 CSS·WebGL·FPS 검증은 별도로 필요하다.
 for (let chosen = 0; chosen < prizes.length; chosen++) {
   test(`${prizes[chosen].name}: 선택 변경·터치·중복 확정 차단·결과 스크롤`, () => {
-    const { get, flow, cards, fx, buttons, tick, camera } = setup();
+    const { get, flow, cards, fx, sound, buttons, tick, camera } = setup();
     assert.equal(buttons.length, 5);
     buttons[chosen].click(); assert.equal(get('prize-preview').hidden, true, 'landing input blocked');
     tick(1.4);
@@ -56,6 +56,7 @@ for (let chosen = 0; chosen < prizes.length; chosen++) {
     get('confirm-prize').click(); get('confirm-prize').click();
     get('change-prize').click(); buttons[(chosen + 2) % 5].click();
     assert.equal(fx.calls, 1, 'only one confirmation effect');
+    assert.equal(sound.calls, 1, 'only one confirmation sound');
     tick(2);
     assert.equal(get('prize-result').hidden, false);
     assert.equal(get('prize-preview').hidden, true);

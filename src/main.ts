@@ -1,6 +1,7 @@
 // 1차: 인트로 → 팩 개봉 → 카드 5장 확인 → 요약·선택 → 목업 쿠폰 (M1~M5).
 import { Group, Vector3 } from 'three';
 import './style.css';
+import { SoundEffects } from './audio/sound';
 import { CARD_H, CARD_W } from './card/card';
 import { Deck, RISE_TOP } from './card/deck';
 import { buildCardTextures } from './card/textures';
@@ -43,6 +44,8 @@ scene.add(deckShadow);
 const fx = new CutFx();
 scene.add(fx.group);
 const reveal = new RevealFx(flashEl, CARD_W, CARD_H);
+const sound = new SoundEffects();
+sound.preload();
 
 const tilt = new TiltInput(canvas);
 
@@ -128,7 +131,7 @@ async function prepare() {
   deck.setViewScale(viewScale);
   pack.root.add(deck.root);
   setupDeck(deck);
-  prizeFlow = new PrizeFlow(canvas, camera, result.cards, reveal);
+  prizeFlow = new PrizeFlow(canvas, camera, result.cards, reveal, () => sound.confirm());
   // 팩·카드 텍스처를 로딩 중에 GPU로 올려 둔다 (팩 등장 첫 프레임에 한꺼번에 올리며 끊기지 않게)
   for (const side of [tex.front, tex.back]) for (const t of Object.values(side)) renderer.initTexture(t);
   for (const t of [cardTex.back, ...cardTex.fronts]) renderer.initTexture(t);
@@ -144,6 +147,7 @@ async function prepare() {
 
 // 준비 중에 탭해도 기억했다가 준비되면 바로 시작
 function onIntroTap() {
+  void sound.unlock();
   wantsStart = true;
   if (ready) start();
 }
@@ -178,6 +182,7 @@ function setupCutter(p: Pack) {
 
   c.onCut = (du, dir, speed) => {
     cutTouched = true;
+    sound.cut(du, speed);
     fx.spray(du, dir, speed);
     // 포장지가 끌려가며 살짝 흔들림 (명세 R7)
     roll.velocity += -dir * du * 2.2;
@@ -185,6 +190,7 @@ function setupCutter(p: Pack) {
   };
 
   c.onComplete = (vel, headU) => {
+    sound.completeCut();
     const t = time;
     p.tear.finish(headU, t, 5);
     fx.burst(headWorld(headU));
@@ -211,10 +217,12 @@ function setupDeck(d: Deck) {
   d.onReveal = (card) => reveal.play(card.root, card.rarity);
   d.onAdvance = () => {
     everSwiped = true;
+    sound.swipe();
     reveal.stop();
   };
   d.onFinish = () => {
     everSwiped = true;
+    sound.swipe();
     reveal.stop();
     summaryAt = time + 0.7; // 마지막 카드가 화면 밖으로 나간 뒤 요약 카드들을 착지시킨다
   };
@@ -336,6 +344,7 @@ function frame(dt: number) {
     pack.update(dt, time);
     updateHint();
     fx.update(dt, cutter.active ? headWorld(cutter.headU) : null, !cutter.inBand);
+    sound.updateCut(cutter.active && cutter.inBand);
 
     if (deck) {
       updateOpening(pack, deck, dt);
