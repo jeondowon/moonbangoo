@@ -59,7 +59,7 @@ npm run typecheck  # 타입 체크만
 `main`에 푸시하면 GitHub Actions(`.github/workflows/deploy.yml`)가 빌드해 GitHub Pages로 배포합니다.
 
 - 주소: https://jeondowon.github.io/moonbangoo/
-- 폰의 기울기 센서는 HTTPS에서만 동작하므로, 자이로 확인은 로컬 개발 서버(http)가 아니라 배포 주소에서 합니다.
+- 폰으로 확인할 때는 이 배포 주소를 쓰면 됩니다.
 - 하위 경로(`/moonbangoo/`)에서 서비스되므로 `vite.config.ts`에서 빌드 시 `base`를 맞춰 둡니다.
 
 ## 주요 결정과 주의사항

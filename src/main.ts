@@ -123,9 +123,8 @@ async function prepare() {
   if (wantsStart) start();
 }
 
-// 준비 중에 탭해도 기억했다가 준비되면 바로 시작 (자이로 권한은 탭 순간에 요청해야 함)
+// 준비 중에 탭해도 기억했다가 준비되면 바로 시작
 function onIntroTap() {
-  void tilt.enableGyro();
   wantsStart = true;
   if (ready) start();
 }
@@ -223,7 +222,7 @@ function updateHint() {
 }
 
 // ── 프레임 ───────────────────────────────────────
-// 입력이 없을 때 빛 반사가 보이도록 천천히 흔들림 (자이로가 있으면 손 떨림만으로 충분)
+// 입력이 없을 때 빛 반사가 보이도록 천천히 흔들림
 function autoSway(t: number, weight: number) {
   return { x: weight * 0.32 * Math.sin(t * 0.55), y: weight * 0.22 * Math.sin(t * 0.41 + 1.3) };
 }
@@ -235,7 +234,7 @@ function frame(dt: number) {
     // 자르는 동안에는 팩을 정면으로 붙잡아 절취선이 흔들리지 않게
     tiltGain.target = cutter.active ? 0.12 : 1;
     tilt.update(dt);
-    const idle = tilt.gyroActive || cutter.active ? 0 : Math.min(1, Math.max(0, (tilt.idleTime - 1.5) / 2));
+    const idle = cutter.active ? 0 : Math.min(1, Math.max(0, (tilt.idleTime - 1.5) / 2));
     const sway = autoSway(time, idle);
     const g = tiltGain.step(dt);
     ry.target = MAX_TILT * (tilt.x + sway.x) * g;
