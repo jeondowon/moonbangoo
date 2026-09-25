@@ -4,7 +4,6 @@
 export const INK = {
   paper: '#F4EDE0',
   paperHi: '#FBF7EF',
-  paperLo: '#E6D9C2',
   tone: '#E9DDC7',      // 종이 위 톤온톤 무늬
   ink: '#4A3A28',       // 본문 인쇄색 (검정 대신 따뜻한 갈색)
   inkSoft: '#8A7760',

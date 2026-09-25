@@ -2,12 +2,8 @@
 
 export class HeightField {
   readonly data: Float32Array;
-  readonly w: number;
-  readonly h: number;
 
-  constructor(w: number, h: number) {
-    this.w = w;
-    this.h = h;
+  constructor(readonly w: number, readonly h: number) {
     this.data = new Float32Array(w * h);
   }
 

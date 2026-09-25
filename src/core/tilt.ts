@@ -19,10 +19,8 @@ export class TiltInput {
 
   private hover = { on: false, x: 0, y: 0 };
   private drag = { id: -1, sx: 0, sy: 0, x: 0, y: 0 };
-  private readonly el: HTMLElement;
 
-  constructor(el: HTMLElement) {
-    this.el = el;
+  constructor(private readonly el: HTMLElement) {
     el.addEventListener('pointermove', this.onMove);
     el.addEventListener('pointerdown', this.onDown);
     el.addEventListener('pointerup', this.onUp);

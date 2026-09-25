@@ -2,7 +2,6 @@
 // 로고 좌표계: viewBox 52 34 306 267 (원본 PNG 좌표). 해 중심 ≈ (205, 185), 반지름 ≈ 91.
 
 export const LOGO_BOX = { x: 52, y: 34, w: 306, h: 267 };
-export const LOGO_SUN = { x: 205, y: 185, r: 91 };
 
 let inner = null;
 
@@ -23,10 +22,4 @@ export function logoMarkup({ uid, paint, x, y, width, filter = '' }) {
     .replace('url(#ko-fish-b)', `url(#${uid}-ko)`)
     .replaceAll('currentColor', paint);
   return `<g transform="translate(${x} ${y}) scale(${+s.toFixed(5)}) translate(${-LOGO_BOX.x} ${-LOGO_BOX.y})"${filter ? ` filter="url(#${filter})"` : ''}>${body}</g>`;
-}
-
-// 로고를 배치했을 때 로고 좌표 (lx, ly)가 바깥 좌표계 어디에 오는지
-export function logoPoint({ x, y, width }, lx, ly) {
-  const s = width / LOGO_BOX.w;
-  return [x + (lx - LOGO_BOX.x) * s, y + (ly - LOGO_BOX.y) * s];
 }

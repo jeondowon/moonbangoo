@@ -19,7 +19,7 @@ import { applyHoloFront, applyRimGlow, RARITY_STYLE, type RarityCode } from './h
 export const CARD_W = 1;
 export const CARD_H = (CARD_W * CARD.H) / CARD.W;
 const RADIUS = (CARD_W * CARD.R) / CARD.W;
-export const CARD_T = 0.0035; // 두께
+const CARD_T = 0.0035; // 두께
 
 /** 둥근 사각 판. groups: 0 = 앞면(+z), 1 = 뒷면(-z), 2 = 옆면 */
 function cardGeometry(w: number, h: number, r: number, t: number, seg = 8): BufferGeometry {
@@ -133,7 +133,6 @@ export class Card {
   readonly root = new Group();
   readonly flipper = new Group();
   readonly mesh: Mesh;
-  readonly rarity: RarityCode;
   /** 선형 색 공간의 앞면 밝기. 1이면 기존 재질 그대로. */
   readonly brightness = { value: 1 };
 
@@ -153,8 +152,7 @@ export class Card {
   /** 넘겨져 화면 밖으로 날아가는 중 (덱 로컬 속도, 카드 폭/초) */
   flight: { vx: number; vy: number; age: number } | null = null;
 
-  constructor(front: Texture, back: Texture, rarity: RarityCode) {
-    this.rarity = rarity;
+  constructor(front: Texture, back: Texture, readonly rarity: RarityCode) {
     sharedGeometry ??= cardGeometry(CARD_W, CARD_H, RADIUS, CARD_T);
     sharedEdge ??= new MeshStandardMaterial({ color: '#e8dcc6', roughness: 0.75 });
     const backKey = `${back.uuid}:${rarity}`;

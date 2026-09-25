@@ -130,7 +130,7 @@ html, body {
 }
 .hint-sub:empty { display: none; }
 
-/* ── 요약 · 선택 · 쿠폰 (M5) ───────────────── */
+/* ── 공통 접근성 · 입력 ───────────────────── */
 [hidden] { display: none !important; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { font: inherit; }
@@ -142,6 +142,8 @@ button:focus-visible, a:focus-visible {
   position: absolute; width: 1px; height: 1px; padding: 0;
   overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
+
+/* 요약 · 선택 · 쿠폰 화면 */
 .prize-flow { position: fixed; inset: 0; pointer-events: none; }
 .flow-summary, .flow-preview {
   position: absolute; inset: 0;

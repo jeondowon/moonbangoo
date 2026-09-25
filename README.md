@@ -41,14 +41,16 @@
 
 ```text
 src/
-  main.ts       화면 흐름(인트로 → 팩 → 카드 → 선택·결과), 렌더러·후처리, 프레임 루프
+  main.ts       앱 초기화, 인트로 → 팩 → 카드 → 선택·결과 연결, 프레임 루프
   pack/         3D 카드팩, 절취 상태·입력·셰이더, 팩 텍스처 생성
-  card/         카드·카드 뭉치, 등급별 재질, 텍스처 생성, 요약·선택·결과 흐름
+  card/         3D 카드·카드 뭉치, 등급별 재질, 텍스처 생성
+  ui/           요약·선택·결과 흐름, 조작 안내 갱신
   fx/           커팅 불티, 등급별 등장 연출
-  gfx/          배경·그림자, 환경맵, SVG → 텍스처, 폰트 내장, 노멀맵 생성
+  gfx/          렌더러·후처리 설정, 배경·그림자, 환경맵, SVG·폰트·노멀맵 처리
   core/         스프링, 기울기 입력, 공용 수학 함수
   data/         팩 결과·시연용 쿠폰(1차는 목업)
 design/         2D 시안 갤러리 + 팩·카드 SVG 생성기(lib/, 3D 텍스처 원본으로도 사용)
+tests/          Node 회귀 테스트 (화면 흐름·쿠폰·안내, DOM 레이아웃은 대역 사용)
 ```
 
 상세 구현 요구사항과 검수 기준은 [PACK_OPENING_SPEC.md](PACK_OPENING_SPEC.md)를 참고하세요.
@@ -68,18 +70,29 @@ design/         2D 시안 갤러리 + 팩·카드 SVG 생성기(lib/, 3D 텍스�
 
 ## 실행 및 빌드
 
-Node.js 22 기준입니다.
+Node.js 22.18 이상이 필요합니다. 로컬·CI는 Node.js 22를 기준으로 사용합니다.
 
 ```bash
-npm install
+npm ci            # package-lock.json에 고정된 의존성 설치
 npm run dev        # 개발 서버 (같은 Wi-Fi의 휴대폰에서도 접속 가능하도록 --host)
 npm run build      # 타입 체크 + 정적 빌드 → dist/
 npm run preview    # 빌드 결과 미리보기
 npm run typecheck  # 타입 체크만
+npm test           # 화면 흐름·쿠폰·안내 회귀 테스트
 ```
 
 - 앱: `http://localhost:5173/`
 - 2D 디자인 시안: `http://localhost:5173/design/` (개발 서버에서 같이 열림)
+
+## 협업 시 확인할 사항
+
+- `design/lib`는 경품 데이터와 실제 앱 텍스처의 원본입니다. 시안 전용 파일로 보고 삭제하지 않습니다.
+- 렌더링 설정은 `src/gfx/rendering.ts`, 화면 흐름은 `src/ui`, CSS는 `src/style.css`에서 관리합니다.
+- 의존성 변경 시 `package.json`과 `package-lock.json`을 함께 커밋합니다. 명세·디자인 원본·테스트도 공유합니다.
+- 로컬 환경·IDE 설정과 산출물은 `.gitignore`로 제외합니다. 환경 변수 예제와 VS Code 공용 확장 추천·작업 설정은 허용합니다. 현재 환경 변수 파일은 필요하지 않습니다.
+- PR 전 `npm test`와 `npm run build`를 실행합니다. PR 검사와 배포에서도 동일하게 실행합니다. 테스트는 DOM 대역을 사용하므로 실제 화면·모바일 조작·성능은 브라우저에서 별도 확인합니다.
+
+테스트는 추가 라이브러리 없이 Node 내장 테스트 러너와 TypeScript 변환을 사용합니다. 실행 중 `Transform Types` 실험 기능 경고가 표시될 수 있습니다.
 
 ## 배포
 

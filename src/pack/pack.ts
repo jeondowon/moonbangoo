@@ -27,7 +27,7 @@ const TAPER = 0.1; // 봉합부에서 최대 두께까지 부풀어 오르는 �
 const SEAL_GAP = 0.0012; // 봉합부 앞뒤 사이 틈 (z 파이팅 방지)
 
 /** 표면 높이 (u: 0=왼쪽, v: 0=위쪽) */
-export function thickness(u: number, v: number) {
+function thickness(u: number, v: number) {
   const c = PACK.crimp / PACK.H;
   const d = Math.min(u, 1 - u);
   const fx = d >= FOLD ? 1 : Math.sqrt(1 - (1 - d / FOLD) ** 2);
@@ -48,7 +48,7 @@ const SEG_Y = 140;
  * 팩 곡면 (v0~v1 구간). 행은 전역 격자(1/SEG_Y)에 맞춘다
  * → 윗조각·본체가 겹치는 구간의 삼각형이 완전히 같아서, 찢김 곡선 양쪽이 픽셀 단위로 딱 맞물린다.
  */
-export function packSurface(side: 1 | -1, v0 = 0, v1 = 1, segX = SEG_X, segY = SEG_Y): BufferGeometry {
+function packSurface(side: 1 | -1, v0 = 0, v1 = 1, segX = SEG_X, segY = SEG_Y): BufferGeometry {
   const j0 = Math.floor(v0 * segY);
   const ny = Math.ceil(v1 * segY) - j0;
   const pos = new Float32Array((segX + 1) * (ny + 1) * 3);

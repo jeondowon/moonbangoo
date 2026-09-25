@@ -1,71 +1,35 @@
 // 1차: 인트로 → 팩 개봉 → 카드 5장 확인 → 요약·선택 → 목업 쿠폰 (M1~M5).
-import {
-  Group,
-  HalfFloatType,
-  NeutralToneMapping,
-  PerspectiveCamera,
-  Scene,
-  Vector2,
-  Vector3,
-  WebGLRenderer,
-  WebGLRenderTarget,
-} from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { Group, Vector3 } from 'three';
 import './style.css';
 import { CARD_H, CARD_W } from './card/card';
 import { Deck, RISE_TOP } from './card/deck';
-import { PrizeFlow } from './card/prizeFlow';
 import { buildCardTextures } from './card/textures';
 import { updateHoloTime } from './card/holo';
 import { Spring } from './core/spring';
 import { TiltInput } from './core/tilt';
-import { drawPack, type PackResult } from './data/draw';
+import { drawPack } from './data/draw';
 import { CutFx } from './fx/cutFx';
 import { RevealFx } from './fx/revealFx';
-import { createBackdrop, createShadow } from './gfx/backdrop';
-import { createStudioEnv } from './gfx/env';
+import { createShadow } from './gfx/backdrop';
+import { createRendering } from './gfx/rendering';
 import { Cutter } from './pack/cutter';
 import { Pack, PACK_H, PACK_W, packX, packY, TEAR_Z } from './pack/pack';
 import { TEAR_V } from './pack/tear';
 import { buildPackTextures } from './pack/textures';
+import { createHint } from './ui/hint';
+import { PrizeFlow } from './ui/prizeFlow';
 
 const MAX_TILT = (18 * Math.PI) / 180; // 명세 R10: 최대 ±15~20°
-const FOV = 26;
 const TAP_MOVE = 10; // px — 이보다 적게 움직이고
 const TAP_TIME = 350; // ms — 이보다 빨리 떼면 탭
 const RISE_MARGIN = 0.15; // 빠져나오는 카드 윗변과 화면 윗끝 사이 여백
 
 const canvas = document.querySelector<HTMLCanvasElement>('#stage')!;
 const intro = document.querySelector<HTMLElement>('#intro')!;
-const hint = document.querySelector<HTMLElement>('#hint')!;
+const setHint = createHint(document.querySelector<HTMLElement>('#hint')!);
 const flashEl = document.querySelector<HTMLElement>('#flash')!;
 
-// 장면은 composer의 MSAA 타깃에 그리고 캔버스에는 전체 화면 사각형 하나만 그리므로 캔버스 자체 안티앨리어싱은 끈다
-// (켜 두면 화면 크기만 한 멀티샘플 버퍼가 따로 잡혀 GPU 메모리만 차지한다)
-const renderer = new WebGLRenderer({ canvas, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
-renderer.toneMapping = NeutralToneMapping; // 인쇄 색(시안 팔레트)을 최대한 그대로 유지
-renderer.toneMappingExposure = 1;
-
-const scene = new Scene();
-scene.environment = createStudioEnv(renderer);
-const camera = new PerspectiveCamera(FOV, 1, 0.1, 50);
-const backdrop = createBackdrop();
-scene.add(backdrop.mesh);
-
-// 후처리: HDR로 그린 뒤 밝은 부분(>1)만 번지게 → 커팅 헤드·불티·잔광 발광 (명세 5.2)
-const composer = new EffectComposer(renderer, new WebGLRenderTarget(1, 1, { type: HalfFloatType, samples: 4 }));
-composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new Vector2(1, 1), 0.7, 0.45, 1.0);
-composer.addPass(bloom);
-const output = new OutputPass();
-// 마지막 패스는 화면에 바로 그리므로 버퍼를 바꿀 필요가 없다. 바꾸면 매 프레임 두 타깃을 번갈아 써서
-// 화면 크기의 MSAA 하프플로트 타깃이 하나 더 GPU에 잡힌다
-output.needsSwap = false;
-composer.addPass(output);
+const { renderer, scene, camera, backdrop, composer } = createRendering(canvas);
 
 const stage = new Group(); // 팩 위치·회전 담당
 scene.add(stage);
@@ -81,9 +45,6 @@ scene.add(fx.group);
 const reveal = new RevealFx(flashEl, CARD_W, CARD_H);
 
 const tilt = new TiltInput(canvas);
-
-/** 이번 참여의 결과 (카드 5장) */
-const session: { result: PackResult | null } = { result: null };
 
 // 기울기 (입력 추종) + 등장 연출 + 뒤집기 + 절취 중 흔들림 스프링
 const rx = new Spring(0, 2.4, 0.62);
@@ -126,7 +87,7 @@ function resize() {
   composer.setPixelRatio(renderer.getPixelRatio());
   composer.setSize(w, h);
   camera.aspect = w / h;
-  const t = Math.tan(((FOV / 2) * Math.PI) / 180);
+  const t = Math.tan(((camera.fov / 2) * Math.PI) / 180);
   // 팩이 화면 높이의 70%, 폭의 74%를 넘지 않게
   const byH = PACK_H / 0.7 / 2 / t;
   const byW = PACK_W / 0.74 / 2 / t / camera.aspect;
@@ -159,7 +120,6 @@ async function prepare() {
     drawn,
     drawn.then((r) => buildCardTextures(renderer, r.cards)),
   ]);
-  session.result = result;
   pack = new Pack(tex);
   stage.add(pack.root);
   setupCutter(pack);
@@ -292,24 +252,10 @@ canvas.addEventListener('pointerup', (e) => {
   if (pack.tear.progress !== s.progress) return; // 자르는 중이었음
   const p = cutter.project(e.clientX, e.clientY);
   if (!p || p.u < 0 || p.u > 1 || p.v < 0 || p.v > 1) return; // 팩 밖
-  toggleFlip();
+  flip.target = flip.target === 0 ? Math.PI : 0;
 });
 
-function toggleFlip() {
-  flip.target = flip.target === 0 ? Math.PI : 0;
-}
-
 // ── 안내 문구 ────────────────────────────────────
-function setHint(main: string | null, sub = '') {
-  if (!main) {
-    hint.classList.remove('is-shown');
-    return;
-  }
-  hint.querySelector('.hint-main')!.textContent = main;
-  hint.querySelector('.hint-sub')!.textContent = sub;
-  hint.classList.add('is-shown');
-}
-
 function updateHint() {
   if (prizeFlow?.active) {
     setHint(null);

@@ -36,18 +36,14 @@ export class Cutter {
   private readonly ray = new Raycaster();
   private readonly ndc = new Vector2();
   private readonly inv = new Matrix4();
-  private readonly el: HTMLElement;
-  private readonly camera: Camera;
-  private readonly target: Object3D;
-  private readonly tear: TearState;
-  private readonly now: () => number;
 
-  constructor(el: HTMLElement, camera: Camera, target: Object3D, tear: TearState, now: () => number) {
-    this.el = el;
-    this.camera = camera;
-    this.target = target;
-    this.tear = tear;
-    this.now = now;
+  constructor(
+    private readonly el: HTMLElement,
+    private readonly camera: Camera,
+    private readonly target: Object3D,
+    private readonly tear: TearState,
+    private readonly now: () => number,
+  ) {
     el.addEventListener('pointerdown', this.onDown);
     el.addEventListener('pointermove', this.onMove);
     el.addEventListener('pointerup', this.onUp);

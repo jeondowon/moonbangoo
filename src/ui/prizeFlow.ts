@@ -7,11 +7,19 @@ import { TiltInput } from '../core/tilt';
 import { createMockCoupon, formatVisitDate, type MockCoupon } from '../data/coupon';
 import type { Prize } from '../data/draw';
 import type { RevealFx } from '../fx/revealFx';
-import { Card, CARD_H, CARD_W } from './card';
-import type { RarityCode } from './holo';
+import { Card, CARD_H, CARD_W } from '../card/card';
+import type { RarityCode } from '../card/holo';
 
 type State = 'inactive' | 'entering' | 'summary' | 'preview' | 'confirming' | 'result';
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+
+function setPrizeDetails(view: 'preview' | 'result', prize: Prize) {
+  el(`${view}-name`).textContent = prize.name;
+  el(`${view}-rarity`).textContent = RARITIES[prize.rarity as RarityCode].name;
+  el(`${view}-description`).textContent = prize.description;
+  el(`${view}-condition`).textContent = prize.condition;
+  el(`${view}-card`).setAttribute('aria-label', `${prize.name} 카드, 드래그해서 기울여 보기`);
+}
 
 interface DisplayCard {
   card: Card;
@@ -31,6 +39,7 @@ export class PrizeFlow {
   private coupon: MockCoupon | null = null;
   private items: DisplayCard[] = [];
   private dirty = true;
+  private fxScale = 1;
   private readonly background = new Spring(1, 2.5, 1);
   private readonly root = new Group();
   private readonly ui = el('prize-flow');
@@ -44,7 +53,6 @@ export class PrizeFlow {
   private readonly change = el<HTMLButtonElement>('change-prize');
   private readonly previewTilt = new TiltInput(this.previewSlot);
   private readonly resultTilt = new TiltInput(this.resultSlot);
-  private readonly observer: ResizeObserver;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -61,8 +69,8 @@ export class PrizeFlow {
     this.result.addEventListener('scroll', () => {
       if (this.state === 'result') this.layout(true);
     }, { passive: true });
-    this.observer = new ResizeObserver(() => { this.dirty = true; });
-    for (const target of [this.ui, this.grid, this.previewSlot, this.resultSlot]) this.observer.observe(target);
+    const observer = new ResizeObserver(() => { this.dirty = true; });
+    for (const target of [this.ui, this.grid, this.previewSlot, this.resultSlot]) observer.observe(target);
   }
 
   get active() { return this.state !== 'inactive'; }
@@ -126,11 +134,7 @@ export class PrizeFlow {
     this.state = 'preview';
     this.age = 0;
     const prize = this.prizes[index];
-    el('preview-name').textContent = prize.name;
-    el('preview-rarity').textContent = RARITIES[prize.rarity as RarityCode].name;
-    el('preview-description').textContent = prize.description;
-    el('preview-condition').textContent = prize.condition;
-    this.previewSlot.setAttribute('aria-label', `${prize.name} 카드, 드래그해서 기울여 보기`);
+    setPrizeDetails('preview', prize);
     this.summary.classList.add('is-background');
     this.summary.inert = true;
     this.preview.hidden = false;
@@ -181,15 +185,11 @@ export class PrizeFlow {
     this.preview.hidden = this.summary.hidden = true;
     this.result.hidden = false;
     this.result.scrollTop = 0;
-    el('result-name').textContent = coupon.prize.name;
-    el('result-rarity').textContent = RARITIES[coupon.prize.rarity as RarityCode].name;
-    el('result-description').textContent = coupon.prize.description;
-    el('result-condition').textContent = coupon.prize.condition;
+    setPrizeDetails('result', coupon.prize);
     el('result-code').textContent = coupon.code;
     const expiry = el<HTMLTimeElement>('result-expiry');
     expiry.dateTime = coupon.expiresAt;
     expiry.textContent = formatVisitDate(coupon.expiresAt);
-    this.resultSlot.setAttribute('aria-label', `${coupon.prize.name} 카드, 드래그해서 기울여 보기`);
     this.items.forEach((item, i) => { item.holder.visible = i === this.selected; });
     this.fx.stop();
     this.layout();
@@ -201,31 +201,32 @@ export class PrizeFlow {
   }
 
   /** DOM 영역을 z=0 평면으로 투영. 화면 크기 변경·안전 영역·결과 스크롤에도 동일한 배치 규칙. */
-  private place(item: DisplayCard, slot: HTMLElement, padding = 1, snap = false) {
-    const box = slot.getBoundingClientRect();
-    const view = this.canvas.getBoundingClientRect();
-    const unit = this.visibleWidth() / view.width;
-    item.x.target = (box.left + box.width / 2 - view.left - view.width / 2) * unit;
-    item.y.target = -(box.top + box.height / 2 - view.top - view.height / 2) * unit;
-    item.scale.target = Math.min(box.width / CARD_W, box.height / CARD_H) * unit * padding;
-    if (snap) {
-      item.x.snap(item.x.target);
-      item.y.snap(item.y.target);
-      item.scale.snap(item.scale.target);
-    }
-  }
-
   private layout(snap = false) {
     if (!this.active) return;
     this.dirty = false;
+    // 한 번의 배치에서 공통 뷰포트는 한 번만 읽는다. 프레임 루프에는 DOM 크기 조회를 남기지 않는다.
+    const view = this.canvas.getBoundingClientRect();
+    const unit = this.visibleWidth() / view.width;
+    this.fxScale = this.canvas.clientHeight / (2 * Math.tan(this.camera.fov * Math.PI / 360));
+    const place = (item: DisplayCard, slot: HTMLElement, padding = 1, immediate = false) => {
+      const box = slot.getBoundingClientRect();
+      item.x.target = (box.left + box.width / 2 - view.left - view.width / 2) * unit;
+      item.y.target = -(box.top + box.height / 2 - view.top - view.height / 2) * unit;
+      item.scale.target = Math.min(box.width / CARD_W, box.height / CARD_H) * unit * padding;
+      if (immediate) {
+        item.x.snap(item.x.target);
+        item.y.snap(item.y.target);
+        item.scale.snap(item.scale.target);
+      }
+    };
+    const focused = this.state !== 'summary' && this.state !== 'entering';
     this.background.target = this.state === 'preview' || this.state === 'confirming' ? 0.22 : 1;
     this.items.forEach((item, i) => {
-      const focused = this.state !== 'summary' && this.state !== 'entering';
       const chosen = focused && i === this.selected;
       if (chosen) {
-        this.place(item, this.state === 'result' ? this.resultSlot : this.previewSlot, 0.88, snap);
+        place(item, this.state === 'result' ? this.resultSlot : this.previewSlot, 0.88, snap);
       } else if (this.state !== 'confirming' && this.state !== 'result') {
-        this.place(item, item.slot, focused ? 0.86 : 1);
+        place(item, item.slot, focused ? 0.86 : 1);
       }
       // 선형 밝기 1.2% → 출력 화면에서는 윤곽만 은은하게 남는다. 선택 카드의 반사는 그대로.
       item.shade.target = focused && !chosen ? (this.state === 'confirming' ? 0 : 0.012) : 1;
@@ -243,7 +244,7 @@ export class PrizeFlow {
       this.items.forEach((item) => { item.button.disabled = false; });
       el('flow-status').textContent = '5장을 모두 확인했어요. 원하는 경품 1개를 골라 주세요.';
     }
-    if (this.state === 'preview' && this.age >= 0.65) this.confirm.disabled = false;
+    if (this.state === 'preview' && this.age >= 0.65 && this.confirm.disabled) this.confirm.disabled = false;
     if (this.state === 'confirming' && this.age > 1.5) this.showResult();
     const input = this.state === 'result' ? this.resultTilt : this.previewTilt;
     input.update(dt);
@@ -261,7 +262,7 @@ export class PrizeFlow {
     });
     if (this.selected >= 0) {
       const scale = this.items[this.selected].holder.scale.x;
-      this.fx.setScale(this.canvas.clientHeight * pixelRatio / (2 * Math.tan(this.camera.fov * Math.PI / 360)) * scale);
+      this.fx.setScale(this.fxScale * pixelRatio * scale);
     }
   }
 }

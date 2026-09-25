@@ -170,9 +170,6 @@ export class RevealFx {
   readonly group = new Group();
   private readonly motes = new Motes();
   private readonly ring: Mesh<PlaneGeometry, ShaderMaterial>;
-  private readonly flashEl: HTMLElement;
-  private readonly cardW: number;
-  private readonly cardH: number;
   private style: RevealStyle | null = null;
   private time = 0;
   /** 이번 연출 시작 시각 (-1 = 재생 중 아님) */
@@ -180,10 +177,7 @@ export class RevealFx {
   /** 카드를 넘겨 연출을 거두기 시작한 시각 */
   private stoppedAt = -1;
 
-  constructor(flashEl: HTMLElement, cardW: number, cardH: number) {
-    this.flashEl = flashEl;
-    this.cardW = cardW;
-    this.cardH = cardH;
+  constructor(private readonly flashEl: HTMLElement, private readonly cardW: number, private readonly cardH: number) {
     this.ring = new Mesh(new PlaneGeometry(cardH * 2.6, cardH * 2.6), ringMaterial());
     // 카드 뭉치 전체보다 뒤 (남은 카드들이 가운데를 가리고, 고리는 가장자리 밖으로만 보인다)
     this.ring.position.z = -0.045;

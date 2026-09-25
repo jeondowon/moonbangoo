@@ -21,7 +21,7 @@ export const PACK = {
 };
 
 // 팩 외곽선: 상·하단 톱니 + 절취선 양옆 V홈
-export function packOutline({ W, H, teeth: p, toothDepth: d, tear, notch } = PACK) {
+function packOutline({ W, H, teeth: p, toothDepth: d, tear, notch } = PACK) {
   let s = `M0 ${d}`;
   for (let x = 0; x < W; x += p) s += `L${x + p / 2} 0L${x + p} ${d}`;
   s += `L${W} ${tear - 7}L${W - notch} ${tear}L${W} ${tear + 7}L${W} ${H - d}`;

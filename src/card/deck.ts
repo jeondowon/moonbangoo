@@ -88,12 +88,8 @@ export class Deck {
   private readonly ray = new Raycaster();
   private readonly ndc = new Vector2();
   private readonly inv = new Matrix4();
-  private readonly el: HTMLElement;
-  private readonly camera: Camera;
 
-  constructor(el: HTMLElement, camera: Camera, prizes: Prize[], fronts: Texture[], back: Texture) {
-    this.el = el;
-    this.camera = camera;
+  constructor(private readonly el: HTMLElement, private readonly camera: Camera, prizes: Prize[], fronts: Texture[], back: Texture) {
     this.cards = prizes.map((p, i) => new Card(fronts[i], back, p.rarity as RarityCode));
     this.cards.forEach((c) => this.root.add(c.root));
     this.layout(true);
