@@ -119,6 +119,7 @@ export class Card {
   readonly root = new Group();
   readonly flipper = new Group();
   readonly mesh: Mesh;
+  readonly rarity: RarityCode;
 
   // 덱 기준 위치·기울기
   readonly x = new Spring(0, 2.6, 0.72);
@@ -137,6 +138,7 @@ export class Card {
   flight: { vx: number; vy: number; age: number } | null = null;
 
   constructor(front: Texture, back: Texture, rarity: RarityCode) {
+    this.rarity = rarity;
     sharedGeometry ??= cardGeometry(CARD_W, CARD_H, RADIUS, CARD_T);
     sharedEdge ??= new MeshStandardMaterial({ color: '#e8dcc6', roughness: 0.75 });
     const backKey = `${back.uuid}:${rarity}`;

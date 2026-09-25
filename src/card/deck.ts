@@ -68,6 +68,8 @@ export class Deck {
   current = 0;
 
   onFlip?: (index: number) => void;
+  /** 뒤집히는 카드의 앞면이 드러나기 시작하는 순간 (옆모습을 지날 때) — 등급별 등장 연출 시점 */
+  onReveal?: (card: Card) => void;
   onAdvance?: (index: number) => void;
   onFinish?: () => void;
 
@@ -86,6 +88,7 @@ export class Deck {
   private settled = false;
 
   private drag: Drag | null = null;
+  private readonly revealed = new Set<Card>();
   private readonly ray = new Raycaster();
   private readonly ndc = new Vector2();
   private readonly inv = new Matrix4();
@@ -229,6 +232,10 @@ export class Deck {
     for (const c of this.cards) {
       c.step(dt);
       if (c.flight) c.root.visible = c.flight.age < 1.2;
+      if (c.faceUp && c.flipProgress > 0.5 && !this.revealed.has(c)) {
+        this.revealed.add(c);
+        this.onReveal?.(c);
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-// 1차: 인트로 → 팩 등장 → 기울여 보기 / 탭해서 뒤집기 → 절취 개봉 → 카드 뭉치 등장 → 한 장씩 넘기기 (M1~M3).
+// 1차: 인트로 → 팩 등장 → 기울여 보기 / 탭해서 뒤집기 → 절취 개봉 → 카드 뭉치 등장 → 한 장씩 뒤집고(등급별 등장 연출) 넘기기 (M1~M4).
 import {
   Group,
   HalfFloatType,
@@ -23,6 +23,7 @@ import { Spring } from './core/spring';
 import { TiltInput } from './core/tilt';
 import { drawPack, type PackResult } from './data/draw';
 import { CutFx } from './fx/cutFx';
+import { RevealFx } from './fx/revealFx';
 import { createBackdrop, createShadow } from './gfx/backdrop';
 import { createStudioEnv } from './gfx/env';
 import { Cutter } from './pack/cutter';
@@ -39,6 +40,7 @@ const RISE_MARGIN = 0.15; // 빠져나오는 카드 윗변과 화면 윗끝 사�
 const canvas = document.querySelector<HTMLCanvasElement>('#stage')!;
 const intro = document.querySelector<HTMLElement>('#intro')!;
 const hint = document.querySelector<HTMLElement>('#hint')!;
+const flashEl = document.querySelector<HTMLElement>('#flash')!;
 
 const renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
@@ -69,6 +71,7 @@ deckShadow.visible = false;
 scene.add(deckShadow);
 const fx = new CutFx();
 scene.add(fx.group);
+const reveal = new RevealFx(flashEl, CARD_W, CARD_H);
 
 const tilt = new TiltInput(canvas);
 
@@ -126,6 +129,8 @@ function resize() {
   const visH = 2 * t * camera.position.z;
   viewScale = Math.min((0.66 * visH) / CARD_H, (0.8 * visH * camera.aspect) / CARD_W);
   deck?.setViewScale(viewScale);
+  // 등장 연출은 덱 안(카드에 붙어) 그려져 덱 배율만큼 커진다
+  reveal.setScale(((h * renderer.getPixelRatio()) / (2 * t)) * viewScale);
   // 빠져나오는 카드 윗변이 화면 윗끝 아래에 머물 만큼 팩을 내림
   dropBy = Math.max(0, RISE_TOP + RISE_MARGIN - visH / 2);
   if (deck && deck.state !== 'packed') openDrop.target = -dropBy;
@@ -157,7 +162,9 @@ async function prepare() {
   // 카드 텍스처 6장을 로딩 중에 GPU로 올려 둔다 (팩 등장 첫 프레임에 한꺼번에 올리며 끊기지 않게)
   for (const t of [cardTex.back, ...cardTex.fronts]) renderer.initTexture(t);
   // 첫 등장 때 셰이더 컴파일로 끊기지 않도록 미리 컴파일 (보이는 오브젝트만 컴파일되므로 숨기기 전에)
+  reveal.warmup(scene);
   await renderer.compileAsync(scene, camera);
+  reveal.warmup(null);
   stage.visible = shadow.visible = false;
   ready = true;
   intro.classList.remove('is-loading');
@@ -230,11 +237,14 @@ function setupDeck(d: Deck) {
   d.onFlip = () => {
     everFlipped = true;
   };
+  d.onReveal = (card) => reveal.play(card.root, card.rarity);
   d.onAdvance = () => {
     everSwiped = true;
+    reveal.stop();
   };
   d.onFinish = () => {
     everSwiped = true;
+    reveal.stop();
   };
 }
 
@@ -373,6 +383,7 @@ function frame(dt: number) {
         deck.setTilt(-k * (tilt.y + sway.y), k * (tilt.x + sway.x));
       }
       deck.update(dt);
+      reveal.update(dt);
       updateDeckShadow(deck);
     }
   }

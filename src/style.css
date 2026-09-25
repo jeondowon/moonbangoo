@@ -30,6 +30,15 @@ html, body {
   touch-action: none; /* 드래그를 스크롤·확대로 뺏기지 않게 */
 }
 
+/* 최고등급 등장 플래시 — 불투명도는 revealFx가 매 프레임 지정 */
+.flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 48%, #fffdf6 0%, #fff4dc 45%, #f3dcae 100%);
+}
+
 /* ── 인트로 ─────────────────────────────── */
 .intro {
   position: fixed;
