@@ -13,6 +13,7 @@
 - **M3** 카드 뭉치가 팩에서 빠져나와 화면 중앙으로, 톡 눌러 뒤집고 옆으로 밀어 넘기기
 - **M4** 등급별 카드 재질(홀로)·뒷면 테두리 암시 발광, 뒤집을 때 등급별 등장 연출
 - **M5** 카드 5장 요약 → 확대 미리보기·선택 변경 → 최종 확인·확정 연출 → 경품 조건과 14일 방문 기한이 담긴 목업 쿠폰
+- **M9 일부** 절취·카드 넘김·등급별 카드 공개·선택 확정의 효과음 (첫 입력 후 재생)
 
 경품·확률은 아직 확정 전이라 팩 결과는 시안의 경품 5장으로 고정되어 있습니다(`design/lib/data.js`).
 
@@ -46,6 +47,7 @@ src/
   card/         3D 카드·카드 뭉치, 등급별 재질, 텍스처 생성
   ui/           요약·선택·결과 흐름, 조작 안내 갱신
   fx/           커팅 불티, 등급별 등장 연출
+  audio/        Web Audio 효과음 재생과 음원 3종
   gfx/          렌더러·후처리 설정, 배경·그림자, 환경맵, SVG·폰트·노멀맵 처리
   core/         스프링, 기울기 입력, 공용 수학 함수
   data/         팩 결과·시연용 쿠폰(1차는 목업)
@@ -61,6 +63,18 @@ tests/          Node 회귀 테스트 (화면 흐름·쿠폰·안내, DOM 레이
 - `logo-mono.svg`: 단색 로고 (팩·카드 텍스처에 사용)
 - `logo.png`: 로고 원본 목업 이미지 (벡터로 다시 그릴 때의 기준)
 - `design/`: 팩·카드 2D 시안 갤러리 (`index.html`, 에셋 1개 렌더용 `render.html`)
+
+## 효과음 출처
+
+핵심 효과음 3종은 Kenney의 CC0 음원을 사용합니다. 원본 OGG를 모바일 브라우저 호환성을 위해 모노 MP3로 변환했으며, 변환본만 `src/audio/assets/`에 포함합니다.
+
+| 앱 파일 | 재생 시점 | 원본 파일·묶음 |
+|---|---|---|
+| `tear.mp3` | 실제 절취 진행·완료 | `cards-pack-open-2.ogg` · [Casino Audio](https://kenney.nl/assets/casino-audio) |
+| `swipe.mp3` | 카드 넘김 성공·카드 앞면 공개 | `card-slide-1.ogg` · [Casino Audio](https://kenney.nl/assets/casino-audio) |
+| `confirm.mp3` | 경품 선택 확정 | `confirmation_001.ogg` · [Interface Sounds](https://kenney.nl/assets/interface-sounds) |
+
+두 묶음의 제작자는 Kenney이며 라이선스는 [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)입니다. 카드 앞면 공개와 선택 확정 시에는 C(일반)는 공통 소리만, R(레어)·SR(슈퍼레어)·UR(최고등급)은 순서대로 1·2·3개의 짧은 Web Audio 음을 덧입힙니다. 등급별 소리는 카드 앞면이 화면에 나온 뒤에만 들리며, 공개 전 암시음은 없습니다. 뭉치 등장·배경음악·햅틱은 이번 효과음 범위에 포함하지 않습니다.
 
 ## 진행 단계
 
