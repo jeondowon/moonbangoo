@@ -41,9 +41,8 @@ uniform float uTearV, uPiece, uFlipU;
 varying vec2 vPackUv;
 `;
 
-const FRAG_PARS = /* glsl */ `
-uniform float uGap, uFiber, uTime, uGuide, uGuideMask;
-uniform vec3 uGlowColor, uGuideColor;
+/** 팩 본체와 카드 가림막이 정확히 같은 찢김 경계를 사용한다. */
+export const TEAR_CURVE_GLSL = /* glsl */ `
 float tearHash(float x) { return fract(sin(x * 127.1) * 43758.5453); }
 float tearNoise(float x) {
   float i = floor(x);
@@ -57,6 +56,12 @@ float tearCurve(float u) {
     + (tearNoise(u * 140.0 + 7.0) - 0.5) * 0.003
     + (tearNoise(u * 520.0 + 3.0) - 0.5) * 0.0014;
 }
+`;
+
+const FRAG_PARS = /* glsl */ `
+uniform float uGap, uFiber, uTime, uGuide, uGuideMask;
+uniform vec3 uGlowColor, uGuideColor;
+${TEAR_CURVE_GLSL}
 `;
 
 export function applyTear(
