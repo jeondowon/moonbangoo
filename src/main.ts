@@ -127,7 +127,7 @@ async function prepare() {
   stage.add(pack.root);
   setupCutter(pack);
   // 카드 뭉치는 처음부터 팩 안에 뒷면으로 들어 있다
-  deck = new Deck(canvas, camera, result.cards, cardTex.fronts, cardTex.back);
+  deck = new Deck(canvas, camera, result.cards, cardTex.fronts, cardTex.back, pack.uniforms);
   deck.setViewScale(viewScale);
   pack.root.add(deck.root);
   setupDeck(deck);
@@ -259,6 +259,8 @@ function updateOpening(p: Pack, d: Deck, dt: number) {
     packFall.y += packFall.v * dt;
     if (packFall.y < -6) stage.visible = shadow.visible = false;
   }
+  if (stage.visible) d.clipBelowOpening(p.root);
+  else d.clearOpeningClip();
 }
 
 // ── 탭해서 뒤집기 ─────────────────────────────────

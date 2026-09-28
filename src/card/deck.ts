@@ -2,11 +2,12 @@
 //   - 맨 위 카드: 탭 → 앞면으로 뒤집힘 (뒷면일 때 옆으로 밀어도 그 방향으로 뒤집힘)
 //   - 앞면 카드: 손가락을 1:1로 따라오고, 놓을 때 충분히 빠르거나 멀리 밀었으면 날아가고, 아니면 스프링으로 복귀
 //   - 드래그 중 이동 방향으로 기울어짐 (명세 R7)
-import { Group, Matrix4, Raycaster, Vector2, Vector3, type Camera, type Object3D, type Texture } from 'three';
+import { Group, Matrix4, Raycaster, Vector2, Vector3, type Camera, type Material, type Object3D, type Texture } from 'three';
 import { clamp, smooth } from '../core/math';
 import { Spring } from '../core/spring';
 import type { Prize } from '../data/draw';
-import { packY } from '../pack/pack';
+import { PACK_H, PACK_W, packY } from '../pack/pack';
+import { TEAR_CURVE_GLSL, type TearUniforms } from '../pack/tearShader';
 import { Card, CARD_H, CARD_W } from './card';
 import type { RarityCode } from './holo';
 
@@ -30,6 +31,47 @@ const BACK_DRAG = 0.35; // 뒷면 카드는 손가락을 덜 따라옴 (고무�
 
 /** 카드별로 고정된 작은 흐트러짐 (쌓인 뭉치가 기계적으로 반듯하지 않게) */
 const jitter = (i: number, k: number) => (Math.sin(i * 12.9898 + k * 78.233) * 43758.5453) % 1;
+
+function openingUniforms(tear: TearUniforms) {
+  return {
+    uOpeningActive: { value: 0 },
+    uPackWorldInverse: { value: new Matrix4() },
+    uPackWidth: { value: PACK_W },
+    uPackHeight: { value: PACK_H },
+    uCut: tear.uCut,
+    uTearV: tear.uTearV,
+    uGap: tear.uGap,
+  };
+}
+
+/** 카드 조각마다 팩 본체와 같은 픽셀 경계에서 가린다. 기존 홀로 셰이더는 유지한다. */
+function applyOpeningMask(material: Material, uniforms: ReturnType<typeof openingUniforms>) {
+  const compile = material.onBeforeCompile;
+  const cacheKey = material.customProgramCacheKey();
+  material.onBeforeCompile = (shader, renderer) => {
+    compile.call(material, shader, renderer);
+    Object.assign(shader.uniforms, uniforms);
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vOpeningWorldPos;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvOpeningWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', /* glsl */ `#include <common>
+      varying vec3 vOpeningWorldPos;
+      uniform float uOpeningActive, uPackWidth, uPackHeight, uTearV, uGap;
+      uniform mat4 uPackWorldInverse;
+      uniform sampler2D uCut;
+      ${TEAR_CURVE_GLSL}`)
+      .replace('#include <clipping_planes_fragment>', /* glsl */ `#include <clipping_planes_fragment>
+      if (uOpeningActive > 0.5) {
+        vec3 packPos = (uPackWorldInverse * vec4(vOpeningWorldPos, 1.0)).xyz;
+        float openingU = clamp(packPos.x / uPackWidth + 0.5, 0.0, 1.0);
+        float openingV = 0.5 - packPos.y / uPackHeight;
+        float bodyEdge = tearCurve(openingU) + texture2D(uCut, vec2(openingU, 0.5)).r * uGap;
+        if (openingV >= bodyEdge) discard;
+      }`);
+  };
+  material.customProgramCacheKey = () => `${cacheKey}-opening-mask`;
+}
 
 type State = 'packed' | 'rising' | 'presenting' | 'ready' | 'done';
 
@@ -88,9 +130,20 @@ export class Deck {
   private readonly ray = new Raycaster();
   private readonly ndc = new Vector2();
   private readonly inv = new Matrix4();
+  private readonly openingMask: ReturnType<typeof openingUniforms>;
 
-  constructor(private readonly el: HTMLElement, private readonly camera: Camera, prizes: Prize[], fronts: Texture[], back: Texture) {
+  constructor(private readonly el: HTMLElement, private readonly camera: Camera, prizes: Prize[], fronts: Texture[], back: Texture, tear: TearUniforms) {
+    this.openingMask = openingUniforms(tear);
     this.cards = prizes.map((p, i) => new Card(fronts[i], back, p.rarity as RarityCode));
+    const masked = new Set<Material>();
+    for (const card of this.cards) {
+      const materials = Array.isArray(card.mesh.material) ? card.mesh.material : [card.mesh.material];
+      for (const material of materials) {
+        if (masked.has(material)) continue;
+        applyOpeningMask(material, this.openingMask);
+        masked.add(material);
+      }
+    }
     this.cards.forEach((c) => this.root.add(c.root));
     this.layout(true);
     this.place();
@@ -124,6 +177,17 @@ export class Deck {
   /** 빠져나오기 시작한 뒤 경과 시간 (s) */
   get riseTime() {
     return this.riseAge;
+  }
+
+  /** 카드 아래쪽을 팩의 실제 찢김 경계에 맞춰 가린다. */
+  clipBelowOpening(pack: Object3D) {
+    pack.updateWorldMatrix(true, false);
+    this.openingMask.uPackWorldInverse.value.copy(pack.matrixWorld).invert();
+    this.openingMask.uOpeningActive.value = 1;
+  }
+
+  clearOpeningClip() {
+    this.openingMask.uOpeningActive.value = 0;
   }
 
   /** 팩에서 떼어 world(보통 scene)로 옮기고 화면 중앙으로 */
