@@ -27,8 +27,9 @@ function panel(
   scene.add(m);
 }
 
-export function createStudioEnv(renderer: WebGLRenderer): Texture {
+export function createStudioEnv(renderer: WebGLRenderer, profile: 'default' | 'pack' = 'default'): Texture {
   const scene = new Scene();
+  const pack = profile === 'pack';
 
   // 방: 위는 따뜻하고 밝게, 아래는 어둡게 (정점 색 그라디언트)
   const room = new BoxGeometry(16, 10, 16, 1, 8, 1);
@@ -46,15 +47,14 @@ export function createStudioEnv(renderer: WebGLRenderer): Texture {
   scene.add(new Mesh(room, new MeshBasicMaterial({ side: BackSide, vertexColors: true })));
 
   // 키 라이트: 카메라 뒤 위쪽의 넓은 소프트박스
-  panel(scene, 5.5, 2.4, 3.2, '#fff4e2', 0, 3.4, 4.6);
+  panel(scene, 5.5, 2.4, pack ? 2.2 : 3.2, '#fff4e2', 0, 3.4, 4.6);
   // 좌우 세로 스트립 (좌우로 기울일 때 금박을 가로지르는 선 하이라이트)
-  panel(scene, 0.55, 5.5, 5, '#fff1d6', -3.6, 0.4, 3.6);
-  panel(scene, 0.55, 5.5, 4, '#ffe8c4', 3.6, 0.4, 3.6);
-  // 정면: 중심을 비껴간 소프트박스 + 대각선 스트립 2줄
-  //   → 정면에서도 금박에 밝은 면/어두운 면이 갈리고, 기울이면 사선 하이라이트가 박 위를 쓸고 지나간다
-  panel(scene, 3.2, 2.2, 1.6, '#fff4e6', 1.4, 1.1, 7.5);
-  panel(scene, 9, 0.5, 4.5, '#fff8ee', 0, -0.6, 7.2, 0.5);
-  panel(scene, 9, 0.28, 3.2, '#fff8ee', -0.6, 1.2, 7.2, 0.5);
+  panel(scene, 0.55, 5.5, pack ? 3 : 5, '#fff1d6', -3.6, 0.4, 3.6);
+  panel(scene, 0.55, 5.5, pack ? 2.6 : 4, '#ffe8c4', 3.6, 0.4, 3.6);
+  // 팩에는 중앙 글자를 덮는 반사광이 약해지도록 패널을 짧게 줄이고 양옆으로 옮긴다.
+  panel(scene, 3.2, 2.2, pack ? 0.9 : 1.6, '#fff4e6', 1.4, 1.1, 7.5);
+  panel(scene, pack ? 5 : 9, 0.5, pack ? 2.2 : 4.5, '#fff8ee', pack ? -3.2 : 0, -0.6, 7.2, 0.5);
+  panel(scene, pack ? 5 : 9, 0.28, pack ? 1.6 : 3.2, '#fff8ee', pack ? 3.2 : -0.6, 1.2, 7.2, 0.5);
   // 아래쪽 반사판 (아래로 기울여도 금박이 까맣게 죽지 않도록)
   panel(scene, 8, 2.4, 1.1, '#e3c79a', 0, -4, 4);
   // 뒤쪽 림 (측면 접힌 곳에 윤곽광)

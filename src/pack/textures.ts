@@ -15,7 +15,8 @@ const SCALE = 1.5;
 // 금속 박의 기본색(PBR base color). 2D 시안의 금색 그라디언트 중간 톤
 const FOIL_ALBEDO = '#e2c486';
 
-const ROUGH = { paper: 0.58, crimp: 0.42, foil: 0.28 };
+const ROUGH = { paper: 0.58, crimp: 0.42, foil: 0.28, frontFoil: 0.88 };
+const FRONT_FOIL_METALNESS = 0.08;
 
 export interface SideTextures {
   albedo: Texture;
@@ -111,7 +112,7 @@ async function buildSide(
   ]);
   const foil = readChannel(foilCanvas);
 
-  // 거칠기·금속도
+  // 거칠기·금속도. 앞면 금박은 인쇄 색을 유지하되 거친 비금속에 가깝게 만들어 글자가 발광처럼 번지지 않게 한다.
   const { H, crimp } = PACK;
   const orm = document.createElement('canvas');
   orm.width = w;
@@ -124,11 +125,11 @@ async function buildSide(
     for (let x = 0; x < w; x++, i++) {
       const m = foil[i];
       // 박 표면도 완전히 균일하지 않게 (주름 높이를 얼룩으로 재사용, 거칠기 ±0.05 정도)
-      const foilRough = ROUGH.foil + relief.data[i] * 0.03;
+      const foilRough = (side === 'front' ? ROUGH.frontFoil : ROUGH.foil) + relief.data[i] * 0.03;
       const o = i * 4;
       oimg.data[o] = 255;
       oimg.data[o + 1] = (base + (foilRough - base) * m) * 255;
-      oimg.data[o + 2] = m * 255;
+      oimg.data[o + 2] = m * (side === 'front' ? FRONT_FOIL_METALNESS : 1) * 255;
       oimg.data[o + 3] = 255;
     }
   }

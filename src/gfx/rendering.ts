@@ -24,6 +24,8 @@ export function createRendering(canvas: HTMLCanvasElement) {
 
   const scene = new Scene();
   scene.environment = createStudioEnv(renderer);
+  // 카드의 기존 반사를 유지하면서 팩에만 부드러운 조명을 쓴다.
+  const packEnvironment = createStudioEnv(renderer, 'pack');
   const camera = new PerspectiveCamera(26, 1, 0.1, 50);
   const backdrop = createBackdrop();
   scene.add(backdrop.mesh);
@@ -38,5 +40,5 @@ export function createRendering(canvas: HTMLCanvasElement) {
   output.needsSwap = false;
   composer.addPass(output);
 
-  return { renderer, scene, camera, backdrop, composer };
+  return { renderer, scene, camera, backdrop, composer, packEnvironment };
 }

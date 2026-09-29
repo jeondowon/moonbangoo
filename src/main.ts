@@ -30,7 +30,7 @@ const intro = document.querySelector<HTMLElement>('#intro')!;
 const setHint = createHint(document.querySelector<HTMLElement>('#hint')!);
 const flashEl = document.querySelector<HTMLElement>('#flash')!;
 
-const { renderer, scene, camera, backdrop, composer } = createRendering(canvas);
+const { renderer, scene, camera, backdrop, composer, packEnvironment } = createRendering(canvas);
 
 const stage = new Group(); // 팩 위치·회전 담당
 scene.add(stage);
@@ -123,7 +123,7 @@ async function prepare() {
     drawn,
     drawn.then((r) => buildCardTextures(renderer, r.cards)),
   ]);
-  pack = new Pack(tex);
+  pack = new Pack(tex, packEnvironment);
   stage.add(pack.root);
   setupCutter(pack);
   // 카드 뭉치는 처음부터 팩 안에 뒷면으로 들어 있다
