@@ -8,6 +8,7 @@ import {
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   type Object3D,
+  type Texture,
   Vector2,
   Vector3,
 } from 'three';
@@ -85,9 +86,10 @@ function packSurface(side: 1 | -1, v0 = 0, v1 = 1, segX = SEG_X, segY = SEG_Y): 
   return g;
 }
 
-function packMaterial(t: SideTextures) {
+function packMaterial(t: SideTextures, environment: Texture) {
   return new MeshPhysicalMaterial({
     map: t.albedo,
+    envMap: environment,
     roughnessMap: t.orm,
     metalnessMap: t.orm,
     roughness: 1,
@@ -138,11 +140,11 @@ export class Pack {
   readonly lining: Mesh;
   private flight: Flight | null = null;
 
-  constructor(tex: PackTextures) {
+  constructor(tex: PackTextures, environment: Texture) {
     this.uniforms = createTearUniforms(this.tear.texture);
     const surface = (side: 1 | -1, piece: TearPiece) => {
       const [v0, v1] = piece === 'top' ? [0, TEAR_V + OVERLAP] : [TEAR_V - OVERLAP, 1];
-      const mat = packMaterial(side === 1 ? tex.front : tex.back);
+      const mat = packMaterial(side === 1 ? tex.front : tex.back, environment);
       applyTear(mat, this.uniforms, { piece, flipU: side === -1, side, guide: side === 1 });
       return new Mesh(packSurface(side, v0, v1), mat);
     };
