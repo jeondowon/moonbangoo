@@ -14,6 +14,8 @@ const ICONS = {
   // 부스터팩: 위아래 톱니 봉합 + 해 로고
   pack: `<path d="M6 3l1.5 1.1L9 3l1.5 1.1L12 3l1.5 1.1L15 3l1.5 1.1L18 3v18l-1.5-1.1L15 21l-1.5-1.1L12 21l-1.5-1.1L9 21l-1.5-1.1L6 21Z"/>
 <circle cx="12" cy="11" r="2.6"/><path d="M9 15.6h6"/>`,
+  // 카드 슬리브: 카드가 반쯤 들어간 보호용 필름
+  sleeve: `<path d="M5 3.5h9l5 5v12H5z"/><path d="M14 3.5v5h5M8 12h8M8 15h8"/><path d="M3 7v14h14"/>`,
 };
 
 export const CATEGORY_LABEL = {
@@ -21,9 +23,14 @@ export const CATEGORY_LABEL = {
   sticker: '카드 씰',
   cafe: '카페 음료',
   pack: '부스터팩',
+  sleeve: '카드 슬리브',
+  bakery: '베이커리 이용권',
+  saver: '카드 세이버',
+  card: '카드',
 };
 
 export function icon(name, { x, y, size = 24, color, sw = 1.6 }) {
   const s = size / 24;
-  return `<g transform="translate(${x} ${y}) scale(${s})" fill="none" stroke="${color}" stroke-width="${sw / s}" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</g>`;
+  const iconName = { bakery: 'cafe', saver: 'sleeve', card: 'sleeve' }[name] || name;
+  return `<g transform="translate(${x} ${y}) scale(${s})" fill="none" stroke="${color}" stroke-width="${sw / s}" stroke-linecap="round" stroke-linejoin="round">${ICONS[iconName]}</g>`;
 }

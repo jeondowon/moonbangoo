@@ -107,7 +107,7 @@
 
   <section>
     <h2>카드 앞면 — 등급별<small>Card Front</small></h2>
-    <p class="lead">경품명·등급 / 일러스트 창 / 카테고리 띠 / 경품 안내·교환 조건 / 등급 마크·컬렉션 번호 순서. 등급 마크는 진주 1~3알(일반·레어·슈퍼레어)과 해 문양(최고등급)입니다. 테두리 재질: 아이보리 → 은 → 금 → 무지개 포일.</p>
+    <p class="lead">경품명·등급 / 일러스트 창 / 카테고리 띠 / 경품 안내·교환 조건 / 등급 마크·컬렉션 번호 순서. 등급 마크는 진주 1~3알(일반·레어·슈퍼레어)과 해 문양(최고등급)입니다. 테두리 재질: 아이보리 → 은 → 금 → 무지개 포일. 마지막 두 카드는 생성 일러스트를 넣은 형태 확인 시안입니다.</p>
     <div class="cards big" id="fronts"></div>
   </section>
 
@@ -156,9 +156,21 @@
       <figcaption><b>${RARITIES[code].name}</b> · ${['암시 없음', '은은한 은빛 테두리', '금빛 테두리 발광', '무지개 테두리 발광 + 파티클'][i]}</figcaption></figure>`).join('');
 
     const sorted = [...PRIZES].sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
+    const concepts = [
+      { id: 'bakery-concept', name: '베이커리 이용권', rarity: 'R', category: 'bakery', description: '베이커리 이용권', artwork: '../bakery-concept.png' },
+      { id: 'drink-concept', name: '음료 이용권', rarity: 'SR', category: 'cafe', description: '카페 음료 1잔\n핫/아이스 선택 가능', artwork: '../drink-voucher-concept.png' },
+      { id: 'sleeve-concept', name: '카드 슬리브', rarity: 'R', category: 'sleeve', description: '카드를 긁힘과 먼지로부터 보호', artwork: '../card-sleeve-concept-v2.png' },
+      { id: 'saver-concept', name: '카드 세이버', rarity: 'SR', category: 'saver', description: '카드 보호용 케이스', artwork: '../card-saver-concept.png' },
+      { id: 'booster-concept', name: '부스터팩', rarity: 'UR', category: 'pack', description: '카드 부스터팩', artwork: '../booster-pack-concept-v3.png' },
+      { id: 'card-concept', name: '카드', rarity: 'SR', category: 'card', description: '컬렉션 카드', artwork: '../card-concept-v2.png' },
+      { id: 'discount-concept', name: '할인권', rarity: 'R', category: 'coupon', description: '매장 할인권', artwork: '../discount-concept.png' },
+    ];
+    const totalCards = sorted.length + concepts.length;
     $('#fronts').innerHTML = sorted.map((p, i) => `
-      <figure><div class="cardwrap">${cardFront(p, { index: i + 1, total: sorted.length })}</div>
-      <figcaption><b>${RARITIES[p.rarity].name}</b> · ${p.name}</figcaption></figure>`).join('');
+      <figure><div class="cardwrap">${cardFront(p, { index: i + 1, total: totalCards })}</div>
+      <figcaption><b>${RARITIES[p.rarity].name}</b> · ${p.name}</figcaption></figure>`).join('') + concepts.map((p, i) => `
+      <figure><div class="cardwrap">${cardFront({ ...p, condition: '현장 즉시 증정' }, { index: sorted.length + i + 1, total: totalCards, artwork: p.artwork, artworkScale: p.category === 'saver' ? 0.95 : 0.8 })}</div>
+      <figcaption><b>형태 확인 시안</b> · ${p.name}</figcaption></figure>`).join('');
 
     const sw = [
       ['포장지 크림', INK.paper], ['포장지 하이라이트', INK.paperHi], ['톤온톤 무늬', INK.tone],

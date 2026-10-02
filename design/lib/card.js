@@ -45,7 +45,7 @@ function rarityMark(r, x, y, uid) {
 }
 
 // 일러스트 창 배경 (1차는 빈 플레이스홀더 — 등급별 바탕만 다르게)
-function windowArt(prize, r, box, uid) {
+function windowArt(prize, r, box, uid, artwork = '', artworkScale = 1) {
   const { x, y, w, h } = box;
   const cx = x + w / 2, cy = y + h / 2;
   const rand = rng(prize.id.length * 97 + r.code.charCodeAt(0));
@@ -85,14 +85,15 @@ function windowArt(prize, r, box, uid) {
   const iconColor = r.code === 'C' ? INK.inkSoft : r.code === 'R' ? '#7d858f' : r.code === 'SR' ? '#9a7434' : '#7b6aa8';
   return `<g clip-path="url(#${uid}-win-clip)">
 ${bg}${sparkles}
-${icon(prize.category, { x: cx - 44, y: cy - 62, size: 88, color: iconColor, sw: 2 }).replace('<g ', '<g opacity=".42" ')}
+${artwork ? `<image href="${artwork}" x="${cx - (w * artworkScale) / 2}" y="${cy - (h * artworkScale) / 2}" width="${w * artworkScale}" height="${h * artworkScale}" preserveAspectRatio="xMidYMid meet"/>` : ''}
+${artwork ? '' : `${icon(prize.category, { x: cx - 44, y: cy - 62, size: 88, color: iconColor, sw: 2 }).replace('<g ', '<g opacity=".42" ')}
 <text x="${cx}" y="${cy + 54}" text-anchor="middle" fill="${iconColor}" opacity=".7" font-family="${LATIN}" font-weight="700" font-size="12" letter-spacing="5">ILLUSTRATION</text>
-<text x="${cx}" y="${cy + 76}" text-anchor="middle" fill="${iconColor}" opacity=".6" font-family="${SANS}" font-weight="500" font-size="13">경품 이미지 자리</text>
+<text x="${cx}" y="${cy + 76}" text-anchor="middle" fill="${iconColor}" opacity=".6" font-family="${SANS}" font-weight="500" font-size="13">경품 이미지 자리</text>`}
 <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#${uid}-winshade)"/>
 </g>`;
 }
 
-export function cardFront(prize, { uid = `cf-${prize.id}`, index = 1, total = 5 } = {}) {
+export function cardFront(prize, { uid = `cf-${prize.id}`, index = 1, total = 5, artwork = '', artworkScale = 1 } = {}) {
   const { W, H, R } = CARD;
   const r = RARITIES[prize.rarity];
   const metal = METALS[r.metal];
@@ -151,7 +152,7 @@ ${pressFilter(`${uid}-press`, 0.7)}
   <g data-layer="window">
     <rect x="${win.x - 5}" y="${win.y - 5}" width="${win.w + 10}" height="${win.h + 10}" rx="7" fill="${u('metal')}"/>
     <rect x="${win.x - 5}" y="${win.y - 5}" width="${win.w + 10}" height="${win.h + 10}" rx="7" fill="none" stroke="#3a2a14" stroke-opacity=".28"/>
-    ${windowArt(prize, r, win, uid)}
+    ${windowArt(prize, r, win, uid, artwork, artworkScale)}
     <rect x="${win.x}" y="${win.y}" width="${win.w}" height="${win.h}" rx="4" fill="none" stroke="#3a2a14" stroke-opacity=".3"/>
   </g>
 
