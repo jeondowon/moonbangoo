@@ -6,7 +6,7 @@ import {
   Group,
   Mesh,
   MeshPhysicalMaterial,
-  MeshStandardMaterial,
+  type MeshPhysicalMaterialParameters,
   type IUniform,
   type Material,
   type Texture,
@@ -19,7 +19,7 @@ import { applyHoloFront, applyRimGlow, RARITY_STYLE, type RarityCode } from './h
 export const CARD_W = 1;
 export const CARD_H = (CARD_W * CARD.H) / CARD.W;
 const RADIUS = (CARD_W * CARD.R) / CARD.W;
-const CARD_T = 0.0035; // 두께
+const CARD_T = 0.006; // 두께 (뭉치를 기울이면 층이 보이도록 실물보다 두껍게)
 
 /** 둥근 사각 판. groups: 0 = 앞면(+z), 1 = 뒷면(-z), 2 = 옆면 */
 function cardGeometry(w: number, h: number, r: number, t: number, seg = 8): BufferGeometry {
@@ -96,7 +96,15 @@ function cardGeometry(w: number, h: number, r: number, t: number, seg = 8): Buff
 }
 
 let sharedGeometry: BufferGeometry | null = null;
-let sharedEdge: Material | null = null;
+/** 등급별 옆면 (명세 R9): 뭉치를 기울이면 보이는 단면으로 등급을 암시. 발광 없이 반사만 */
+const EDGE_STYLE: Record<RarityCode, MeshPhysicalMaterialParameters> = {
+  C: { color: '#e8dcc6', roughness: 0.75 }, // 종이 단면
+  R: { color: '#d9dde4', metalness: 1, roughness: 0.25 }, // 은박
+  SR: { color: '#e8c06a', metalness: 1, roughness: 0.25 }, // 금박
+  // 무지개 홀로박: 보는 각도에 따라 색이 바뀜
+  UR: { color: '#e6e6ea', metalness: 1, roughness: 0.2, iridescence: 1, iridescenceIOR: 1.8, iridescenceThicknessRange: [200, 900] },
+};
+const edgeMaterials = new Map<RarityCode, Material>();
 /** 뒷면 텍스처는 모든 카드가 공유하지만, 테두리 암시 발광은 등급별로 달라 재질은 (텍스처, 등급) 쌍으로 캐시 */
 const backMaterials = new Map<string, Material>();
 
@@ -154,11 +162,12 @@ export class Card {
 
   constructor(front: Texture, back: Texture, readonly rarity: RarityCode) {
     sharedGeometry ??= cardGeometry(CARD_W, CARD_H, RADIUS, CARD_T);
-    sharedEdge ??= new MeshStandardMaterial({ color: '#e8dcc6', roughness: 0.75 });
     const backKey = `${back.uuid}:${rarity}`;
     let backMat = backMaterials.get(backKey);
     if (!backMat) backMaterials.set(backKey, (backMat = printMaterial(back, rarity, 'back')));
-    this.mesh = new Mesh(sharedGeometry, [printMaterial(front, rarity, 'front', this.brightness), backMat, sharedEdge]);
+    let edgeMat = edgeMaterials.get(rarity);
+    if (!edgeMat) edgeMaterials.set(rarity, (edgeMat = new MeshPhysicalMaterial(EDGE_STYLE[rarity])));
+    this.mesh = new Mesh(sharedGeometry, [printMaterial(front, rarity, 'front', this.brightness), backMat, edgeMat]);
     this.flipper.rotation.y = Math.PI;
     this.flipper.add(this.mesh);
     this.root.add(this.flipper);

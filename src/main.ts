@@ -177,8 +177,8 @@ function setupCutter(p: Pack) {
   const c = new Cutter(canvas, camera, p.root, p.tear, () => time);
   cutter = c;
   // 절취선 근처를 누르면 기울이기 대신 절취
-  // 개봉한 뒤에는 드래그가 카드 넘기기용 (기울이기는 마우스 호버만)
-  tilt.shouldIgnore = (e) => p.opened || c.active || c.wants(e);
+  // 개봉한 뒤에는 맨 위 카드를 잡으면 넘기기, 배경을 끌면 뭉치 기울이기
+  tilt.shouldIgnore = (e) => (p.opened ? !!deck?.hitsTop(e.clientX, e.clientY) : c.active || c.wants(e));
 
   c.onCut = (du, dir, speed) => {
     cutTouched = true;
@@ -300,8 +300,8 @@ function updateCardHint(d: Deck) {
   const top = d.top;
   if (d.state === 'done') setHint('5장을 모두 확인했어요');
   else if (d.state !== 'ready' || !top) setHint(null);
-  else if (!top.faceUp && !everFlipped) setHint('카드를 톡 눌러 뒤집어 보세요');
-  else if (top.faceUp && top.flipProgress > 0.9 && !everSwiped) setHint('옆으로 밀어서 다음 카드 보기');
+  else if (!top.faceUp && !everFlipped) setHint('카드 뭉치를 톡 눌러 뒤집어 보세요');
+  else if (top.faceUp && top.flipProgress > 0.9 && !everSwiped) setHint('밀어서 다음 카드 보기');
   else setHint(null);
 }
 
@@ -369,7 +369,7 @@ function frame(dt: number) {
         setHint(null);
       }
       if (!prizeFlow?.active && deck.state !== 'packed' && deck.state !== 'rising') {
-        // 카드도 기울여 볼 수 있음 (명세 R10 — 마우스 호버 + 가만히 있으면 자동 흔들림). 넘기는 중에는 약하게
+        // 카드도 기울여 볼 수 있음 (명세 R10 — 배경 드래그·마우스 호버 + 가만히 있으면 자동 흔들림). 넘기는 중에는 약하게
         const k = MAX_TILT * 0.8 * (deck.dragging ? 0.25 : 1);
         deck.setTilt(-k * (tilt.y + sway.y), k * (tilt.x + sway.x));
       }

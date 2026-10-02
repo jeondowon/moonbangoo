@@ -1,6 +1,6 @@
 // 카드 뭉치 (명세 R2·R3). 팩 안에 뒷면으로 들어 있다가 위로 빠져나오고, 화면 중앙으로 옮겨져 한 장씩 확인한다.
-//   - 맨 위 카드: 탭 → 앞면으로 뒤집힘 (뒷면일 때 옆으로 밀어도 그 방향으로 뒤집힘)
-//   - 앞면 카드: 손가락을 1:1로 따라오고, 놓을 때 충분히 빠르거나 멀리 밀었으면 날아가고, 아니면 스프링으로 복귀
+//   - 뒷면 뭉치: 탭 → 뭉치 전체가 앞면으로 뒤집힘 (옆으로 밀어도 그 방향으로 뒤집힘)
+//   - 앞면 카드: 손가락을 1:1로 따라오고, 놓으면 민 방향과 상관없이 위로 넘어감. 다음 카드는 앞면으로 드러남
 //   - 드래그 중 이동 방향으로 기울어짐 (명세 R7)
 import { Group, Matrix4, Raycaster, Vector2, Vector3, type Camera, type Material, type Object3D, type Texture } from 'three';
 import { clamp, smooth } from '../core/math';
@@ -11,7 +11,7 @@ import { TEAR_CURVE_GLSL, type TearUniforms } from '../pack/tearShader';
 import { Card, CARD_H, CARD_W } from './card';
 import type { RarityCode } from './holo';
 
-const GAP = 0.0055; // 카드 사이 z 간격
+const GAP = 0.009; // 카드 사이 z 간격 (기울이면 아래 카드 옆면이 층층이 보이도록)
 const IN_TOP_V = 0.16; // 팩 안에서 카드 윗변 위치 (팩 위에서부터 비율, 절취선 아래)
 const IN_Y = packY(IN_TOP_V) - CARD_H / 2;
 const RISE = 1; // 팩 입구 위로 빠져나오는 거리
@@ -22,9 +22,8 @@ const SETTLE = 0.75; // 중앙으로 옮겨 가는 동안 입력을 받지 않�
 
 const TAP_MOVE = 10; // px
 const TAP_TIME = 350; // ms
-const FLING_SPEED = 1.6; // 카드 폭/초 — 이보다 빠르게 놓으면 넘어감
-const FLING_DIST = 0.42; // 카드 폭 — 또는 이만큼 밀었으면 넘어감
 const FLING_MIN = 6; // 날아가는 최소 속도 (카드 폭/초)
+const FLING_SIDE = 0.3; // 위로 날아갈 때 옆으로 민 속도를 이만큼만 이어받음
 const TURN_DIST = 0.1; // 뒷면 카드를 이만큼 밀면 뒤집힘
 const TURN_SPEED = 0.9;
 const BACK_DRAG = 0.35; // 뒷면 카드는 손가락을 덜 따라옴 (고무줄)
@@ -288,7 +287,8 @@ export class Deck {
     for (const c of this.cards) {
       c.step(dt);
       if (c.flight) c.root.visible = c.flight.age < 1.2;
-      if (c.faceUp && c.flipProgress > 0.5 && !this.revealed.has(c)) {
+      // 뭉치를 뒤집으면 모두 앞면이 되지만, 등장 연출은 맨 위로 드러난 카드만
+      if (c === this.top && c.faceUp && c.flipProgress > 0.5 && !this.revealed.has(c)) {
         this.revealed.add(c);
         this.onReveal?.(c);
       }
@@ -314,7 +314,8 @@ export class Deck {
     return ray.at(t, new Vector3());
   }
 
-  private hitsTop(clientX: number, clientY: number) {
+  /** 화면 좌표가 맨 위 카드를 가리키는지 */
+  hitsTop(clientX: number, clientY: number) {
     const top = this.top;
     if (!top) return false;
     this.aim(clientX, clientY);
@@ -382,7 +383,6 @@ export class Deck {
     const moved = Math.hypot(e.clientX - d.sx, e.clientY - d.sy);
     const tap = moved < TAP_MOVE && e.timeStamp - d.t0 < TAP_TIME;
     const dx = card.x.value - d.cx;
-    const dy = card.y.value - d.cy;
     card.lean.target = card.pitch.target = 0;
 
     if (!card.faceUp) {
@@ -392,16 +392,10 @@ export class Deck {
       return;
     }
 
-    const speed = Math.hypot(v.x, v.y);
-    const dist = Math.hypot(dx, dy);
-    // 빠르게 튕겼거나(되돌리는 방향이 아닐 때) 충분히 멀리 밀었으면 넘어감
-    const flick = speed > FLING_SPEED * CARD_W && v.x * dx + v.y * dy >= 0;
-    if (flick || dist > FLING_DIST * CARD_W) {
-      // 방향은 손가락 속도, 느리면 밀어 둔 방향으로
-      let [ux, uy] = speed > 0.5 ? [v.x / speed, v.y / speed] : [dx / (dist || 1), dy / (dist || 1)];
-      if (!Number.isFinite(ux)) [ux, uy] = [1, 0];
-      const s = Math.max(FLING_MIN * CARD_W, speed * 1.1);
-      card.fling(ux * s, uy * s);
+    // 조금이라도 밀었으면 어느 방향이든 위로 넘어감 (옆으로 민 만큼만 살짝 비껴감)
+    if (moved >= TAP_MOVE) {
+      const s = Math.max(FLING_MIN * CARD_W, Math.hypot(v.x, v.y) * 1.1);
+      card.fling(clamp(v.x * FLING_SIDE, -s * FLING_SIDE, s * FLING_SIDE), s);
       this.current++;
       this.layout();
       if (this.current >= this.cards.length) {
@@ -430,9 +424,10 @@ export class Deck {
     card.y.velocity = v.y;
   }
 
+  /** 뭉치 전체를 앞면으로 뒤집는다 */
   private turnOver(card: Card, dir: number) {
     if (card.faceUp) return;
-    card.turnOver(dir);
+    for (const c of this.cards) c.turnOver(dir);
     this.onFlip?.(this.current);
   }
 }
