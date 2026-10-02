@@ -181,6 +181,86 @@ ${pressFilter(`${uid}-press`, 0.7)}
 </svg>`;
 }
 
+// 매장 안내 카드: 실물 팩의 광고 카드처럼 뭉치 맨 앞에 끼워 넣는 경품 아닌 카드.
+// 첫 장은 넘기기 안내에 덮여 보이므로, 어둡게 덮여도 알아보도록 큰 로고 위주로 구성. 등급·번호는 넣지 않는다.
+export function cardStore({ uid = 'cs', total = 5 } = {}) {
+  const { W, H, R } = CARD;
+  const u = (s) => `url(#${uid}-${s})`;
+  const win = WINDOW_BOX;
+  const panel = { x: 40, y: 530, w: 550, h: 252 };
+  const cx = win.x + win.w / 2;
+  const lw = 300;
+  const lh = (lw * LOGO_BOX.h) / LOGO_BOX.w;
+  const darkText = '#3a2c1c';
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" class="card" role="img" aria-label="어른뭉방구 매장 안내 카드">
+<defs>
+${linGrad(`${uid}-metal`, METALS.gold, 0, 0, W, H)}
+${linGrad(`${uid}-metal-h`, METALS.ivory, 0, 0, W, 0)}
+${linGrad(`${uid}-foil-logo`, METALS.gold, LOGO_BOX.x, LOGO_BOX.y, LOGO_BOX.x + LOGO_BOX.w, LOGO_BOX.y + LOGO_BOX.h)}
+${linGrad(`${uid}-face`, [[0, INK.paperHi], [0.6, INK.paper], [1, '#EFE5D3']], 0, 0, 0, H)}
+${radGrad(`${uid}-win`, [[0, INK.paperHi], [0.7, INK.paper], [1, '#E9DCC5']], cx, win.y + win.h * 0.55, win.w * 0.7)}
+${linGrad(`${uid}-winshade`, [[0, '#3a2a14', 0.22], [0.06, '#3a2a14', 0], [0.94, '#3a2a14', 0], [1, '#3a2a14', 0.12]], 0, win.y, 0, win.y + win.h)}
+${grainFilter(`${uid}-grain`)}
+${pressFilter(`${uid}-press-logo`, 0.75)}
+<clipPath id="${uid}-clip"><rect width="${W}" height="${H}" rx="${R}"/></clipPath>
+<clipPath id="${uid}-win-clip"><rect x="${win.x}" y="${win.y}" width="${win.w}" height="${win.h}" rx="4"/></clipPath>
+</defs>
+<g clip-path="url(#${uid}-clip)">
+  <g data-layer="frame">
+    <rect width="${W}" height="${H}" fill="${u('metal')}"/>
+    <rect x="8" y="8" width="${W - 16}" height="${H - 16}" rx="${R - 7}" fill="none" stroke="#000" stroke-opacity=".12" stroke-width="1"/>
+    <rect x="9" y="9" width="${W - 18}" height="${H - 18}" rx="${R - 8}" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1"/>
+  </g>
+  <g data-layer="paper">
+    <rect x="18" y="18" width="${W - 36}" height="${H - 36}" rx="14" fill="${u('face')}"/>
+    <rect x="18" y="18" width="${W - 36}" height="${H - 36}" rx="14" fill="none" stroke="#3a2a14" stroke-opacity=".25" stroke-width="1.2"/>
+  </g>
+
+  <g data-layer="header">
+    <text x="46" y="82" fill="${INK.ink}" font-family="${SERIF}" font-weight="700" font-size="34" letter-spacing="-.5">어른뭉방구</text>
+    <text x="${W - 46}" y="78" text-anchor="end" fill="${INK.accent}" font-family="${LATIN}" font-weight="700" font-size="17" letter-spacing="4">WELCOME</text>
+  </g>
+
+  <g data-layer="window">
+    <rect x="${win.x - 5}" y="${win.y - 5}" width="${win.w + 10}" height="${win.h + 10}" rx="7" fill="${u('metal')}"/>
+    <g clip-path="url(#${uid}-win-clip)">
+      <rect x="${win.x}" y="${win.y}" width="${win.w}" height="${win.h}" fill="${u('win')}"/>
+      <path d="${raysPath(cx, win.y + win.h * 0.55, win.w, 40)}" fill="${INK.tone}" opacity=".45"/>
+      <path d="${wavePath(win.x, win.x + win.w, win.y + win.h - 46, 8, 120, 20, win.y + win.h)}" fill="${INK.tone}" opacity=".8"/>
+      <path d="${wavePath(win.x, win.x + win.w, win.y + win.h - 22, 7, 96, 60, win.y + win.h)}" fill="${INK.tone}"/>
+      ${logoMarkup({ uid: `${uid}-logo`, paint: u('foil-logo'), x: cx - lw / 2, y: win.y + win.h / 2 - lh / 2 - 6, width: lw, filter: `${uid}-press-logo` })}
+      <rect x="${win.x}" y="${win.y}" width="${win.w}" height="${win.h}" fill="url(#${uid}-winshade)"/>
+    </g>
+    <rect x="${win.x}" y="${win.y}" width="${win.w}" height="${win.h}" rx="4" fill="none" stroke="#3a2a14" stroke-opacity=".3"/>
+  </g>
+
+  <g data-layer="strip">
+    <rect x="${win.x - 5}" y="480" width="${win.w + 10}" height="30" rx="4" fill="${u('metal-h')}" opacity=".9"/>
+    <text x="${win.x + 12}" y="500" fill="${darkText}" font-family="${SANS}" font-weight="600" font-size="14.5">매장 안내</text>
+    <text x="${win.x + win.w - 12}" y="500" text-anchor="end" fill="${darkText}" font-family="${LATIN}" font-style="italic" font-weight="600" font-size="15" letter-spacing="1.5">Eoreun Mungbanggu Store Card</text>
+  </g>
+
+  <g data-layer="panel">
+    <rect x="${panel.x}" y="${panel.y}" width="${panel.w}" height="${panel.h}" rx="12" fill="#FAF6EE" fill-opacity=".8" stroke="${u('metal')}" stroke-width="1.5"/>
+    <text x="66" y="570" fill="${INK.accent}" font-family="${SERIF}" font-weight="700" font-size="17">어서 오세요</text>
+    <text x="66" y="604" fill="${INK.ink}" font-family="${SANS}" font-weight="600" font-size="20" letter-spacing="-.3">포항 종합 문구·카드샵</text>
+    <text x="66" y="634" fill="${INK.inkSoft}" font-family="${SANS}" font-weight="500" font-size="17" letter-spacing="-.3">포켓몬카드 · 원피스카드 · 문구</text>
+    <path d="M66 666H${panel.x + panel.w - 26}" stroke="${INK.inkSoft}" stroke-opacity=".45" stroke-dasharray="2 5" stroke-linecap="round" stroke-width="1.4"/>
+    <text x="66" y="700" fill="${INK.accent}" font-family="${SERIF}" font-weight="700" font-size="17">오시는 길</text>
+    <text x="66" y="738" fill="${INK.accent}" font-family="${SANS}" font-weight="700" font-size="23" letter-spacing="-.4">경북 포항시 ○○구 ○○로 00, 1층</text>
+    <text x="66" y="765" fill="${INK.inkSoft}" font-family="${SANS}" font-weight="500" font-size="14" letter-spacing="-.2">매일 10:00 – 21:00</text>
+  </g>
+
+  <g data-layer="footer">
+    <text x="50" y="832" fill="${INK.ink}" font-family="${SERIF}" font-weight="700" font-size="15">경품 카드 ${total}장은 다음 장부터</text>
+    <text x="${W - 46}" y="832" text-anchor="end" fill="${INK.inkSoft}" font-family="${LATIN}" font-weight="600" font-size="15" letter-spacing=".5">Store Card  ·  Pohang</text>
+  </g>
+  <rect width="${W}" height="${H}" fill="#000" filter="url(#${uid}-grain)" pointer-events="none"/>
+</g>
+</svg>`;
+}
+
 export function cardBack({ uid = 'cb' } = {}) {
   const { W, H, R } = CARD;
   const u = (s) => `url(#${uid}-${s})`;

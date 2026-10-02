@@ -19,7 +19,7 @@ function setup() {
   const camera = new PerspectiveCamera(26, W / H, 0.1, 50);
   camera.position.z = 6;
   camera.updateMatrixWorld();
-  const deck = new Deck(el, camera, prizes, prizes.map(() => new Texture()), new Texture(), createTearUniforms(new Texture()));
+  const deck = new Deck(el, camera, prizes, prizes.map(() => new Texture()), new Texture(), new Texture(), createTearUniforms(new Texture()));
   deck.setViewScale(1.6);
   const reveals = [];
   deck.onReveal = (card) => reveals.push(deck.cards.indexOf(card));
@@ -64,15 +64,27 @@ test('앞면 카드는 어느 방향으로 조금만 밀어도 위로 넘어가�
   // 아래(+왼쪽)로 살짝 민 경우
   gesture(-6, 14);
   assert.equal(deck.current, 1);
-  const { vx, vy } = deck.cards[0].flight;
-  assert.ok(vy > 0 && Math.abs(vx) < vy, `위로 날아가야 함: vx=${vx}, vy=${vy}`);
+  assert.ok(deck.cards[0].flight.vy > 0);
+  const x0 = deck.cards[0].x.value;
   tick(0.1);
+  assert.ok(Math.abs(deck.cards[0].x.value - x0) < 1e-6, '옆으로 비껴가지 않고 일직선으로 올라가야 함');
   assert.deepEqual(reveals, [0, 1]);
   assert.ok(deck.cards[1].faceUp);
   // 옆으로 크게 민 경우도 위로
   gesture(120, 0);
   assert.equal(deck.current, 2);
-  assert.ok(deck.cards[1].flight.vy > Math.abs(deck.cards[1].flight.vx));
+  assert.ok(deck.cards[1].flight.vy > 0);
+  const x1 = deck.cards[1].x.value;
+  tick(0.1);
+  assert.ok(Math.abs(deck.cards[1].x.value - x1) < 1e-6, '옆으로 민 경우도 일직선으로 올라가야 함');
+});
+
+test('매장 안내 카드가 맨 앞에 있고, 경품 카드 목록에는 들어가지 않는다', () => {
+  const { deck } = setup();
+  assert.equal(deck.cards.length, prizes.length + 1);
+  assert.equal(deck.cards[0], deck.lead);
+  assert.ok(!deck.prizeCards.includes(deck.lead));
+  assert.deepEqual(deck.prizeCards.map((c) => c.rarity), prizes.map((p) => p.rarity));
 });
 
 test('앞면 카드를 탭만 하면 넘어가지 않는다', () => {

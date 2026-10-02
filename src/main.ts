@@ -29,6 +29,7 @@ const canvas = document.querySelector<HTMLCanvasElement>('#stage')!;
 const intro = document.querySelector<HTMLElement>('#intro')!;
 const setHint = createHint(document.querySelector<HTMLElement>('#hint')!);
 const flashEl = document.querySelector<HTMLElement>('#flash')!;
+const swipeCoach = document.querySelector<HTMLElement>('#swipe-coach')!;
 
 const { renderer, scene, camera, backdrop, composer, packEnvironment } = createRendering(canvas);
 
@@ -82,6 +83,7 @@ let openedAt = -1; // 윗조각이 날아간 시각
 let packFall: { y: number; v: number } | null = null; // 카드가 빠져나온 뒤 팩 본체 퇴장
 let everFlipped = false; // 안내 문구: 카드를 한 번이라도 뒤집었는지
 let everSwiped = false; // 안내 문구: 카드를 한 번이라도 넘겼는지
+let coachDismissed = false; // 넘기기 안내: 떠 있는 동안 한 번이라도 누르면 닫고 다시 띄우지 않음
 
 function resize() {
   const w = canvas.clientWidth;
@@ -127,14 +129,14 @@ async function prepare() {
   stage.add(pack.root);
   setupCutter(pack);
   // 카드 뭉치는 처음부터 팩 안에 뒷면으로 들어 있다
-  deck = new Deck(canvas, camera, result.cards, cardTex.fronts, cardTex.back, pack.uniforms);
+  deck = new Deck(canvas, camera, result.cards, cardTex.fronts, cardTex.back, cardTex.store, pack.uniforms);
   deck.setViewScale(viewScale);
   pack.root.add(deck.root);
   setupDeck(deck);
   prizeFlow = new PrizeFlow(canvas, camera, result.cards, reveal, (rarity) => sound.confirm(rarity));
   // 팩·카드 텍스처를 로딩 중에 GPU로 올려 둔다 (팩 등장 첫 프레임에 한꺼번에 올리며 끊기지 않게)
   for (const side of [tex.front, tex.back]) for (const t of Object.values(side)) renderer.initTexture(t);
-  for (const t of [cardTex.back, ...cardTex.fronts]) renderer.initTexture(t);
+  for (const t of [cardTex.back, cardTex.store, ...cardTex.fronts]) renderer.initTexture(t);
   // 첫 등장 때 셰이더 컴파일로 끊기지 않도록 미리 컴파일 (보이는 오브젝트만 컴파일되므로 숨기기 전에)
   reveal.warmup(scene);
   await renderer.compileAsync(scene, camera);
@@ -215,6 +217,7 @@ function setupDeck(d: Deck) {
     everFlipped = true;
   };
   d.onReveal = (card) => {
+    if (card === d.lead) return; // 매장 안내 카드는 경품이 아니므로 등급 연출·소리 없음
     reveal.play(card.root, card.rarity);
     // 앞면이 충분히 돌아와 읽을 수 있고, 그 화면이 한 프레임 그려진 뒤에만 소리를 낸다.
     const afterFrontIsVisible = () => {
@@ -301,9 +304,16 @@ function updateCardHint(d: Deck) {
   if (d.state === 'done') setHint('5장을 모두 확인했어요');
   else if (d.state !== 'ready' || !top) setHint(null);
   else if (!top.faceUp && !everFlipped) setHint('카드 뭉치를 톡 눌러 뒤집어 보세요');
-  else if (top.faceUp && top.flipProgress > 0.9 && !everSwiped) setHint('밀어서 다음 카드 보기');
   else setHint(null);
+  // 첫 카드: 어두운 화면 위에 위로 쓸어 올리는 손을 보여줌 (누르는 순간 닫힘)
+  const coach = d.state === 'ready' && !!top?.faceUp && top.flipProgress > 0.9 && !everSwiped && !coachDismissed;
+  swipeCoach.classList.toggle('is-shown', coach);
 }
+
+// 터치·클릭은 캔버스로 가므로(안내는 pointer-events: none) 창에서 먼저 받아 안내를 닫는다
+window.addEventListener('pointerdown', () => {
+  if (swipeCoach.classList.contains('is-shown')) coachDismissed = true;
+}, true);
 
 // ── 프레임 ───────────────────────────────────────
 // 입력이 없을 때 빛 반사가 보이도록 천천히 흔들림
@@ -365,7 +375,7 @@ function frame(dt: number) {
     if (deck) {
       updateOpening(pack, deck, dt);
       if (summaryAt >= 0 && time >= summaryAt && prizeFlow && !prizeFlow.active) {
-        prizeFlow.start(deck.cards, scene);
+        prizeFlow.start(deck.prizeCards, scene);
         setHint(null);
       }
       if (!prizeFlow?.active && deck.state !== 'packed' && deck.state !== 'rising') {

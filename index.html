@@ -33,6 +33,15 @@
   <p class="hint-sub"></p>
 </div>
 
+<!-- 첫 카드 넘기기 안내: 화면을 반투명하게 어둡게 덮고 위로 쓸어 올리는 손을 보여줌. 터치는 그대로 캔버스로 -->
+<div id="swipe-coach" class="swipe-coach" aria-live="polite">
+  <svg class="coach-gesture" viewBox="0 0 24 34" aria-hidden="true">
+    <path class="coach-arrow" d="M7 -3l5-5 5 5M12 -8v9" />
+    <path class="coach-hand" d="M18.84 25.87l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 16.67 10 17.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z" />
+  </svg>
+  <p class="coach-text">위로 스와이프하여 다음 카드 보기</p>
+</div>
+
 <!-- M5: 카드는 같은 WebGL 장면에서 그리며, DOM은 배치·조작·읽을 수 있는 안내를 담당한다. -->
 <main id="prize-flow" class="prize-flow" hidden>
   <section id="summary" class="flow-summary" aria-labelledby="summary-title">

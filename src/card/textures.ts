@@ -1,7 +1,7 @@
 // 카드 텍스처: design/lib/card.js의 SVG(M0 확정 시안)를 래스터화한다.
 // M3은 색(albedo)만 — 등급별 금속·홀로 재질 분리는 M4에서.
 import type { Texture, WebGLRenderer } from 'three';
-import { CARD, cardBack, cardFront } from '../../design/lib/card.js';
+import { CARD, cardBack, cardFront, cardStore } from '../../design/lib/card.js';
 import { loadLogo } from '../../design/lib/logo.js';
 import type { Prize } from '../data/draw';
 import { embeddedFontCss } from '../gfx/fonts';
@@ -12,6 +12,8 @@ const SCALE = 1.25;
 
 export interface CardTextures {
   back: Texture;
+  /** 경품 카드 앞에 끼우는 매장 안내 카드 */
+  store: Texture;
   /** 넘기는 순서와 같은 순서 */
   fronts: Texture[];
 }
@@ -53,8 +55,9 @@ async function fitTexts(svg: SVGSVGElement) {
 export async function buildCardTextures(renderer: WebGLRenderer, cards: Prize[]): Promise<CardTextures> {
   await loadLogo();
   const back = cardBack({ uid: 'cb' });
+  const store = cardStore({ uid: 'cs', total: cards.length });
   const fronts = cards.map((p, i) => cardFront(p, { uid: `cf${i}`, index: i + 1, total: cards.length }));
-  const fontCss = await embeddedFontCss([back, ...fronts].map(svgText).join('')).catch((e) => {
+  const fontCss = await embeddedFontCss([back, store, ...fronts].map(svgText).join('')).catch((e) => {
     console.warn('폰트 내장 실패, 시스템 폰트로 대체', e);
     return '';
   });
@@ -65,6 +68,6 @@ export async function buildCardTextures(renderer: WebGLRenderer, cards: Prize[])
     await fitTexts(svg);
     return toTexture(await rasterize(svg, w, h, { fontCss }), renderer);
   };
-  const [b, ...f] = await Promise.all([back, ...fronts].map(draw));
-  return { back: b, fronts: f };
+  const [b, s, ...f] = await Promise.all([back, store, ...fronts].map(draw));
+  return { back: b, store: s, fronts: f };
 }

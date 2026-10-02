@@ -19,7 +19,7 @@ import { applyHoloFront, applyRimGlow, RARITY_STYLE, type RarityCode } from './h
 export const CARD_W = 1;
 export const CARD_H = (CARD_W * CARD.H) / CARD.W;
 const RADIUS = (CARD_W * CARD.R) / CARD.W;
-const CARD_T = 0.006; // 두께 (뭉치를 기울이면 층이 보이도록 실물보다 두껍게)
+const CARD_T = 0.01; // 두께 (뭉치를 기울이면 층이 보이도록 실물보다 두껍게)
 
 /** 둥근 사각 판. groups: 0 = 앞면(+z), 1 = 뒷면(-z), 2 = 옆면 */
 function cardGeometry(w: number, h: number, r: number, t: number, seg = 8): BufferGeometry {
@@ -158,7 +158,7 @@ export class Card {
   readonly flip = new Spring(Math.PI, 1.55, 0.74);
 
   /** 넘겨져 화면 밖으로 날아가는 중 (덱 로컬 속도, 카드 폭/초) */
-  flight: { vx: number; vy: number; age: number } | null = null;
+  flight: { vy: number; age: number } | null = null;
 
   constructor(front: Texture, back: Texture, readonly rarity: RarityCode) {
     sharedGeometry ??= cardGeometry(CARD_W, CARD_H, RADIUS, CARD_T);
@@ -198,12 +198,11 @@ export class Card {
     return (CARD_W / 2) * turn + (CARD_H / 2) * Math.abs(Math.sin(this.pitch.value)) + arc;
   }
 
-  /** 놓은 속도 그대로 날려 보낸다. 날아가는 방향으로 돌고 기울어짐 */
-  fling(vx: number, vy: number) {
-    this.flight = { vx, vy, age: 0 };
-    const side = Math.sign(vx) || 1;
-    this.roll.target = this.roll.value - side * 0.55;
-    this.lean.target = side * 0.45;
+  /** 위로 일직선으로 날려 보낸다. 드래그로 돌아간 각도는 반듯하게 펴짐 */
+  fling(vy: number) {
+    this.flight = { vy, age: 0 };
+    this.roll.target = 0;
+    this.lean.target = 0;
     this.z.target = this.z.value + 0.06; // 다음 카드 위로 지나가도록
   }
 
@@ -211,7 +210,6 @@ export class Card {
     const f = this.flight;
     if (f) {
       f.age += dt;
-      this.x.snap(this.x.value + f.vx * dt);
       this.y.snap(this.y.value + f.vy * dt);
     }
     for (const s of [this.x, this.y, this.z, this.roll, this.lean, this.pitch, this.flip]) s.step(dt);

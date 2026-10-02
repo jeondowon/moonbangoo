@@ -130,6 +130,68 @@ html, body {
 }
 .hint-sub:empty { display: none; }
 
+/* ── 첫 카드 넘기기 안내 (튜토리얼) ─────────── */
+.swipe-coach {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(8, 6, 4, .55);
+  opacity: 0;
+  transition: opacity .4s ease;
+}
+.swipe-coach.is-shown { opacity: 1; }
+.coach-gesture {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 64px;
+  height: auto;
+  margin-left: -32px;
+  overflow: visible;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, .55));
+}
+.coach-arrow {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: coach-arrow 1.6s cubic-bezier(.45, 0, .2, 1) infinite;
+}
+.coach-hand {
+  fill: var(--text);
+  animation: coach-swipe 1.6s cubic-bezier(.45, 0, .2, 1) infinite;
+}
+.coach-text {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(5.5vh + env(safe-area-inset-bottom));
+  margin: 0;
+  padding: 0 16px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--text);
+}
+@keyframes coach-swipe {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 1; }
+  60% { transform: translateY(-14px); opacity: 1; }
+  80%, 100% { transform: translateY(-16px); opacity: 0; }
+}
+/* 손과 같은 박자로 나타났다 사라짐 */
+@keyframes coach-arrow {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 1; }
+  60% { transform: translateY(-3px); opacity: 1; }
+  80%, 100% { transform: translateY(-3px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coach-hand, .coach-arrow { animation: none; }
+}
+
 /* ── 공통 접근성 · 입력 ───────────────────── */
 [hidden] { display: none !important; }
 button, a { -webkit-tap-highlight-color: transparent; }

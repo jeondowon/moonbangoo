@@ -12,12 +12,12 @@
 </head>
 <body>
 <!-- 단일 에셋을 창 폭에 맞춰 렌더 (확대 검수 / 추후 텍스처 PNG 추출용)
-     ?a=pack-front | pack-back | card-back | card&id=<prize id>  [&bg=transparent] -->
+     ?a=pack-front | pack-back | card-back | card-store | card&id=<prize id>  [&bg=transparent] -->
 <div id="out"></div>
 <script type="module">
   import { loadLogo } from './lib/logo.js';
   import { packFront, packBack } from './lib/pack.js';
-  import { cardFront, cardBack } from './lib/card.js';
+  import { cardFront, cardBack, cardStore } from './lib/card.js';
   import { PRIZES, RARITY_ORDER } from './lib/data.js';
 
   const q = new URLSearchParams(location.search);
@@ -30,6 +30,7 @@
     'pack-front': () => packFront(),
     'pack-back': () => packBack(),
     'card-back': () => cardBack(),
+    'card-store': () => cardStore({ total: sorted.length }),
     card: () => cardFront(sorted[i], { index: i + 1, total: sorted.length }),
   }[a]();
   document.getElementById('out').innerHTML = svg;

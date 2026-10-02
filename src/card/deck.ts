@@ -11,7 +11,8 @@ import { TEAR_CURVE_GLSL, type TearUniforms } from '../pack/tearShader';
 import { Card, CARD_H, CARD_W } from './card';
 import type { RarityCode } from './holo';
 
-const GAP = 0.009; // 카드 사이 z 간격 (기울이면 아래 카드 옆면이 층층이 보이도록)
+const GAP = 0.013; // 카드 사이 z 간격 (기울이면 아래 카드 옆면이 층층이 보이도록)
+const IN_SQUEEZE = 0.65; // 팩 안에서는 뭉치를 이만큼 얇게 눌러 담음 (절취선 입구 두께보다 얇아야 팩을 뚫고 보이지 않음)
 const IN_TOP_V = 0.16; // 팩 안에서 카드 윗변 위치 (팩 위에서부터 비율, 절취선 아래)
 const IN_Y = packY(IN_TOP_V) - CARD_H / 2;
 const RISE = 1; // 팩 입구 위로 빠져나오는 거리
@@ -23,7 +24,6 @@ const SETTLE = 0.75; // 중앙으로 옮겨 가는 동안 입력을 받지 않�
 const TAP_MOVE = 10; // px
 const TAP_TIME = 350; // ms
 const FLING_MIN = 6; // 날아가는 최소 속도 (카드 폭/초)
-const FLING_SIDE = 0.3; // 위로 날아갈 때 옆으로 민 속도를 이만큼만 이어받음
 const TURN_DIST = 0.1; // 뒷면 카드를 이만큼 밀면 뒤집힘
 const TURN_SPEED = 0.9;
 const BACK_DRAG = 0.35; // 뒷면 카드는 손가락을 덜 따라옴 (고무줄)
@@ -99,7 +99,10 @@ interface Drag {
 
 export class Deck {
   readonly root = new Group();
+  /** 넘기는 순서. 맨 앞은 매장 안내 카드, 그 뒤가 경품 카드 */
   readonly cards: Card[];
+  /** 맨 앞의 매장 안내 카드 (경품 아님 — 첫 장은 넘기기 안내에 덮여 보이므로 경품 대신 이 카드가 덮임) */
+  readonly lead: Card;
   state: State = 'packed';
   /** 지금 맨 위 카드 번호 (0부터) */
   current = 0;
@@ -121,6 +124,8 @@ export class Deck {
   private readonly ry = new Spring(0, 2.2, 0.66);
   private readonly rz = new Spring(0, 1.6, 0.8);
   private readonly scale = new Spring(1, 1.5, 0.74);
+  /** 뭉치 두께 배율 — 팩 안에서는 눌려 있다가 중앙으로 옮겨 가며 펴짐 */
+  private readonly depth = new Spring(IN_SQUEEZE, 1.5, 0.74);
   private viewScale = 1;
   private settled = false;
 
@@ -131,9 +136,10 @@ export class Deck {
   private readonly inv = new Matrix4();
   private readonly openingMask: ReturnType<typeof openingUniforms>;
 
-  constructor(private readonly el: HTMLElement, private readonly camera: Camera, prizes: Prize[], fronts: Texture[], back: Texture, tear: TearUniforms) {
+  constructor(private readonly el: HTMLElement, private readonly camera: Camera, prizes: Prize[], fronts: Texture[], back: Texture, lead: Texture, tear: TearUniforms) {
     this.openingMask = openingUniforms(tear);
-    this.cards = prizes.map((p, i) => new Card(fronts[i], back, p.rarity as RarityCode));
+    this.lead = new Card(lead, back, 'C');
+    this.cards = [this.lead, ...prizes.map((p, i) => new Card(fronts[i], back, p.rarity as RarityCode))];
     const masked = new Set<Material>();
     for (const card of this.cards) {
       const materials = Array.isArray(card.mesh.material) ? card.mesh.material : [card.mesh.material];
@@ -154,6 +160,11 @@ export class Deck {
 
   get top(): Card | null {
     return this.cards[this.current] ?? null;
+  }
+
+  /** 경품 카드만 (매장 안내 카드 제외) */
+  get prizeCards() {
+    return this.cards.slice(1);
   }
 
   get dragging() {
@@ -245,9 +256,9 @@ export class Deck {
   /** 팩 안에 있을 때의 덱 위치 (팩 로컬) */
   private place() {
     const n = this.cards.length;
-    this.root.position.set(0, IN_Y + this.rise.value, ((n - 1) * GAP) / 2);
+    this.root.position.set(0, IN_Y + this.rise.value, ((n - 1) * GAP * IN_SQUEEZE) / 2);
     this.root.rotation.set(0, 0, 0);
-    this.root.scale.setScalar(1);
+    this.root.scale.set(1, 1, IN_SQUEEZE);
   }
 
   update(dt: number) {
@@ -260,16 +271,17 @@ export class Deck {
       }
       this.place();
     } else {
-      for (const s of [this.px, this.py, this.pz, this.rx, this.ry, this.rz, this.scale]) s.step(dt);
+      for (const s of [this.px, this.py, this.pz, this.rx, this.ry, this.rz, this.scale, this.depth]) s.step(dt);
       this.root.position.set(this.px.value, this.py.value, this.pz.value);
       this.root.rotation.set(this.rx.value, this.ry.value, this.rz.value);
-      this.root.scale.setScalar(this.scale.value);
+      this.root.scale.set(this.scale.value, this.scale.value, this.scale.value * this.depth.value);
       if (this.state === 'presenting') {
         this.presentAge += dt;
         if (!this.settled && this.presentAge > HOLD) {
           this.settled = true;
           this.px.target = this.py.target = this.pz.target = this.rz.target = 0;
           this.scale.target = this.viewScale;
+          this.depth.target = 1;
         }
         if (this.presentAge > HOLD + SETTLE) this.state = 'ready';
       }
@@ -392,10 +404,9 @@ export class Deck {
       return;
     }
 
-    // 조금이라도 밀었으면 어느 방향이든 위로 넘어감 (옆으로 민 만큼만 살짝 비껴감)
+    // 조금이라도 밀었으면 어느 방향이든 위로 일직선으로 넘어감
     if (moved >= TAP_MOVE) {
-      const s = Math.max(FLING_MIN * CARD_W, Math.hypot(v.x, v.y) * 1.1);
-      card.fling(clamp(v.x * FLING_SIDE, -s * FLING_SIDE, s * FLING_SIDE), s);
+      card.fling(Math.max(FLING_MIN * CARD_W, Math.hypot(v.x, v.y) * 1.1));
       this.current++;
       this.layout();
       if (this.current >= this.cards.length) {
