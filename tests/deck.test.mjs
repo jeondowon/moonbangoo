@@ -2,10 +2,10 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { PerspectiveCamera, Scene, Texture } from 'three';
 import { Deck } from '../src/card/deck.ts';
-import { drawPack } from '../src/data/draw.ts';
+import { fixedPack } from './helpers/pack.mjs';
 import { createTearUniforms } from '../src/pack/tearShader.ts';
 
-const prizes = (await drawPack()).cards; // C, R, R, SR, UR
+const prizes = await fixedPack(); // C, R, R, SR, UR
 const W = 390;
 const H = 844;
 

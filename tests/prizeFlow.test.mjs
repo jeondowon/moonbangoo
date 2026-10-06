@@ -57,6 +57,7 @@ for (let chosen = 0; chosen < prizes.length; chosen++) {
     get('change-prize').click(); buttons[(chosen + 2) % 5].click();
     assert.equal(fx.calls, 1, 'only one confirmation effect');
     assert.deepEqual(sound.rarities, [prizes[chosen].rarity], 'selected rarity sounds only once');
+    assert.deepEqual(sound.prizes, [prizes[chosen]], '확정한 경품을 한 번만 알림 (재고 차감용)');
     tick(2);
     assert.equal(get('prize-result').hidden, false);
     assert.equal(get('prize-preview').hidden, true);

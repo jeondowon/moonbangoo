@@ -147,6 +147,9 @@ export class CutFx {
     this.halo = new Sprite(mat(new Color(2.2, 1.35, 0.55)));
     this.core = new Sprite(mat(new Color(6, 5.2, 4)));
     this.halo.renderOrder = this.core.renderOrder = 30;
+    // 첫 update 전(팩 고르는 화면)에는 꺼진 상태. 미리 컴파일되도록 숨기지 않고 크기만 0에 가깝게
+    this.halo.scale.setScalar(0.001);
+    this.core.scale.setScalar(0.001);
     this.light = new PointLight('#ffcf8a', 0, 0.9, 2);
     this.group.add(this.halo, this.core, this.light, this.sparks.points);
   }

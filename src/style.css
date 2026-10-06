@@ -192,6 +192,82 @@ html, body {
   .coach-hand, .coach-arrow { animation: none; }
 }
 
+/* ── 오리파: 수량 표시 + 팩 고르기 ─────────── */
+/* 팩은 캔버스에 그려지므로 배경 없이 덮는다. 가운데 영역(.oripa-stage)이 스와이프를 받는다 */
+.oripa {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: max(20px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom));
+  text-align: center;
+  animation: oripa-in .6s ease both;
+  transition: opacity .45s ease;
+}
+.oripa.is-leaving { opacity: 0; pointer-events: none; }
+@keyframes oripa-in { from { opacity: 0; } }
+.oripa-stats {
+  display: flex;
+  align-items: center;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.oripa-stats p { margin: 0; padding: 0 16px; white-space: nowrap; }
+.oripa-stats p + p { border-left: 1px solid rgba(217, 184, 114, .3); }
+.oripa-stats strong {
+  margin: 0 3px 0 6px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.oripa-soldout {
+  margin: clamp(10px, 2.5svh, 26px) 0 0;
+  font-family: 'Gowun Batang', serif;
+  font-weight: 700;
+  font-size: clamp(21px, 5.6vw, 30px);
+}
+.oripa-stage {
+  flex: 1;
+  align-self: stretch;
+  min-height: 0;
+  touch-action: none;
+  cursor: grab;
+}
+.oripa-stage:active { cursor: grabbing; }
+.oripa-stock {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  width: min(100%, 980px);
+  margin: clamp(12px, 2.4svh, 22px) 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid rgba(217, 184, 114, .22);
+  list-style: none;
+}
+.oripa-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.oripa-item img { width: 34px; height: 34px; object-fit: contain; }
+.oripa-item.is-empty { opacity: .35; }
+.oripa-count { font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.oripa-count b { font-weight: 700; color: var(--text); }
+.oripa-count small { font-size: 10px; color: var(--muted); }
+@media (min-width: 640px) {
+  .oripa-item { flex-direction: row; justify-content: center; gap: 10px; }
+  .oripa-item img { width: 40px; height: 40px; }
+  .oripa-count { font-size: 15px; }
+  .oripa-count small { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .oripa { animation: none; }
+}
+
 /* ── 공통 접근성 · 입력 ───────────────────── */
 [hidden] { display: none !important; }
 button, a { -webkit-tap-highlight-color: transparent; }

@@ -27,6 +27,17 @@
   </p>
 </div>
 
+<!-- 오리파: 남은 수량 표시 + 팩 고르기. 팩 자체는 캔버스에 그리고, 가운데 영역은 좌우 스와이프·탭(가운데 팩 = 열기)을 받는다 -->
+<section id="oripa" class="oripa" aria-label="카드팩 고르기" hidden>
+  <header class="oripa-stats">
+    <p>남은 카드 <strong id="oripa-remaining"></strong> 장</p>
+    <p>최고등급 <strong id="oripa-top"></strong> 개</p>
+  </header>
+  <p id="oripa-soldout" class="oripa-soldout" hidden>경품이 모두 소진되었어요</p>
+  <div id="oripa-stage" class="oripa-stage" role="group" aria-roledescription="캐러셀" tabindex="0" aria-label="카드팩 고르기. 좌우로 넘기고, 가운데 팩을 누르면 열려요"></div>
+  <ul id="oripa-stock" class="oripa-stock" aria-label="카테고리별 남은 경품"></ul>
+</section>
+
 <!-- 조작 안내 (절취·뒤집기) -->
 <div id="hint" class="hint" aria-live="polite">
   <p class="hint-main"></p>

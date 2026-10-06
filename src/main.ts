@@ -1,4 +1,4 @@
-// 1차: 인트로 → 팩 개봉 → 카드 5장 확인 → 요약·선택 → 목업 쿠폰 (M1~M5).
+// 1차: 인트로 → 오리파(팩 고르기) → 팩 개봉 → 카드 5장 확인 → 요약·선택 → 목업 쿠폰 (M1~M5).
 import { Group, Vector3 } from 'three';
 import './style.css';
 import { SoundEffects } from './audio/sound';
@@ -9,15 +9,18 @@ import { updateHoloTime } from './card/holo';
 import { Spring } from './core/spring';
 import { TiltInput } from './core/tilt';
 import { drawPack } from './data/draw';
+import { consume, inventory } from './data/inventory';
 import { CutFx } from './fx/cutFx';
 import { RevealFx } from './fx/revealFx';
 import { createShadow } from './gfx/backdrop';
 import { createRendering } from './gfx/rendering';
+import { PackCarousel } from './pack/carousel';
 import { Cutter } from './pack/cutter';
 import { Pack, PACK_H, PACK_W, packX, packY, TEAR_Z } from './pack/pack';
 import { TEAR_V } from './pack/tear';
 import { buildPackTextures } from './pack/textures';
 import { createHint } from './ui/hint';
+import { OripaScreen } from './ui/oripa';
 import { PrizeFlow } from './ui/prizeFlow';
 
 const MAX_TILT = (18 * Math.PI) / 180; // 명세 R10: 최대 ±15~20°
@@ -67,6 +70,9 @@ let pack: Pack | null = null;
 let cutter: Cutter | null = null;
 let deck: Deck | null = null;
 let prizeFlow: PrizeFlow | null = null;
+let carousel: PackCarousel | null = null;
+let oripa: OripaScreen | null = null;
+let choosing = false; // 오리파 화면에서 팩을 고르는 중
 let summaryAt = -1;
 /** 카드를 보여줄 때 덱 배율 (화면 비율에 맞춰 resize에서 계산) */
 let viewScale = 1;
@@ -109,6 +115,20 @@ function resize() {
   // 빠져나오는 카드 윗변이 화면 윗끝 아래에 머물 만큼 팩을 내림
   dropBy = Math.max(0, RISE_TOP + RISE_MARGIN - visH / 2);
   if (deck && deck.state !== 'packed') openDrop.target = -dropBy;
+  layoutCarousel();
+}
+
+/** 오리파 화면의 가운데 영역에 팩 캐러셀을 맞춘다 (가운데 팩 위쪽, 아래는 바닥 반사 자리) */
+function layoutCarousel() {
+  if (!carousel || !oripa?.shown) return;
+  const view = canvas.getBoundingClientRect();
+  const box = oripa.stage.getBoundingClientRect();
+  if (!box.height || !view.height) return;
+  const unit = (2 * Math.tan(((camera.fov / 2) * Math.PI) / 180) * camera.position.z) / view.height; // 월드/px
+  // 가운데 팩은 영역 높이의 78%, 폭의 46%를 넘지 않게 (양옆 팩이 화면 가장자리에 걸치도록)
+  const packPx = Math.min(box.height * 0.78, (box.width * 0.46 * PACK_H) / PACK_W);
+  const centerPx = box.top + box.height * 0.06 + packPx / 2;
+  carousel.setLayout(-(centerPx - view.top - view.height / 2) * unit, (packPx * unit) / PACK_H);
 }
 // 인앱 브라우저(인스타그램 등)는 최초 진입 시 주소창이 접히며 실제 뷰포트가
 // 바뀌어도 window resize 이벤트를 안정적으로 쏘지 않는 경우가 있어,
@@ -133,7 +153,14 @@ async function prepare() {
   deck.setViewScale(viewScale);
   pack.root.add(deck.root);
   setupDeck(deck);
-  prizeFlow = new PrizeFlow(canvas, camera, result.cards, reveal, (rarity) => sound.confirm(rarity));
+  prizeFlow = new PrizeFlow(canvas, camera, result.cards, reveal, (rarity, prize) => {
+    sound.confirm(rarity);
+    consume(inventory, prize.id); // 오리파: 최종 선택한 1장만 차감 (아직 저장하지 않음)
+  });
+  carousel = new PackCarousel(tex, packEnvironment);
+  scene.add(carousel.group);
+  oripa = new OripaScreen(carousel, inventory);
+  carousel.group.visible = true; // 아래 미리 컴파일 대상에 넣기 위해 잠깐 보이게
   // 팩·카드 텍스처를 로딩 중에 GPU로 올려 둔다 (팩 등장 첫 프레임에 한꺼번에 올리며 끊기지 않게)
   for (const side of [tex.front, tex.back]) for (const t of Object.values(side)) renderer.initTexture(t);
   for (const t of [cardTex.back, cardTex.store, ...cardTex.fronts]) renderer.initTexture(t);
@@ -141,30 +168,41 @@ async function prepare() {
   reveal.warmup(scene);
   await renderer.compileAsync(scene, camera);
   reveal.warmup(null);
-  stage.visible = shadow.visible = false;
+  stage.visible = shadow.visible = carousel.group.visible = false;
   ready = true;
   intro.classList.remove('is-loading');
-  if (wantsStart) start();
+  if (wantsStart) showOripa();
 }
 
 // 준비 중에 탭해도 기억했다가 준비되면 바로 시작
 function onIntroTap() {
   void sound.unlock();
   wantsStart = true;
-  if (ready) start();
+  if (ready) showOripa();
 }
 intro.addEventListener('click', onIntroTap);
 intro.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') onIntroTap();
 });
 
+function showOripa() {
+  if (choosing || started || !oripa) return;
+  intro.classList.add('is-hidden');
+  oripa.show();
+  layoutCarousel();
+  choosing = true;
+}
+
+/** 고른 팩이 실제 팩 자리(정면·원래 크기)로 모였을 때 — 같은 자리의 실제 팩으로 바꿔 끼운다 */
 function start() {
   if (started) return;
-  intro.classList.add('is-hidden');
+  oripa?.hide();
+  choosing = false;
   stage.visible = shadow.visible = true;
-  enterY.target = 0;
-  enterSpin.target = 0;
-  enterPitch.target = 0;
+  // 캐러셀에서 이미 자리를 잡았으므로 아래에서 올라오는 등장 연출 없이 그 자리에서 시작
+  enterY.snap(0);
+  enterSpin.snap(0);
+  enterPitch.snap(0);
   started = true;
   startedAt = time;
 }
@@ -325,6 +363,11 @@ function frame(dt: number) {
   time += dt;
   updateHoloTime(time);
 
+  if (choosing && carousel) {
+    carousel.update(dt);
+    if (carousel.opened) start();
+  }
+
   if (started && pack && cutter) {
     // 자르는 동안에는 팩을 정면으로 붙잡아 절취선이 흔들리지 않게
     // 카드가 빠져나오는 동안에도 팩을 거의 정면으로
@@ -392,7 +435,7 @@ function frame(dt: number) {
     }
   }
   // 시작 전에는 불투명한 인트로가 캔버스를 덮고 있으므로 그리지 않는다 (로딩 중 텍스처 생성과 경쟁하지 않게)
-  if (started) composer.render(dt);
+  if (started || choosing) composer.render(dt);
 }
 
 /** 화면 중앙으로 나온 카드 뭉치 아래 그림자 */

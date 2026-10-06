@@ -49,7 +49,7 @@ const SEG_Y = 140;
  * 팩 곡면 (v0~v1 구간). 행은 전역 격자(1/SEG_Y)에 맞춘다
  * → 윗조각·본체가 겹치는 구간의 삼각형이 완전히 같아서, 찢김 곡선 양쪽이 픽셀 단위로 딱 맞물린다.
  */
-function packSurface(side: 1 | -1, v0 = 0, v1 = 1, segX = SEG_X, segY = SEG_Y): BufferGeometry {
+export function packSurface(side: 1 | -1, v0 = 0, v1 = 1, segX = SEG_X, segY = SEG_Y): BufferGeometry {
   const j0 = Math.floor(v0 * segY);
   const ny = Math.ceil(v1 * segY) - j0;
   const pos = new Float32Array((segX + 1) * (ny + 1) * 3);
@@ -86,7 +86,7 @@ function packSurface(side: 1 | -1, v0 = 0, v1 = 1, segX = SEG_X, segY = SEG_Y): 
   return g;
 }
 
-function packMaterial(t: SideTextures, environment: Texture) {
+export function packMaterial(t: SideTextures, environment: Texture) {
   return new MeshPhysicalMaterial({
     map: t.albedo,
     envMap: environment,

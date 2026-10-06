@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PerspectiveCamera, Scene, Texture } from 'three';
 import { Card, CARD_H } from '../../src/card/card.ts';
-import { drawPack } from '../../src/data/draw.ts';
+import { fixedPack } from './pack.mjs';
 import { PrizeFlow } from '../../src/ui/prizeFlow.ts';
 
-export const prizes = (await drawPack()).cards;
+export const prizes = await fixedPack(); // C, R, R, SR, UR
 const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
 const ids = [...html.matchAll(/id="([^"]+)"/g)].map(m => m[1]);
 assert.equal(new Set(ids).size, ids.length, 'HTML IDs must be unique');
@@ -29,6 +29,8 @@ class Element extends EventTarget {
   };
 
   append(...children) { this.children.push(...children); }
+  replaceChildren(...children) { this.children = children; }
+  getContext() { return { createLinearGradient: () => ({ addColorStop() {} }), fillRect() {} }; }
   setAttribute(key, value) { this.attributes.set(key, value); }
   getBoundingClientRect() { this.layoutReads++; return this.rect; }
   get clientHeight() { this.layoutReads++; return this.rect.height; }
@@ -68,8 +70,8 @@ export function setup(width = 390, height = 844) {
   const scene = new Scene();
   const cards = prizes.map(p => new Card(new Texture(), new Texture(), p.rarity));
   const fx = { calls: 0, scale: 0, play() { this.calls++; }, stop() {}, setScale(value) { this.scale = value; } };
-  const sound = { rarities: [] };
-  const flow = new PrizeFlow(get('stage'), camera, prizes, fx, rarity => { sound.rarities.push(rarity); });
+  const sound = { rarities: [], prizes: [] };
+  const flow = new PrizeFlow(get('stage'), camera, prizes, fx, (rarity, prize) => { sound.rarities.push(rarity); sound.prizes.push(prize); });
   const tick = seconds => {
     for (let t = 0; t < seconds; t += 1 / 60) flow.update(1 / 60, 2);
   };
