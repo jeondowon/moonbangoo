@@ -9,15 +9,21 @@ import {
   Vector2,
 } from 'three';
 
+// 톤매핑 후 화면에서 라이트는 가운데 #eee4d4 → 가장자리 #d7c5a7 정도로 보인다 (블룸 기준 1.0 미만 유지)
+const PALETTES = {
+  light: { uCenter: '#f7eedf', uMid: '#efe4cf', uEdge: '#dccbae', uGlow: '#5c4c32' },
+  dark: { uCenter: '#3d3226', uMid: '#241d16', uEdge: '#110d0a', uGlow: '#6b5534' },
+};
+
 export function createBackdrop() {
   const mat = new ShaderMaterial({
     uniforms: {
       uAspect: { value: 1 },
       uBrightness: { value: 1 },
-      uCenter: { value: new Color('#3d3226') },
-      uMid: { value: new Color('#241d16') },
-      uEdge: { value: new Color('#110d0a') },
-      uGlow: { value: new Color('#6b5534') },
+      uCenter: { value: new Color(PALETTES.light.uCenter) },
+      uMid: { value: new Color(PALETTES.light.uMid) },
+      uEdge: { value: new Color(PALETTES.light.uEdge) },
+      uGlow: { value: new Color(PALETTES.light.uGlow) },
       uFocus: { value: new Vector2(0.5, 0.56) },
     },
     vertexShader: /* glsl */ `
@@ -60,6 +66,11 @@ export function createBackdrop() {
     },
     setBrightness(value: number) {
       mat.uniforms.uBrightness.value = value;
+    },
+    setTheme(dark: boolean) {
+      for (const [name, hex] of Object.entries(dark ? PALETTES.dark : PALETTES.light)) {
+        (mat.uniforms[name].value as Color).set(hex);
+      }
     },
   };
 }

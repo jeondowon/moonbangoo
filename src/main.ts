@@ -22,6 +22,7 @@ import { buildPackTextures } from './pack/textures';
 import { createHint } from './ui/hint';
 import { OripaScreen } from './ui/oripa';
 import { PrizeFlow } from './ui/prizeFlow';
+import { createThemeToggle } from './ui/theme';
 
 const MAX_TILT = (18 * Math.PI) / 180; // 명세 R10: 최대 ±15~20°
 const TAP_MOVE = 10; // px — 이보다 적게 움직이고
@@ -35,6 +36,13 @@ const flashEl = document.querySelector<HTMLElement>('#flash')!;
 const swipeCoach = document.querySelector<HTMLElement>('#swipe-coach')!;
 
 const { renderer, scene, camera, backdrop, composer, packEnvironment } = createRendering(canvas);
+createThemeToggle(
+  document.querySelector<HTMLElement>('#theme-toggle')!,
+  document.documentElement,
+  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]'),
+  (() => { try { return localStorage; } catch { return null; } })(),
+  (dark) => backdrop.setTheme(dark),
+);
 
 const stage = new Group(); // 팩 위치·회전 담당
 scene.add(stage);

@@ -1,8 +1,16 @@
 :root {
+  --bg: #e9dec8;
+  --text: #2f2418;
+  --muted: #6e5d47;
+  --gold: #7a5520;
+  --chip: rgba(255, 250, 240, .55);
+}
+:root[data-theme="dark"] {
   --bg: #1a1511;
   --text: #efe6d6;
   --muted: #a99a82;
   --gold: #d9b872;
+  --chip: rgba(26, 21, 17, .55);
 }
 
 * { box-sizing: border-box; }
@@ -50,18 +58,20 @@ html, body {
   padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
   text-align: center;
   cursor: pointer;
-  background: radial-gradient(120% 80% at 50% 42%, #3d3226 0%, #241d16 45%, #110d0a 100%);
+  background: radial-gradient(120% 80% at 50% 42%, #eee4d4 0%, #e7dac2 45%, #d6c5a6 100%);
   transition: opacity .6s ease, visibility 0s linear .6s;
   outline: none;
 }
+[data-theme="dark"] .intro { background: radial-gradient(120% 80% at 50% 42%, #3d3226 0%, #241d16 45%, #110d0a 100%); }
 .intro.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 .intro.is-loading, .intro.is-error { cursor: default; }
 
 .intro-logo {
   width: min(52vw, 220px);
   height: auto;
-  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, .45));
+  filter: drop-shadow(0 6px 18px rgba(90, 60, 20, .25));
 }
+[data-theme="dark"] .intro-logo { filter: drop-shadow(0 6px 18px rgba(0, 0, 0, .45)); }
 .intro-eyebrow {
   margin: 28px 0 0;
   font-weight: 600;
@@ -70,8 +80,8 @@ html, body {
   color: var(--gold);
 }
 .intro-title {
-  margin: 8px 0 0;
-  font-weight: 700;
+  margin: 20px 0 0;
+  font-weight: 600;
   font-size: clamp(30px, 8.5vw, 42px);
   letter-spacing: -.02em;
 }
@@ -133,6 +143,7 @@ html, body {
   position: fixed;
   inset: 0;
   pointer-events: none;
+  --text: #efe6d6; /* 어둡게 덮인 위라 밝은 글자 */
   background: rgba(8, 6, 4, .55);
   opacity: 0;
   transition: opacity .4s ease;
@@ -212,7 +223,8 @@ html, body {
   color: var(--muted);
 }
 .oripa-stats p { margin: 0; padding: 0 16px; white-space: nowrap; }
-.oripa-stats p + p { border-left: 1px solid rgba(217, 184, 114, .3); }
+.oripa-stats p + p { border-left: 1px solid rgba(122, 85, 32, .3); }
+[data-theme="dark"] .oripa-stats p + p { border-left-color: rgba(217, 184, 114, .3); }
 .oripa-stats strong {
   margin: 0 3px 0 6px;
   font-size: 19px;
@@ -241,9 +253,10 @@ html, body {
   width: min(100%, 980px);
   margin: clamp(12px, 2.4svh, 22px) 0 0;
   padding: 12px 0 0;
-  border-top: 1px solid rgba(217, 184, 114, .22);
+  border-top: 1px solid rgba(122, 85, 32, .22);
   list-style: none;
 }
+[data-theme="dark"] .oripa-stock { border-top-color: rgba(217, 184, 114, .22); }
 .oripa-item {
   display: flex;
   flex-direction: column;
@@ -265,6 +278,28 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .oripa { animation: none; }
 }
+
+/* ── 라이트/다크 전환 버튼 ─────────────────── */
+/* 다른 화면·안내 오버레이보다 위에 둔다 */
+.theme-toggle {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--chip);
+  color: var(--text);
+  cursor: pointer;
+}
+.theme-toggle svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.theme-toggle .icon-moon { fill: currentColor; stroke: none; }
+.theme-toggle .icon-sun,
+[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
 
 /* ── 공통 접근성 · 입력 ───────────────────── */
 [hidden] { display: none !important; }
@@ -320,7 +355,8 @@ button:focus-visible, a:focus-visible {
 .flow-summary.is-background .prize-option-name,
 .flow-summary.is-background .prize-option-rarity { visibility: hidden; }
 .flow-summary.is-background .prize-option { pointer-events: none; }
-.flow-preview { gap: 12px; --muted: #c6b9a4; }
+/* 미리보기는 배경을 어둡게 낮추므로 밝은 글자를 쓴다 */
+.flow-preview { gap: 12px; --text: #efe6d6; --muted: #c6b9a4; --gold: #d9b872; color: var(--text); }
 .focus-card { width: min(100%, 520px); min-height: 90px; flex: 1; touch-action: none; pointer-events: auto; }
 .preview-details { width: min(100%, 380px); text-align: center; flex: none; }
 .prize-rarity { margin: 0 0 5px; color: var(--gold); font-size: 12px; letter-spacing: .06em; }
