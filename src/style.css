@@ -64,18 +64,16 @@ html, body {
 }
 .intro-eyebrow {
   margin: 28px 0 0;
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 700;
-  font-size: 12px;
+  font-weight: 600;
+  font-size: 11px;
   letter-spacing: .3em;
   color: var(--gold);
 }
 .intro-title {
   margin: 8px 0 0;
-  font-family: 'Gowun Batang', serif;
   font-weight: 700;
   font-size: clamp(30px, 8.5vw, 42px);
-  letter-spacing: .02em;
+  letter-spacing: -.02em;
 }
 .intro-cta {
   margin: 44px 0 0;
@@ -224,9 +222,9 @@ html, body {
 }
 .oripa-soldout {
   margin: clamp(10px, 2.5svh, 26px) 0 0;
-  font-family: 'Gowun Batang', serif;
   font-weight: 700;
   font-size: clamp(21px, 5.6vw, 30px);
+  letter-spacing: -.02em;
 }
 .oripa-stage {
   flex: 1;
@@ -291,11 +289,12 @@ button:focus-visible, a:focus-visible {
 .flow-heading { text-align: center; flex: none; }
 .flow-eyebrow {
   margin: 0 0 8px; color: var(--gold);
-  font: 700 12px 'Cormorant Garamond', serif;
+  font: 600 11px 'Pretendard Variable', Pretendard, sans-serif;
   letter-spacing: .28em;
 }
 .flow-heading h1 {
-  font: 700 clamp(22px, 5.8vw, 30px) 'Gowun Batang', serif;
+  font: 700 clamp(22px, 5.8vw, 30px) 'Pretendard Variable', Pretendard, sans-serif;
+  letter-spacing: -.02em;
   margin: 0; outline: none;
 }
 .flow-heading > p:last-child:not(.flow-eyebrow) { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
@@ -325,7 +324,7 @@ button:focus-visible, a:focus-visible {
 .focus-card { width: min(100%, 520px); min-height: 90px; flex: 1; touch-action: none; pointer-events: auto; }
 .preview-details { width: min(100%, 380px); text-align: center; flex: none; }
 .prize-rarity { margin: 0 0 5px; color: var(--gold); font-size: 12px; letter-spacing: .06em; }
-.preview-details h2, .coupon-ticket h2 { margin: 0; font: 700 25px 'Gowun Batang', serif; }
+.preview-details h2, .coupon-ticket h2 { margin: 0; font: 700 25px 'Pretendard Variable', Pretendard, sans-serif; letter-spacing: -.02em; }
 .prize-description { margin: 10px 0 0; color: var(--muted); white-space: pre-line; font-size: 13px; line-height: 1.6; }
 .preview-condition { margin: 14px 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
 .preview-condition strong { color: var(--text); }
