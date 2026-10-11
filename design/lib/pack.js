@@ -6,7 +6,7 @@
 //   [data-layer=print]   일반 인쇄 텍스트
 //   [data-layer=shading] 2D 시안 전용 입체감 (3D에서는 실제 조명이 대신하므로 제외)
 import {
-  INK, linGrad, grainFilter, pressFilter, divider, wavePath,
+  INK, linGrad, grainFilter, pressFilter, divider,
 } from './common.js';
 import { logoMarkup, LOGO_BOX } from './logo.js';
 
@@ -21,31 +21,13 @@ export const PACK = {
 };
 
 // 팩 전용 인쇄 팔레트. 카드·로고 원본의 색상은 바꾸지 않는다.
-const WRAP = { ivory: '#FBF9F4', ink: '#88734F' };
+const WRAP = { ivory: '#FAF7EF', sand: '#EAE1D0', line: '#D8CAB0', label: '#FFFCF5', ink: '#88734F' };
 const PACK_GOLD = [[0, '#AE8D50'], [0.45, '#D0B477'], [1, '#B4965F']];
 
-// 흰 대리석 바탕: 옅은 회갈색 결 + 진주빛 광택
-function marbleDefs(id, { W, H } = PACK) {
-  return `<filter id="${id('veins')}" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
-<feTurbulence type="fractalNoise" baseFrequency="0.0028 0.0065" numOctaves="6" seed="23" result="n"/>
-<feColorMatrix in="n" type="matrix" values="0 0 0 0 0.62  0 0 0 0 0.56  0 0 0 0 0.47  1 0 0 0 0" result="c"/>
-<feComponentTransfer in="c"><feFuncA type="table" tableValues="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.16 0.32 0.16 0 0 0 0 0 0 0 0.12 0.06 0 0 0 0 0 0 0 0 0 0 0 0 0"/></feComponentTransfer>
-<feGaussianBlur stdDeviation="0.4"/>
-<feComposite in2="SourceGraphic" operator="in"/></filter>
-${linGrad(id('pearl'), [[0, '#F4E4E0', 0.7], [0.32, '#fff', 0], [0.62, '#EDEFEF', 0.45], [1, '#F1E6D2', 0.75]], 0, 0, W, H)}`;
-}
-
-function marble(u, { W, H } = PACK) {
-  return `<rect width="${W}" height="${H}" fill="${WRAP.ivory}"/>
-<rect width="${W}" height="${H}" fill="#000" filter="${u('veins')}"/>
-<rect width="${W}" height="${H}" fill="${u('pearl')}"/>`;
-}
-
-// 하단 물결: 아래로 갈수록 진해지는 모래색 겹
-function waves(y0, { W, H } = PACK) {
-  return [['#F2EADC', 0.9], ['#EBE1CE', 0.85], ['#E5D9C2', 0.8], ['#DFD1B7', 0.8]]
-    .map(([c, a], i) => `<path d="${wavePath(0, W + 300, y0 + i * 26, 11 - i * 1.5, 300 - i * 30, i * 90, H)}" fill="${c}" opacity="${a}"/>`)
-    .join('');
+function paperLines(y0, y1, width) {
+  let lines = '';
+  for (let y = y0; y <= y1; y += 12) lines += `M0 ${y}H${width}`;
+  return `<path d="${lines}" fill="none" stroke="${WRAP.line}" stroke-width="1" opacity=".45"/>`;
 }
 
 // 팩 외곽선: 상·하단 톱니 + 절취선 양옆 V홈
@@ -78,7 +60,7 @@ export function packFront({ uid = 'pf' } = {}) {
   const logo = { x: 120, y: 214, width: 360 };
 
   const defs = `
-${marbleDefs(id)}
+${linGrad(id('base'), [[0, WRAP.ivory], [0.58, '#F5EFE3'], [1, WRAP.sand]], 0, 0, 0, H)}
 ${linGrad(id('crimp'), [[0, '#EDE3D2'], [0.5, '#F7F1E6'], [1, '#E4D7C0']], 0, 0, W, 0)}
 ${linGrad(id('foil'), PACK_GOLD, 0, 0, W, H * 0.62)}
 ${linGrad(id('foil-logo'), PACK_GOLD, LOGO_BOX.x, LOGO_BOX.y, LOGO_BOX.x + LOGO_BOX.w, LOGO_BOX.y + LOGO_BOX.h)}
@@ -91,8 +73,12 @@ ${pressFilter(id('press-logo'), 0.75)}
 
   const paper = `
 <g data-layer="paper">
-  ${marble(u)}
-  ${waves(880)}
+  <rect width="${W}" height="${H}" fill="${u('base')}"/>
+  <path d="M34 172V882M${W - 34} 172V882" stroke="${WRAP.line}" stroke-width="1.2"/>
+  <rect x="64" y="568" width="472" height="216" rx="3" fill="${WRAP.label}"/>
+  <rect x="72" y="576" width="456" height="200" rx="1" fill="none" stroke="${WRAP.line}" stroke-width="1"/>
+  <path d="M64 894H536" stroke="${WRAP.line}" stroke-width="1"/>
+  ${paperLines(918, H - crimp, W)}
 </g>`;
 
   const crimps = `<g data-layer="crimp">${crimpBand(0, crimp, W, u('crimp'))}${crimpBand(H - crimp, H, W, u('crimp'))}</g>`;
@@ -165,7 +151,7 @@ export function packBack({ uid = 'pb' } = {}) {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" class="pack" role="img" aria-label="카드팩 뒷면">
 <defs>
-${marbleDefs(id)}
+${linGrad(id('base'), [[0, WRAP.ivory], [0.58, '#F5EFE3'], [1, WRAP.sand]], 0, 0, 0, H)}
 ${linGrad(id('crimp'), [[0, '#EDE3D2'], [0.5, '#F7F1E6'], [1, '#E4D7C0']], 0, 0, W, 0)}
 ${linGrad(id('seam'), [[0, '#5b4424', 0.12], [0.18, '#fff', 0.35], [0.5, '#fff', 0.08], [0.82, '#fff', 0.35], [1, '#5b4424', 0.12]], seam.x0, 0, seam.x1, 0)}
 ${linGrad(id('foil'), PACK_GOLD, 0, 0, W, H * 0.62)}
@@ -177,8 +163,11 @@ ${pressFilter(id('press'), 0.75)}
 </defs>
 <g clip-path="${u('clip')}">
   <g data-layer="paper">
-    ${marble(u)}
-    ${waves(880)}
+    <rect width="${W}" height="${H}" fill="${u('base')}"/>
+    <rect x="42" y="160" width="218" height="290" rx="3" fill="${WRAP.label}" stroke="${WRAP.line}" stroke-width="1"/>
+    <rect x="346" y="160" width="212" height="184" rx="3" fill="${WRAP.label}" stroke="${WRAP.line}" stroke-width="1"/>
+    <path d="M42 714H260M346 714H558" stroke="${WRAP.line}" stroke-width="1"/>
+    ${paperLines(918, H - crimp, W)}
   </g>
   <g data-layer="crimp">
     ${crimpBand(0, crimp, W, u('crimp'))}
