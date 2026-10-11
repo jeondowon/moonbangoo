@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>어른뭉방구 · 카드팩 디자인 방향</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #eeece6; color: #514735; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; }
+    main { max-width: 1320px; margin: auto; padding: 52px 32px 64px; }
+    header { margin-bottom: 36px; }
+    .eyebrow { font-size: 11px; letter-spacing: .2em; color: #84745a; }
+    h1 { font-size: clamp(25px, 4vw, 36px); font-weight: 500; letter-spacing: -.04em; margin: 12px 0; }
+    header p { font-size: 14px; line-height: 1.8; color: #817561; }
+    .concepts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; }
+    figure { margin: 0; min-width: 0; }
+    .pack { display: block; width: 100%; height: auto; }
+    h2 { font-size: 19px; font-weight: 500; margin: 22px 0 10px; }
+    .number { display: inline-block; color: #a4874e; margin-right: 12px; }
+    figcaption p { margin: 0; color: #817561; font-size: 14px; line-height: 1.8; }
+    a { color: inherit; text-underline-offset: 4px; }
+    .download { display: inline-block; font-size: 12px; margin-top: 16px; }
+    footer { margin-top: 48px; border-top: 1px solid #d6d0c2; padding-top: 20px; color: #817561; font-size: 12px; line-height: 1.8; }
+    @media (max-width: 760px) {
+      main { padding: 32px 24px; }
+      .concepts { grid-template-columns: 1fr; gap: 48px; }
+      figure { max-width: 380px; width: 100%; margin-inline: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">EOREUN MUNGBANGGU / PACKAGE STUDIES</div>
+      <h1>같은 금색, 세 가지 구성.</h1>
+      <p>기존 로고와 아이보리·금색을 중심으로 다시 구성한 평면 시안입니다.<br>색의 면적, 로고의 크기, 글자의 배치를 비교해 주세요.</p>
+    </header>
+    <section class="concepts" aria-label="카드팩 앞면 디자인 시안 3종">
+      <figure>
+        <img class="pack" src="a-gold-band.svg" width="600" height="1040" alt="A안: 왼쪽에 세로 금색 띠, 오른쪽 아이보리 공간에 큰 금색 로고와 두 줄 제목">
+        <figcaption>
+          <h2><span class="number">A</span>금빛 띠</h2>
+          <p>얇고 긴 금색 면과 넉넉한 여백.<br>로고를 주인공으로 둔 차분한 구성입니다.</p>
+          <a class="download" href="a-gold-band.svg" download>SVG 내려받기</a>
+        </figcaption>
+      </figure>
+      <figure>
+        <img class="pack" src="b-gold-field.svg" width="600" height="1040" alt="B안: 위쪽 넓은 금색 면에 아이보리 로고, 아래쪽 아이보리 면에 제목과 안내">
+        <figcaption>
+          <h2><span class="number">B</span>금빛 바탕</h2>
+          <p>금색 바탕 위로 밝게 드러나는 로고.<br>세 안 중 금색의 존재감이 가장 큽니다.</p>
+          <a class="download" href="b-gold-field.svg" download>SVG 내려받기</a>
+        </figcaption>
+      </figure>
+      <figure>
+        <img class="pack" src="c-gift-envelope.svg" width="600" height="1040" alt="C안: 왼쪽 위 작은 금색 로고, 큰 선물 문구, 아래쪽 사선 금색 봉투 형태">
+        <figcaption>
+          <h2><span class="number">C</span>선물 봉투</h2>
+          <p>작은 로고와 큰 한글 문구, 사선으로 접힌 금색 면.<br>누군가에게 건네는 선물의 느낌을 담았습니다.</p>
+          <a class="download" href="c-gift-envelope.svg" download>SVG 내려받기</a>
+        </figcaption>
+      </figure>
+    </section>
+    <footer>앞면 구성 비교용 시안입니다. 금색은 평면 색으로 표시했으며, 금박의 반사 강도는 실제 적용 시 별도로 조정합니다.</footer>
+  </main>
+</body>
+</html>
