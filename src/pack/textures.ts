@@ -13,7 +13,7 @@ import { parseSvg, rasterize, svgText, toTexture } from '../gfx/svg';
 const SCALE = 1.5;
 
 // 금속 박의 기본색(PBR base color). 2D 시안의 금색 그라디언트 중간 톤
-const FOIL_ALBEDO = '#e2c486';
+const FOIL_ALBEDO = '#c4a568';
 
 const ROUGH = { paper: 0.82, crimp: 0.7, foil: 0.52, frontFoil: 0.62 };
 const FRONT_FOIL_METALNESS = 0.35;
