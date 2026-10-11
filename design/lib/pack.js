@@ -17,7 +17,7 @@ export const PACK = {
   tear: 132,          // 절취선 y (상단 12.7%)
   teeth: 12,          // 톱니 간격
   toothDepth: 8,
-  notch: 9,           // 절취선 양끝 V홈 깊이
+  notch: 0,           // 절취선 양끝 V홈 깊이 (0 = 홈 없음)
 };
 
 // 팩 외곽선: 상·하단 톱니 + 절취선 양옆 V홈

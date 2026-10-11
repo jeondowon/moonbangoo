@@ -63,11 +63,13 @@ for (let chosen = 0; chosen < prizes.length; chosen++) {
     assert.equal(get('prize-preview').hidden, true);
     assert.equal(get('result-name').textContent, prizes[chosen].name);
     assert.equal(get('result-condition').textContent, prizes[chosen].condition);
-    assert.match(get('result-code').textContent, /^DEMO-MB-/);
+    assert.equal(get('result-code'), undefined);
+    assert.equal(get('result-expiry'), undefined);
+    assert.equal(get('store-title'), undefined);
     assert.equal(cards.filter(c => c.root.parent.visible).length, 1);
-    const code = get('result-code').textContent;
     get('confirm-prize').click(); get('change-prize').click(); tick(0.2);
-    assert.equal(get('result-code').textContent, code, 'finalized coupon remains stable');
+    assert.equal(get('result-name').textContent, prizes[chosen].name, '확정한 상품 유지');
+    assert.equal(sound.prizes.length, 1, '결과 화면에서 중복 차감 없음');
     // Result card follows content scrolling instantly; material is reused, no new Card.
     const before = cards[chosen].root.parent.position.y;
     get('result-card').rect.top -= 200;
@@ -108,6 +110,9 @@ for (let selected = 0; selected < prizes.length; selected++) {
       assert.ok(shader.fragmentShader.includes('outgoingLight *= uCardBrightness;'));
       if (s.cards[i].rarity !== 'C') assert.ok(shader.fragmentShader.includes('uHoloStrength'));
       assert.equal(mat.customProgramCacheKey(), keys[i]);
+      const edge = { uniforms: {}, vertexShader: '', fragmentShader: '#include <common>\n#include <opaque_fragment>' };
+      s.cards[i].mesh.material[2].onBeforeCompile(edge, {});
+      assert.equal(edge.uniforms.uCardBrightness, s.cards[i].brightness);
     }
     s.get('change-prize').click(); s.tick(1);
     assert.ok(s.flow.backgroundBrightness > 0.999);

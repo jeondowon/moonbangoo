@@ -1,12 +1,13 @@
 // 절취 입력 (명세 R1). 포인터 위치를 팩 좌표(u, v)로 바꿔 TearState에 반영한다.
-//   - 판정 평면: 절취선 높이의 앞면 곡면(z = TEAR_Z). 팩 밖(좌우 V홈 바깥)까지 연장되므로 가장자리부터 긋기 쉽다
+//   - 밴드 안에서는 손가락이 지나간 경로 그대로 잘린다 (높이까지 TearState에 기록)
+//   - 판정 평면: 절취선 높이의 앞면 곡면(z = TEAR_Z). 팩 밖(좌우 가장자리 바깥)까지 연장되므로 가장자리부터 긋기 쉽다
 //   - 허용 밴드 밖으로 벗어나면 진행이 멈춘다(취소 아님). 다시 들어오면 그 지점부터 이어서
 //   - getCoalescedEvents로 프레임 사이 포인터 이동까지 모두 반영 → 빠르게 그어도 끊기지 않음
 import { Matrix4, Raycaster, Vector2, type Camera, type Object3D } from 'three';
 import { packX, packY, PACK_H, PACK_W, TEAR_Z } from './pack';
-import { TEAR_BINS, TEAR_V, type TearState } from './tear';
+import { TEAR_BINS, TEAR_MAX_DEV, TEAR_V, type TearState } from './tear';
 
-const BAND = 0.05; // 절취선 위아래 허용 폭 (팩 높이 비율, 휴대폰에서 약 ±30px)
+const BAND = TEAR_MAX_DEV; // 절취선 위아래 허용 폭 (팩 높이 비율, 휴대폰에서 약 ±30px)
 const START_BAND = 0.065; // 처음 누를 때는 조금 더 너그럽게
 const EDGE_SLACK = 0.12; // 좌우로 팩 밖까지 허용하는 폭 (팩 폭 비율)
 const COMPLETE = 0.95; // 이만큼 자르면 자동 완료
@@ -31,6 +32,7 @@ export class Cutter {
 
   private id = -1;
   private lastU = 0;
+  private lastV = 0;
   private lastIn = false;
   private samples: Sample[] = [];
   private readonly ray = new Raycaster();
@@ -104,7 +106,7 @@ export class Cutter {
     const inBand = Math.abs(p.v - TEAR_V) < BAND && p.u > -EDGE_SLACK && p.u < 1 + EDGE_SLACK;
     if (inBand) {
       if (this.lastIn) {
-        const n = this.tear.cut(this.lastU, p.u, this.now());
+        const n = this.tear.cut(this.lastU, p.u, this.now(), this.lastV, p.v);
         if (n > 0) {
           const prev = this.samples[this.samples.length - 1];
           const dtS = prev ? Math.max(1e-3, (t - prev.t) / 1000) : 1 / 60;
@@ -113,6 +115,7 @@ export class Cutter {
       }
       this.headU = Math.min(1, Math.max(0, p.u));
       this.lastU = p.u;
+      this.lastV = p.v;
     }
     this.lastIn = inBand;
     this.inBand = inBand;

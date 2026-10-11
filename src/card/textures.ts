@@ -1,7 +1,7 @@
 // 카드 텍스처: design/lib/card.js의 SVG(M0 확정 시안)를 래스터화한다.
 // M3은 색(albedo)만 — 등급별 금속·홀로 재질 분리는 M4에서.
 import type { Texture, WebGLRenderer } from 'three';
-import { CARD, cardBack, cardFront, cardStore } from '../../design/lib/card.js';
+import { CARD, STORE_PALETTES, cardBack, cardFront, cardStore } from '../../design/lib/card.js';
 import { loadLogo } from '../../design/lib/logo.js';
 import type { Prize } from '../data/draw';
 import { embeddedFontCss } from '../gfx/fonts';
@@ -55,7 +55,8 @@ async function fitTexts(svg: SVGSVGElement) {
 export async function buildCardTextures(renderer: WebGLRenderer, cards: Prize[]): Promise<CardTextures> {
   await loadLogo();
   const back = cardBack({ uid: 'cb' });
-  const store = cardStore({ uid: 'cs', total: cards.length });
+  const palette = STORE_PALETTES[Math.floor(Math.random() * STORE_PALETTES.length)];
+  const store = cardStore({ uid: 'cs', total: cards.length, palette });
   const fronts = cards.map((p, i) => cardFront(p, { uid: `cf${i}`, index: i + 1, total: cards.length }));
   const fontCss = await embeddedFontCss([back, store, ...fronts].map(svgText).join('')).catch((e) => {
     console.warn('폰트 내장 실패, 시스템 폰트로 대체', e);

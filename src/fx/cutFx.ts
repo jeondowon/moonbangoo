@@ -71,7 +71,7 @@ class Sparks {
           // 막 튄 불티는 흰빛, 식으면서 금색 → 주황
           vec3 hot = vec3(1.0, 0.95, 0.85);
           vec3 warm = vec3(1.0, 0.62, 0.22);
-          vec3 col = mix(warm, hot, vLife * vLife) * (1.2 + 4.0 * vLife);
+          vec3 col = mix(warm, hot, vLife * vLife) * (0.7 + 2.4 * vLife);
           gl_FragColor = vec4(col * a * vLife, 1.0);
         }`,
       transparent: true,
@@ -102,7 +102,7 @@ class Sparks {
       this.vel[i * 3 + 2] = s * (0.35 + Math.random() * 0.8);
       this.span[i] = 0.25 + Math.random() * 0.45;
       this.life[i] = 1;
-      this.size[i] = 0.012 + Math.random() * 0.02;
+      this.size[i] = 0.0038 + Math.random() * 0.0063;
     }
     this.alive = true;
     // 크기는 방출할 때만 바뀐다
@@ -144,8 +144,8 @@ export class CutFx {
     const tex = glowTexture();
     const mat = (c: Color) =>
       new SpriteMaterial({ map: tex, color: c, blending: AdditiveBlending, depthTest: false, depthWrite: false });
-    this.halo = new Sprite(mat(new Color(2.2, 1.35, 0.55)));
-    this.core = new Sprite(mat(new Color(6, 5.2, 4)));
+    this.halo = new Sprite(mat(new Color(1.3, 0.8, 0.33)));
+    this.core = new Sprite(mat(new Color(3.6, 3.1, 2.4)));
     this.halo.renderOrder = this.core.renderOrder = 30;
     // 첫 update 전(팩 고르는 화면)에는 꺼진 상태. 미리 컴파일되도록 숨기지 않고 크기만 0에 가깝게
     this.halo.scale.setScalar(0.001);
@@ -172,11 +172,11 @@ export class CutFx {
     const k = Math.max(0, s) * flicker;
     this.halo.position.copy(this.pos);
     this.core.position.copy(this.pos);
-    this.halo.scale.setScalar(0.34 * k + 0.001);
-    this.core.scale.setScalar(0.085 * k + 0.001);
+    this.halo.scale.setScalar(0.1 * k + 0.001);
+    this.core.scale.setScalar(0.026 * k + 0.001);
     this.halo.visible = this.core.visible = k > 0.01;
     this.light.position.copy(this.pos).z += 0.14;
-    this.light.intensity = 0.09 * k;
+    this.light.intensity = 0.055 * k;
     this.sparks.update(dt);
   }
 

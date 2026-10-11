@@ -123,6 +123,30 @@ test('캐러셀: 끝에서 처음으로 이어지고, 놓으면 가까운 팩에
   assert.ok(chosen.position.length() < 1e-3 && Math.abs(chosen.rotation.y) < 1e-3 && Math.abs(chosen.scale.x - 1) < 1e-3);
 });
 
+test('캐러셀: 놓으면 손 속도 그대로 미끄러지다가 넘치지 않고 멈추고, 세게 튕기면 여러 칸 간다', () => {
+  setup();
+  const carousel = new PackCarousel(tex(), new Texture());
+  carousel.dragBy(0.3);
+  carousel.release(6); // 6칸/초로 놓음
+  const target = carousel.index;
+  assert.equal(target, 2);
+  let prev = carousel.pos.value;
+  carousel.update(1 / 60);
+  const speed = (carousel.pos.value - prev) * 60;
+  assert.ok(Math.abs(speed - 6) < 0.6, `놓은 직후 속도 ${speed}`);
+  for (let t = 0; t < 3; t += 1 / 60) {
+    prev = carousel.pos.value;
+    carousel.update(1 / 60);
+    assert.ok(carousel.pos.value >= prev - 1e-9, '되돌아가지 않음');
+    assert.ok(carousel.pos.value <= target + 1e-3, '목표를 넘치지 않음');
+  }
+  assert.ok(Math.abs(carousel.pos.value - target) < 1e-3);
+
+  carousel.dragBy(0.01);
+  carousel.release(12);
+  assert.ok(carousel.index - target >= 3, `세게 튕기면 ${carousel.index - target}칸`);
+});
+
 test('오리파 화면: 수량 표시, 스와이프·옆 팩 탭·방향키로 이동, 가운데 팩 탭으로 열기, 소진 시 차단', () => {
   const { get } = setup();
   const carousel = new PackCarousel(tex(), new Texture());
@@ -146,7 +170,8 @@ test('오리파 화면: 수량 표시, 스와이프·옆 팩 탭·방향키로 �
   pointer(stage, 'pointermove', { pointerId: 1, clientX: 200 });
   pointer(stage, 'pointerup', { pointerId: 1, clientX: 170 });
   const afterSwipe = carousel.index;
-  assert.ok(afterSwipe === 1 || afterSwipe === 2, `swipe → ${afterSwipe}`);
+  // 테스트의 스와이프는 순식간이라 최대 속도로 튕긴 셈 → 여러 칸 미끄러짐
+  assert.ok(afterSwipe >= 1 && afterSwipe <= 4, `swipe → ${afterSwipe}`);
   // 오른쪽 팩을 톡 누르면 그 팩으로
   pointer(stage, 'pointerdown', { pointerId: 2, clientX: 370 });
   pointer(stage, 'pointerup', { pointerId: 2, clientX: 372 });

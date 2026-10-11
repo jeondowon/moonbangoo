@@ -1,10 +1,9 @@
-// M5: 넘긴 카드 5장을 재사용해 요약 → 미리보기 → 확정 → 쿠폰으로 연결한다.
+// M5: 넘긴 카드 5장을 재사용해 요약 → 미리보기 → 확정 → 결과으로 연결한다.
 // DOM의 빈 카드 영역을 월드 좌표로 옮겨 같은 WebGL 장면 안에서 배치한다.
 import { Group, type PerspectiveCamera, type Scene } from 'three';
 import { RARITIES } from '../../design/lib/data.js';
 import { Spring } from '../core/spring';
 import { TiltInput } from '../core/tilt';
-import { createMockCoupon, formatVisitDate, type MockCoupon } from '../data/coupon';
 import type { Prize } from '../data/draw';
 import type { RevealFx } from '../fx/revealFx';
 import { Card, CARD_H, CARD_W } from '../card/card';
@@ -36,7 +35,7 @@ export class PrizeFlow {
   private state: State = 'inactive';
   private age = 0;
   private selected = -1;
-  private coupon: MockCoupon | null = null;
+  private confirmedPrize: Prize | null = null;
   private items: DisplayCard[] = [];
   private dirty = true;
   private fxScale = 1;
@@ -130,7 +129,7 @@ export class PrizeFlow {
   }
 
   private select(index: number) {
-    if (this.state !== 'summary' || this.coupon) return;
+    if (this.state !== 'summary' || this.confirmedPrize) return;
     this.selected = index;
     this.state = 'preview';
     this.age = 0;
@@ -146,7 +145,7 @@ export class PrizeFlow {
   }
 
   private back() {
-    if (this.state !== 'preview' || this.coupon) return;
+    if (this.state !== 'preview' || this.confirmedPrize) return;
     this.state = 'summary';
     this.preview.hidden = true;
     this.summary.classList.remove('is-background');
@@ -157,14 +156,14 @@ export class PrizeFlow {
   }
 
   private commit() {
-    if (this.state !== 'preview' || this.age < 0.65 || this.coupon) return;
-    this.coupon = createMockCoupon(this.prizes[this.selected]);
+    if (this.state !== 'preview' || this.age < 0.65 || this.confirmedPrize) return;
+    this.confirmedPrize = this.prizes[this.selected];
     this.state = 'confirming';
     this.age = 0;
     this.confirm.disabled = this.change.disabled = true;
     this.preview.classList.add('is-confirming');
     el('confirm-notice').textContent = '선택한 선물을 준비하고 있어요';
-    el('flow-status').textContent = `${this.coupon.prize.name} 선택이 확정되었어요.`;
+    el('flow-status').textContent = `${this.confirmedPrize.name} 선택이 확정되었어요.`;
     const chosen = this.items[this.selected];
     chosen.scale.velocity += chosen.scale.value * 0.7;
     this.fx.play(chosen.card.root, chosen.card.rarity, true);
@@ -181,17 +180,13 @@ export class PrizeFlow {
   }
 
   private showResult() {
-    const coupon = this.coupon!;
+    const prize = this.confirmedPrize!;
     this.state = 'result';
     this.age = 0;
     this.preview.hidden = this.summary.hidden = true;
     this.result.hidden = false;
     this.result.scrollTop = 0;
-    setPrizeDetails('result', coupon.prize);
-    el('result-code').textContent = coupon.code;
-    const expiry = el<HTMLTimeElement>('result-expiry');
-    expiry.dateTime = coupon.expiresAt;
-    expiry.textContent = formatVisitDate(coupon.expiresAt);
+    setPrizeDetails('result', prize);
     this.items.forEach((item, i) => { item.holder.visible = i === this.selected; });
     this.fx.stop();
     this.layout();

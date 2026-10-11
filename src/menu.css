@@ -1,0 +1,43 @@
+/* 게임 메뉴는 로고의 아이보리·금색을 고정 사용한다. */
+:root {
+  color-scheme: light;
+  font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+  color: #514433;
+  background: #f8f5ee;
+  -webkit-text-size-adjust: 100%;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+.game-menu {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: max(40px, env(safe-area-inset-top)) max(28px, env(safe-area-inset-right)) max(48px, env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left));
+}
+.menu-brand { margin-bottom: clamp(32px, 5vh, 64px); }
+.menu-brand img { display: block; width: clamp(116px, 9vw, 180px); height: auto; }
+.menu-options { width: min(88vw, 1680px); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(24px, 3.5vw, 64px); }
+.menu-option { display: block; min-width: 0; color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+a.menu-option:focus-visible { outline: 2px solid #a08449; outline-offset: 8px; }
+.game-thumbnail { aspect-ratio: 3 / 2; overflow: hidden; border: 1px solid #e3d9c6; border-radius: 4px; background: #f0e9dc; }
+.game-thumbnail img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
+.pack-thumbnail { display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 45% 35%, #fcf8ef, #e9decb); }
+.pack-thumbnail img { width: 72%; height: 82%; object-fit: contain; filter: drop-shadow(12px 18px 14px #76603e26); }
+a.menu-option:hover .game-thumbnail img { transform: scale(1.035); }
+.game-caption { display: flex; align-items: center; gap: 20px; padding: clamp(20px, 1.8vw, 32px) 2px; border-bottom: 1px solid #dcd2bf; }
+.game-name { font-size: clamp(23px, 2vw, 38px); font-weight: 500; line-height: 1.4; letter-spacing: -.045em; }
+.menu-arrow { width: clamp(28px, 2.2vw, 40px); height: clamp(28px, 2.2vw, 40px); margin-left: auto; flex: none; stroke: #a08449; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+.is-unavailable .game-name { letter-spacing: -.02em; font-weight: 400; }
+.game-status { margin-left: auto; color: #897d69; font-size: clamp(12px, 1vw, 18px); font-weight: 400; white-space: nowrap; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 640px) {
+  .game-menu { padding-inline: max(24px, env(safe-area-inset-left)) max(24px, env(safe-area-inset-right)); }
+  .menu-brand { margin-bottom: 32px; }
+  .menu-options { width: 100%; max-width: 440px; grid-template-columns: 1fr; gap: 28px; }
+  .game-caption { padding: 17px 2px; }
+  .game-name { font-size: 23px; }
+}
+@media (prefers-reduced-motion: reduce) { .game-thumbnail img { transition: none; } }

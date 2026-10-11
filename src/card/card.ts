@@ -104,9 +104,23 @@ const EDGE_STYLE: Record<RarityCode, MeshPhysicalMaterialParameters> = {
   // 무지개 홀로박: 보는 각도에 따라 색이 바뀜
   UR: { color: '#e6e6ea', metalness: 1, roughness: 0.2, iridescence: 1, iridescenceIOR: 1.8, iridescenceThicknessRange: [200, 900] },
 };
-const edgeMaterials = new Map<RarityCode, Material>();
 /** 뒷면 텍스처는 모든 카드가 공유하지만, 테두리 암시 발광은 등급별로 달라 재질은 (텍스처, 등급) 쌍으로 캐시 */
 const backMaterials = new Map<string, Material>();
+
+/** 반사·홀로까지 계산된 빛을 낮춘다. 재질 재컴파일 없이 유니폼만 갱신. */
+function dimmable(mat: Material, brightness: IUniform<number>) {
+  const compile = mat.onBeforeCompile;
+  const cacheKey = mat.customProgramCacheKey();
+  mat.onBeforeCompile = (shader, renderer) => {
+    compile.call(mat, shader, renderer);
+    shader.uniforms.uCardBrightness = brightness;
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform float uCardBrightness;')
+      .replace('#include <opaque_fragment>', 'outgoingLight *= uCardBrightness;\n#include <opaque_fragment>');
+  };
+  mat.customProgramCacheKey = () => `${cacheKey}-brightness`;
+  return mat;
+}
 
 /** 등급별 인쇄 카드 재질 (명세 R6·R9, M4): 금속감·클리어코트 + 홀로/테두리 발광 */
 function printMaterial(map: Texture, rarity: RarityCode, face: 'front' | 'back', brightness?: IUniform<number>) {
@@ -121,19 +135,7 @@ function printMaterial(map: Texture, rarity: RarityCode, face: 'front' | 'back',
   });
   if (face === 'front') applyHoloFront(mat, rarity);
   else applyRimGlow(mat, rarity);
-  if (brightness) {
-    const compile = mat.onBeforeCompile;
-    const cacheKey = mat.customProgramCacheKey();
-    mat.onBeforeCompile = (shader, renderer) => {
-      compile.call(mat, shader, renderer);
-      shader.uniforms.uCardBrightness = brightness;
-      // 기본색이 아니라 반사·홀로까지 계산된 빛을 낮춘다. 재질 재컴파일 없이 유니폼만 갱신.
-      shader.fragmentShader = shader.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform float uCardBrightness;')
-        .replace('#include <opaque_fragment>', 'outgoingLight *= uCardBrightness;\n#include <opaque_fragment>');
-    };
-    mat.customProgramCacheKey = () => `${cacheKey}-brightness`;
-  }
+  if (brightness) dimmable(mat, brightness);
   return mat;
 }
 
@@ -165,8 +167,8 @@ export class Card {
     const backKey = `${back.uuid}:${rarity}`;
     let backMat = backMaterials.get(backKey);
     if (!backMat) backMaterials.set(backKey, (backMat = printMaterial(back, rarity, 'back')));
-    let edgeMat = edgeMaterials.get(rarity);
-    if (!edgeMat) edgeMaterials.set(rarity, (edgeMat = new MeshPhysicalMaterial(EDGE_STYLE[rarity])));
+    // 옆면도 앞면과 함께 어두워져야 금속 옆면이 어두운 화면에서 빛나지 않는다. 밝기가 카드마다 달라 재질은 카드별.
+    const edgeMat = dimmable(new MeshPhysicalMaterial(EDGE_STYLE[rarity]), this.brightness);
     this.mesh = new Mesh(sharedGeometry, [printMaterial(front, rarity, 'front', this.brightness), backMat, edgeMat]);
     this.flipper.rotation.y = Math.PI;
     this.flipper.add(this.mesh);

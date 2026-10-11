@@ -1,6 +1,5 @@
-// 1차: 인트로 → 오리파(팩 고르기) → 팩 개봉 → 카드 5장 확인 → 요약·선택 → 목업 쿠폰 (M1~M5).
+// 1차: 인트로 → 오리파(팩 고르기) → 팩 개봉 → 카드 5장 확인 → 요약·선택 → 선택 결과 (M1~M5).
 import { Group, Vector3 } from 'three';
-import './style.css';
 import { SoundEffects } from './audio/sound';
 import { CARD_H, CARD_W } from './card/card';
 import { Deck, RISE_TOP } from './card/deck';
@@ -17,7 +16,6 @@ import { createRendering } from './gfx/rendering';
 import { PackCarousel } from './pack/carousel';
 import { Cutter } from './pack/cutter';
 import { Pack, PACK_H, PACK_W, packX, packY, TEAR_Z } from './pack/pack';
-import { TEAR_V } from './pack/tear';
 import { PackReflection, PACK_FLOOR_Y } from './pack/reflection';
 import { buildPackTextures } from './pack/textures';
 import { createHint } from './ui/hint';
@@ -256,7 +254,7 @@ function setupCutter(p: Pack) {
 /** 커팅 헤드의 월드 위치 */
 const headTmp = new Vector3();
 function headWorld(u: number) {
-  return pack!.root.localToWorld(headTmp.set(packX(u), packY(TEAR_V), TEAR_Z + 0.012));
+  return pack!.root.localToWorld(headTmp.set(packX(u), packY(pack!.tear.lineV(u)), TEAR_Z + 0.012));
 }
 
 // ── 카드 ─────────────────────────────────────────

@@ -7,7 +7,7 @@ import { fixedPack } from './pack.mjs';
 import { PrizeFlow } from '../../src/ui/prizeFlow.ts';
 
 export const prizes = await fixedPack(); // C, R, R, SR, UR
-const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../../card.html', import.meta.url), 'utf8');
 const ids = [...html.matchAll(/id="([^"]+)"/g)].map(m => m[1]);
 assert.equal(new Set(ids).size, ids.length, 'HTML IDs must be unique');
 

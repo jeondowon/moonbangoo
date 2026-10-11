@@ -280,6 +280,23 @@ html, body {
 }
 
 /* ── 라이트/다크 전환 버튼 ─────────────────── */
+.menu-back {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(10px, env(safe-area-inset-left));
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  background: var(--chip);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 12px;
+}
+.intro.is-hidden ~ .menu-back { display: none; }
 /* 다른 화면·안내 오버레이보다 위에 둔다 */
 .theme-toggle {
   position: fixed;
@@ -314,7 +331,7 @@ button:focus-visible, a:focus-visible {
   overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
 
-/* 요약 · 선택 · 쿠폰 화면 */
+/* 요약 · 선택 · 결과 화면 */
 .prize-flow { position: fixed; inset: 0; pointer-events: none; }
 .flow-summary, .flow-preview {
   position: absolute; inset: 0;
@@ -360,7 +377,7 @@ button:focus-visible, a:focus-visible {
 .focus-card { width: min(100%, 520px); min-height: 90px; flex: 1; touch-action: none; pointer-events: auto; }
 .preview-details { width: min(100%, 380px); text-align: center; flex: none; }
 .prize-rarity { margin: 0 0 5px; color: var(--gold); font-size: 12px; letter-spacing: .06em; }
-.preview-details h2, .coupon-ticket h2 { margin: 0; font: 700 25px 'Pretendard Variable', Pretendard, sans-serif; letter-spacing: -.02em; }
+.preview-details h2 { margin: 0; font: 700 25px 'Pretendard Variable', Pretendard, sans-serif; letter-spacing: -.02em; }
 .prize-description { margin: 10px 0 0; color: var(--muted); white-space: pre-line; font-size: 13px; line-height: 1.6; }
 .preview-condition { margin: 14px 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
 .preview-condition strong { color: var(--text); }
@@ -378,26 +395,58 @@ button:focus-visible, a:focus-visible {
 .flow-primary:disabled, .flow-secondary:disabled { cursor: default; opacity: .6; }
 .flow-preview.is-confirming .focus-card { pointer-events: none; }
 .flow-result { position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; pointer-events: auto; touch-action: pan-y; }
-.result-content { max-width: 520px; margin: 0 auto; padding: max(28px, env(safe-area-inset-top)) 20px max(36px, env(safe-area-inset-bottom)); }
-.flow-result .focus-card { height: clamp(190px, 34svh, 310px); margin-top: 18px; }
-.card-tilt-hint { text-align: center; font-size: 11px; color: var(--muted); margin: 2px 0 24px; }
-.coupon-ticket { padding: 25px 24px 0; border: 1px solid #bc9a62; border-radius: 10px; background: #f4ede0; color: #4a3a28; text-align: center; }
-.coupon-ticket .prize-rarity { color: #7a5520; margin-top: 16px; }
-.coupon-ticket .prize-description { color: #75624c; }
-.coupon-badge { display: inline-block; margin: 0; padding: 5px 10px; border: 1px solid #c7b38e; border-radius: 20px; color: #7a5520; font-size: 11px; }
-.coupon-terms { margin: 22px 0; text-align: left; font-size: 13px; line-height: 1.8; }
-.coupon-terms > div { display: grid; grid-template-columns: 64px 1fr; gap: 8px; margin-top: 12px; }
-.coupon-terms dt { color: #75624c; }
-.coupon-terms dd { margin: 0; overflow-wrap: anywhere; }
-.coupon-code-area { border-top: 1px dashed #cbb895; padding: 20px 0; }
-.coupon-code-area p { margin: 0 0 10px; font-size: 11px; line-height: 1.6; color: #75624c; }
-.coupon-code-area p:last-child { margin: 12px 0 0; }
-.coupon-code-area code { font-size: clamp(18px, 5vw, 24px); letter-spacing: .06em; user-select: text; -webkit-user-select: text; }
-.store-info { margin: 24px 0 0; padding: 0 4px; font-size: 13px; line-height: 1.7; }
-.store-info h2 { font-size: 15px; margin: 0 0 10px; }
-.store-info h2 span { margin-left: 8px; font-size: 11px; font-weight: 400; color: var(--muted); }
-.store-info p { margin: 4px 0; color: var(--muted); }
-.store-info a { display: inline-block; color: var(--gold); padding: 12px 0; text-underline-offset: 4px; }
+/* 완료 표시는 작게, 선택한 카드와 상품명은 크게. 배경은 기존 WebGL 장면을 유지한다. */
+.result-content {
+  width: min(100%, 1200px); min-height: 100svh; margin: 0 auto;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: max(32px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(32px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+}
+.result-heading { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--gold); }
+.result-check { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid currentColor; border-radius: 50%; }
+.result-check svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.result-heading h1 { margin: 0; outline: none; font-size: 16px; font-weight: 500; letter-spacing: .04em; }
+.result-showcase { display: grid; justify-items: center; gap: 12px; margin-top: 12px; }
+.flow-result .focus-card { width: 100%; max-width: 520px; height: clamp(220px, 38svh, 440px); flex: none; }
+.result-info { width: min(100%, 400px); min-width: 0; text-align: center; }
+.result-details .prize-rarity {
+  display: inline-block; margin: 0 0 12px; padding: 5px 12px;
+  border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent); border-radius: 4px;
+  color: var(--gold); font-size: 11px; font-weight: 600; letter-spacing: .1em;
+}
+.result-details h2 { margin: 0; font-size: clamp(28px, 5vw, 42px); font-weight: 650; letter-spacing: -.045em; line-height: 1.25; word-break: keep-all; overflow-wrap: anywhere; }
+.result-details .prize-description { margin-top: 14px; font-size: 14px; line-height: 1.7; word-break: keep-all; overflow-wrap: anywhere; }
+.result-condition { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid color-mix(in srgb, var(--gold) 20%, transparent); color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.result-menu {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  min-height: 56px; margin-top: 28px; padding: 16px 22px;
+  border: 1px solid #a88a51; border-radius: 6px; background: #b99a60; color: #211a0e;
+  font-size: 15px; font-weight: 600; text-decoration: none; -webkit-tap-highlight-color: transparent;
+}
+.result-menu svg { width: 22px; height: 22px; flex: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.result-menu:focus-visible { outline: 2px solid var(--gold); outline-offset: 5px; }
+.result-menu:active { background: #d6b77b; }
+@media (hover: hover) { .result-menu:hover { background: #c8a970; } }
+:root[data-theme="dark"] .result-menu { background: #dfc28c; border-color: #dfc28c; }
+:root[data-theme="dark"] .result-menu:active { background: #ebd3a5; }
+@media (min-width: 760px) and (min-aspect-ratio: 6 / 5) {
+  .result-content { padding-inline: max(48px, env(safe-area-inset-left)) max(48px, env(safe-area-inset-right)); }
+  .result-heading { margin-bottom: 28px; }
+  .result-showcase { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; gap: clamp(32px, 5vw, 80px); margin: 0; }
+  .flow-result .focus-card { height: clamp(240px, 62svh, 640px); }
+  .result-info { text-align: left; }
+  .result-details h2 { font-size: clamp(32px, 3.4vw, 52px); }
+  .result-details .prize-description { font-size: clamp(14px, 1.3vw, 18px); margin-top: 22px; }
+  .result-condition { margin-top: 28px; padding-top: 20px; font-size: 14px; }
+  .result-menu { margin-top: 40px; min-height: 60px; font-size: 16px; }
+}
+@media (max-height: 700px) {
+  .result-content { padding-top: max(20px, env(safe-area-inset-top)); padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+  .result-showcase { row-gap: 8px; }
+  .result-details .prize-rarity { margin-bottom: 8px; }
+  .result-details .prize-description { margin-top: 10px; }
+  .result-condition { margin-top: 12px; padding-top: 10px; }
+  .result-menu { margin-top: 20px; }
+}
 @media (max-height: 680px) {
   .flow-summary, .flow-preview { padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
   .flow-preview { gap: 8px; }

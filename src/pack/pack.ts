@@ -14,7 +14,7 @@ import {
 } from 'three';
 import { PACK } from '../../design/lib/pack.js';
 import { smooth } from '../core/math';
-import { TEAR_V, TearState } from './tear';
+import { TEAR_MAX_DEV, TEAR_V, TearState } from './tear';
 import { applyTear, createTearUniforms, type TearPiece, type TearUniforms } from './tearShader';
 import type { PackTextures, SideTextures } from './textures';
 
@@ -110,8 +110,8 @@ export function packMaterial(t: SideTextures, environment: Texture) {
   });
 }
 
-/** 윗조각·본체가 겹쳐 만들어지는 여유 폭 (찢김 요철 + 틈보다 넉넉히) */
-const OVERLAP = 0.03;
+/** 윗조각·본체가 겹쳐 만들어지는 여유 폭 (그은 경로의 높낮이 + 틈보다 넉넉히) */
+const OVERLAP = TEAR_MAX_DEV + 0.01;
 const GRAVITY = 14;
 
 /** 팩 좌표 (u, v) → 팩 로컬 x, y */
@@ -154,7 +154,7 @@ export class Pack {
     // 속지: 틈 사이로 보이는 팩 안쪽 (실물처럼 은박 안감)
     const lining = new MeshStandardMaterial({ color: '#b9b4ac', metalness: 1, roughness: 0.38 });
     applyTear(lining, this.uniforms, { piece: 'body', flipU: false, side: 0, guide: false });
-    this.lining = new Mesh(flatStrip(TEAR_V - OVERLAP, TEAR_V + 0.06), lining);
+    this.lining = new Mesh(flatStrip(TEAR_V - OVERLAP, TEAR_V + TEAR_MAX_DEV + 0.06), lining);
     this.body.add(this.lining);
 
     this.root.add(this.top, this.body);

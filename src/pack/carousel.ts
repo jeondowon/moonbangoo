@@ -17,6 +17,9 @@ export const POOL_SIDE = 6;
 const RADIUS = 5; // 팩이 늘어선 원의 반지름 (가운데 팩 앞면이 원의 맨 앞)
 const STEP = 0.3; // 이웃 팩 사이 원 위의 각도 (rad) — 한 칸마다 이만큼 더 돌아서고 더 물러난다
 const SHOWN = 2; // 가운데 양옆으로 화면에 들어오는 칸 수. 한 칸 더 바깥(화면 밖)까지만 그린다 (더 멀면 원을 돌아 뒤쪽에서 다시 보이므로)
+const SNAP = { freq: 2.2, zeta: 0.82 }; // 탭·방향키로 한 칸씩 옮길 때
+const GLIDE = 0.3; // 놓은 뒤 미끄러지는 시간 상수(초). 클수록 멀리, 천천히 멈춘다
+const MAX_FLICK = 12; // 놓는 속도 상한 (칸/초)
 
 /**
  * 가운데에서 d칸 떨어진(오른쪽 +) 팩의 배치. 팩들은 큰 원 위에 같은 각도(STEP) 간격으로 서서 바깥을 향한다.
@@ -30,7 +33,7 @@ export function slotAt(d: number) {
 export class PackCarousel {
   readonly group = new Group();
   /** 현재 위치 (연속 값). 정수 n일 때 n번 팩(끝에서 처음으로 이어짐)이 가운데 */
-  readonly pos = new Spring(0, 2.2, 0.82);
+  readonly pos = new Spring(0, SNAP.freq, SNAP.zeta);
   /** 0 = 고르는 중, 1 = 고른 팩이 실제 팩 자리로 모임 */
   private readonly focus = new Spring(0, 1.6, 0.92);
   private readonly y = new Spring(0, 1.6, 0.92);
@@ -78,6 +81,7 @@ export class PackCarousel {
 
   go(delta: number) {
     if (!this.picking) return;
+    this.pos.set(SNAP.freq, SNAP.zeta);
     this.pos.target = Math.round(this.pos.target) + delta;
   }
 
@@ -90,12 +94,18 @@ export class PackCarousel {
     this.pos.velocity = 0;
   }
 
-  /** 놓은 속도(칸/초)를 이어받아 가까운 팩에 멈춤 */
+  /** 놓은 속도(칸/초)를 그대로 이어받아 미끄러지다가 가까운 팩에 멈춤 */
   release(velocity: number) {
     if (!this.dragging) return;
     this.dragging = false;
-    this.pos.velocity = 0;
-    this.pos.target = Math.round(this.pos.value + clamp(velocity, -8, 8) * 0.18);
+    const v = clamp(velocity, -MAX_FLICK, MAX_FLICK);
+    const target = Math.round(this.pos.value + v * GLIDE);
+    const d = target - this.pos.value;
+    // 임계감쇠 스프링은 ω = v/d이면 놓은 속도 v로 출발해 지수적으로 느려지며 target에 닿는다 (멈칫·튕김 없음)
+    const w = v * d > 0 ? clamp(v / d, 3, 10) : 2 * Math.PI * SNAP.freq;
+    this.pos.set(w / (2 * Math.PI), v * d > 0 ? 1 : SNAP.zeta);
+    this.pos.velocity = v;
+    this.pos.target = target;
   }
 
   /** 가운데 팩을 골라 실제 팩 자리로 모은다. 나머지 팩은 양옆으로 물러난다. */
