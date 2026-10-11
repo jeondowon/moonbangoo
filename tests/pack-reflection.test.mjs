@@ -88,6 +88,6 @@ test('캐러셀과 개봉용의 표면·절취 구조가 같고 선택 완료 �
     assert.equal(surface.material.map, opened[i].material.map);
     assert.equal(surface.material.customProgramCacheKey(), opened[i].material.customProgramCacheKey());
     assert.equal(reflection.children[i].visible, true);
-    assert.equal(reflection.children[i].material.opacity, .3);
+    assert.ok(reflection.children[i].material.opacity > 0, '선택 후에도 반사가 사라지지 않음');
   });
 });

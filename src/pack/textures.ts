@@ -15,8 +15,8 @@ const SCALE = 1.5;
 // 금속 박의 기본색(PBR base color). 2D 시안의 금색 그라디언트 중간 톤
 const FOIL_ALBEDO = '#e2c486';
 
-const ROUGH = { paper: 0.58, crimp: 0.42, foil: 0.28, frontFoil: 0.88 };
-const FRONT_FOIL_METALNESS = 0.08;
+const ROUGH = { paper: 0.82, crimp: 0.7, foil: 0.52, frontFoil: 0.62 };
+const FRONT_FOIL_METALNESS = 0.35;
 
 export interface SideTextures {
   albedo: Texture;
@@ -112,7 +112,7 @@ async function buildSide(
   ]);
   const foil = readChannel(foilCanvas);
 
-  // 거칠기·금속도. 앞면 금박은 인쇄 색을 유지하되 거친 비금속에 가깝게 만들어 글자가 발광처럼 번지지 않게 한다.
+  // 포장지는 무광, 금박만 부드러운 반사. 앞면은 글자 가독성을 위해 금속도를 낮춘다.
   const { H, crimp } = PACK;
   const orm = document.createElement('canvas');
   orm.width = w;

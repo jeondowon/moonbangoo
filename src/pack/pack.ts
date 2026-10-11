@@ -96,15 +96,11 @@ export function packMaterial(t: SideTextures, environment: Texture) {
     metalness: 1,
     normalMap: t.normal,
     normalScale: new Vector2(1, 1),
-    // 포장 필름의 얇은 광택층 (주름은 따라가되 박 눌림은 덮음)
-    clearcoat: 0.35,
-    clearcoatRoughness: 0.3,
+    // 무광 포장지의 약한 코팅만 남긴다. 금박 광택은 ORM 마스크로 구분한다.
+    clearcoat: 0.04,
+    clearcoatRoughness: 0.65,
     clearcoatNormalMap: t.normal,
     clearcoatNormalScale: new Vector2(0.35, 0.35),
-    // 펄 포장지의 은은한 무지갯빛
-    iridescence: 0.12,
-    iridescenceIOR: 1.35,
-    iridescenceThicknessRange: [220, 480],
     alphaTest: 0.5,
     alphaToCoverage: true,
   });
