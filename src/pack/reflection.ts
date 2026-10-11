@@ -2,7 +2,7 @@ import { Group, Matrix4, Mesh, type MeshStandardMaterial, type Object3D } from '
 import { PACK_H } from './pack';
 
 export const PACK_FLOOR_Y = -PACK_H / 2 - 0.07 * PACK_H;
-const OPACITY = 0.1;
+const OPACITY = 0.3;
 
 /** 팩 표면만 복제한다. 이후 추가되는 카드 뭉치는 반사에 포함하지 않는다. */
 export class PackReflection {
