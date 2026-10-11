@@ -5,7 +5,7 @@ export const LOGO_BOX = { x: 52, y: 34, w: 306, h: 267 };
 
 let inner = null;
 
-export async function loadLogo(url = new URL('../../logo-mono.svg', import.meta.url)) {
+export async function loadLogo(url = new URL('../logo/logo-mono.svg', import.meta.url)) {
   const raw = await (await fetch(url)).text();
   inner = raw
     .replace(/^[\s\S]*?<svg[^>]*>/, '')

@@ -10,7 +10,7 @@ import { parseSvg, rasterize, svgText, toTexture } from '../gfx/svg';
 /** 630×880 → 788×1100. 폰에서 카드가 화면 높이의 약 2/3 (DPR 2 기준 1000px 남짓) */
 const SCALE = 1.25;
 
-/** 카테고리별 경품 일러스트 (루트의 *-concept.png 시안을 긴 변 720px WebP로 줄인 사본) */
+/** 카테고리별 경품 일러스트 (design/concepts/의 *-concept.png 시안을 긴 변 720px WebP로 줄인 사본) */
 const ARTWORK: Record<string, string> = {
   card: new URL('./artwork/card.webp', import.meta.url).href,
   pack: new URL('./artwork/pack.webp', import.meta.url).href,

@@ -6,7 +6,7 @@ import type { PackCarousel } from '../pack/carousel';
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const fmt = (n: number) => n.toLocaleString('ko-KR');
 
-/** 카테고리 이미지 (루트의 *-concept.png를 160px로 줄인 사본) */
+/** 카테고리 이미지 (design/concepts/의 *-concept.png를 160px로 줄인 사본) */
 const CATEGORY_IMAGE: Record<string, string> = {
   card: new URL('./category/card.png', import.meta.url).href,
   pack: new URL('./category/pack.png', import.meta.url).href,

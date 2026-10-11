@@ -279,7 +279,6 @@ html, body {
   .oripa { animation: none; }
 }
 
-/* ── 라이트/다크 전환 버튼 ─────────────────── */
 .menu-back {
   position: fixed;
   top: max(10px, env(safe-area-inset-top));
@@ -297,6 +296,7 @@ html, body {
   font-size: 12px;
 }
 .intro.is-hidden ~ .menu-back { display: none; }
+/* ── 라이트/다크 전환 버튼 ─────────────────── */
 /* 다른 화면·안내 오버레이보다 위에 둔다 */
 .theme-toggle {
   position: fixed;

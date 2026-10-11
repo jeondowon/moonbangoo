@@ -84,7 +84,7 @@
     <h2>로고<small>Logo</small></h2>
     <p class="lead">원본 목업(logo.png)을 선 단위로 다시 그린 벡터입니다.</p>
     <div class="logos">
-      <div class="logo-tile" style="background:#F4EDE0"><img src="../logo.svg" alt="어른뭉방구 로고 (금색)"></div>
+      <div class="logo-tile" style="background:#F4EDE0"><img src="./logo/logo.svg" alt="어른뭉방구 로고 (금색)"></div>
       <div class="logo-tile" style="background:#fff;color:#1c1a17"><span id="logo-mono-dark" style="width:72%"></span></div>
       <div class="logo-tile" style="background:#1c1814;color:#e9d8b4"><span id="logo-mono-light" style="width:72%"></span></div>
     </div>
@@ -143,7 +143,7 @@
 
   async function main() {
     await loadLogo();
-    const mono = await (await fetch('../logo-mono.svg')).text();
+    const mono = await (await fetch('./logo/logo-mono.svg')).text();
     $('#logo-mono-dark').innerHTML = mono.replace(/ko-fish-b/g, 'lm1-ko');
     $('#logo-mono-light').innerHTML = mono.replace(/ko-fish-b/g, 'lm2-ko');
     for (const el of document.querySelectorAll('.logo-tile span svg')) { el.removeAttribute('width'); el.removeAttribute('height'); el.style.width = '100%'; el.style.height = 'auto'; }
@@ -157,13 +157,13 @@
 
     const sorted = [...PRIZES].sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
     const concepts = [
-      { id: 'bakery-concept', name: '베이커리 이용권', rarity: 'R', category: 'bakery', description: '베이커리 이용권', artwork: '../bakery-concept.png' },
-      { id: 'drink-concept', name: '음료 이용권', rarity: 'SR', category: 'cafe', description: '카페 음료 1잔\n핫/아이스 선택 가능', artwork: '../drink-voucher-concept.png' },
-      { id: 'sleeve-concept', name: '카드 슬리브', rarity: 'R', category: 'sleeve', description: '카드를 긁힘과 먼지로부터 보호', artwork: '../card-sleeve-concept-v2.png' },
-      { id: 'saver-concept', name: '카드 세이버', rarity: 'SR', category: 'saver', description: '카드 보호용 케이스', artwork: '../card-saver-concept.png' },
-      { id: 'booster-concept', name: '부스터팩', rarity: 'UR', category: 'pack', description: '카드 부스터팩', artwork: '../booster-pack-concept-v3.png' },
-      { id: 'card-concept', name: '카드', rarity: 'SR', category: 'card', description: '컬렉션 카드', artwork: '../card-concept-v2.png' },
-      { id: 'discount-concept', name: '할인권', rarity: 'R', category: 'coupon', description: '매장 할인권', artwork: '../discount-concept.png' },
+      { id: 'bakery-concept', name: '베이커리 이용권', rarity: 'R', category: 'bakery', description: '베이커리 이용권', artwork: './concepts/bakery-concept.png' },
+      { id: 'drink-concept', name: '음료 이용권', rarity: 'SR', category: 'cafe', description: '카페 음료 1잔\n핫/아이스 선택 가능', artwork: './concepts/drink-voucher-concept.png' },
+      { id: 'sleeve-concept', name: '카드 슬리브', rarity: 'R', category: 'sleeve', description: '카드를 긁힘과 먼지로부터 보호', artwork: './concepts/card-sleeve-concept-v2.png' },
+      { id: 'saver-concept', name: '카드 세이버', rarity: 'SR', category: 'saver', description: '카드 보호용 케이스', artwork: './concepts/card-saver-concept.png' },
+      { id: 'booster-concept', name: '부스터팩', rarity: 'UR', category: 'pack', description: '카드 부스터팩', artwork: './concepts/booster-pack-concept-v3.png' },
+      { id: 'card-concept', name: '카드', rarity: 'SR', category: 'card', description: '컬렉션 카드', artwork: './concepts/card-concept-v2.png' },
+      { id: 'discount-concept', name: '할인권', rarity: 'R', category: 'coupon', description: '매장 할인권', artwork: './concepts/discount-concept.png' },
     ];
     const totalCards = sorted.length + concepts.length;
     $('#fronts').innerHTML = sorted.map((p, i) => `
