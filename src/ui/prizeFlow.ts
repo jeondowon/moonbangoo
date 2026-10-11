@@ -4,7 +4,7 @@ import { Group, type PerspectiveCamera, type Scene } from 'three';
 import { RARITIES } from '../../design/lib/data.js';
 import { Spring } from '../core/spring';
 import { TiltInput } from '../core/tilt';
-import type { Prize } from '../data/draw';
+import type { Prize } from '../data/api';
 import type { RevealFx } from '../fx/revealFx';
 import { Card, CARD_H, CARD_W } from '../card/card';
 import type { RarityCode } from '../card/holo';

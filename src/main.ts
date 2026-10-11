@@ -3,12 +3,11 @@ import { Group, Vector3 } from 'three';
 import { SoundEffects } from './audio/sound';
 import { CARD_H, CARD_W } from './card/card';
 import { Deck, RISE_TOP } from './card/deck';
-import { buildCardTextures } from './card/textures';
+import { buildCardTextures, prepareCardTextures } from './card/textures';
 import { updateHoloTime } from './card/holo';
 import { Spring } from './core/spring';
 import { TiltInput } from './core/tilt';
-import { drawPack } from './data/draw';
-import { consume, inventory } from './data/inventory';
+import { confirmPrize, drawCards, fetchShop } from './data/api';
 import { CutFx } from './fx/cutFx';
 import { RevealFx } from './fx/revealFx';
 import { createShadow } from './gfx/backdrop';
@@ -144,34 +143,27 @@ let ready = false;
 let wantsStart = false;
 
 async function prepare() {
-  const drawn = drawPack();
-  const [tex, result, cardTex] = await Promise.all([
-    buildPackTextures(renderer),
-    drawn,
-    drawn.then((r) => buildCardTextures(renderer, r.cards)),
-  ]);
+  // 카드 폰트·일러스트도 로딩 중에 미리 받아 둔다 (팩을 열 때 바로 그릴 수 있게)
+  const shopReady = fetchShop().then(async (shop) => {
+    await prepareCardTextures(shop.prizes).catch((e) => console.warn('카드 미리 준비 실패, 열 때 다시 준비', e));
+    return shop;
+  });
+  const [tex, shop] = await Promise.all([buildPackTextures(renderer), shopReady]);
   pack = new Pack(tex, packEnvironment);
   stage.add(pack.root);
   packReflection = new PackReflection(pack.root);
   scene.add(packReflection.group);
   packReflection.update(PACK_FLOOR_Y);
   setupCutter(pack);
-  // 카드 뭉치는 처음부터 팩 안에 뒷면으로 들어 있다
-  deck = new Deck(canvas, camera, result.cards, cardTex.fronts, cardTex.back, cardTex.store, pack.uniforms);
-  deck.setViewScale(viewScale);
-  pack.root.add(deck.root);
-  setupDeck(deck);
-  prizeFlow = new PrizeFlow(canvas, camera, result.cards, reveal, (rarity, prize) => {
-    sound.confirm(rarity);
-    consume(inventory, prize.id); // 오리파: 최종 선택한 1장만 차감 (아직 저장하지 않음)
-  });
   carousel = new PackCarousel(tex, packEnvironment);
   scene.add(carousel.group);
-  oripa = new OripaScreen(carousel, inventory);
+  // 팩을 고르는 순간 서버에서 카드를 뽑고, 팩이 가운데로 모이는 동안 카드를 준비한다
+  oripa = new OripaScreen(carousel, shop, () => {
+    openPack(shop.packId!).catch(showError);
+  });
   carousel.group.visible = true; // 아래 미리 컴파일 대상에 넣기 위해 잠깐 보이게
-  // 팩·카드 텍스처를 로딩 중에 GPU로 올려 둔다 (팩 등장 첫 프레임에 한꺼번에 올리며 끊기지 않게)
+  // 팩 텍스처를 로딩 중에 GPU로 올려 둔다 (팩 등장 첫 프레임에 한꺼번에 올리며 끊기지 않게)
   for (const side of [tex.front, tex.back]) for (const t of Object.values(side)) renderer.initTexture(t);
-  for (const t of [cardTex.back, cardTex.store, ...cardTex.fronts]) renderer.initTexture(t);
   // 첫 등장 때 셰이더 컴파일로 끊기지 않도록 미리 컴파일 (보이는 오브젝트만 컴파일되므로 숨기기 전에)
   reveal.warmup(scene);
   await renderer.compileAsync(scene, camera);
@@ -182,8 +174,39 @@ async function prepare() {
   if (wantsStart) showOripa();
 }
 
+/** 고른 팩의 카드 5장을 서버에서 받아 팩 안에 넣는다. 준비가 끝나야 deck이 생기고 개봉 화면이 시작된다. */
+async function openPack(packId: number) {
+  const result = await drawCards(packId);
+  const cardTex = await buildCardTextures(renderer, result.cards);
+  // 카드 뭉치는 처음부터 팩 안에 뒷면으로 들어 있다
+  const d = new Deck(canvas, camera, result.cards, cardTex.fronts, cardTex.back, cardTex.store, pack!.uniforms);
+  d.setViewScale(viewScale);
+  pack!.root.add(d.root);
+  setupDeck(d);
+  prizeFlow = new PrizeFlow(canvas, camera, result.cards, reveal, (rarity, prize) => {
+    sound.confirm(rarity);
+    confirmPrize(result.drawId, prize.id).catch(showError); // 최종 선택한 1장만 서버에서 차감
+  });
+  for (const t of [cardTex.back, cardTex.store, ...cardTex.fronts]) renderer.initTexture(t);
+  await renderer.compileAsync(d.root, camera, scene);
+  deck = d;
+}
+
+/** 서버 오류: 인트로를 다시 덮고 안내한다. 터치하면 처음부터 다시 시작 */
+function showError(e: unknown) {
+  console.error(e);
+  const message = e instanceof Error ? e.message : '오류가 발생했어요.';
+  intro.querySelector('.when-error')!.textContent = `${message} 화면을 터치하면 처음부터 다시 시작해요.`;
+  intro.classList.remove('is-hidden', 'is-loading');
+  intro.classList.add('is-error');
+}
+
 // 준비 중에 탭해도 기억했다가 준비되면 바로 시작
 function onIntroTap() {
+  if (intro.classList.contains('is-error')) {
+    location.reload();
+    return;
+  }
   void sound.unlock();
   wantsStart = true;
   if (ready) showOripa();
@@ -215,10 +238,7 @@ function start() {
   startedAt = time;
 }
 
-prepare().catch((e) => {
-  console.error(e);
-  intro.classList.add('is-error');
-});
+prepare().catch(showError);
 
 // ── 절취 ─────────────────────────────────────────
 function setupCutter(p: Pack) {
@@ -373,7 +393,7 @@ function frame(dt: number) {
 
   if (choosing && carousel) {
     carousel.update(dt);
-    if (carousel.opened) start();
+    if (carousel.opened && deck) start(); // 서버에서 받은 카드가 준비될 때까지 고른 팩 그대로 대기
   }
 
   if (started && pack && cutter) {

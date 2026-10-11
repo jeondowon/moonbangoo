@@ -5,7 +5,7 @@
 import { Group, Matrix4, Raycaster, Vector2, Vector3, type Camera, type Material, type Object3D, type Texture } from 'three';
 import { clamp, smooth } from '../core/math';
 import { Spring } from '../core/spring';
-import type { Prize } from '../data/draw';
+import type { Prize } from '../data/api';
 import { PACK_H, PACK_W, packY } from '../pack/pack';
 import { TEAR_CURVE_GLSL, type TearUniforms } from '../pack/tearShader';
 import { Card, CARD_H, CARD_W } from './card';

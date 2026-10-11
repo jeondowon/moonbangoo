@@ -1,58 +1,15 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Texture } from 'three';
-import { drawPack } from '../src/data/draw.ts';
-import { categoryCounts, consume, createInventory, pickPrize, topRarityCounts, totalCounts } from '../src/data/inventory.ts';
 import { PackCarousel, PACK_COUNT, POOL_SIDE, slotAt } from '../src/pack/carousel.ts';
 import { OripaScreen } from '../src/ui/oripa.ts';
 import { pointer, setup } from './helpers/flow.mjs';
-import { fixedPack } from './helpers/pack.mjs';
 
 const side = () => ({ albedo: new Texture(), orm: new Texture(), normal: new Texture() });
 const tex = () => ({ front: side(), back: side() });
 const run = (carousel, seconds) => {
   for (let t = 0; t < seconds; t += 1 / 60) carousel.update(1 / 60);
 };
-
-test('남은 수량에 비례해 뽑히고(추첨권 1장 = 남은 경품 1개), 품절 경품은 나오지 않는다', () => {
-  const stock = createInventory(); // 카드 10 · 부스터 20 · … · 할인권 500 (합계 1000)
-  assert.equal(pickPrize(stock, () => 0).id, 'card');
-  assert.equal(pickPrize(stock, () => 0.0099).id, 'card');
-  assert.equal(pickPrize(stock, () => 0.01).id, 'booster');
-  assert.equal(pickPrize(stock, () => 0.9999).id, 'coupon-5');
-  stock[0].remaining = 0;
-  assert.equal(pickPrize(stock, () => 0).id, 'booster');
-});
-
-test('5장은 남은 경품 중에서 뽑고, 같은 경품이 여러 장 나와도 되며, 뽑기만으로는 차감하지 않는다', async () => {
-  const stock = createInventory();
-  for (const s of stock) s.remaining = s.prize.id === 'drink' ? 1 : 0;
-  const before = structuredClone(stock);
-  const { cards } = await drawPack(stock);
-  assert.equal(cards.length, 5);
-  assert.ok(cards.every((p) => p.id === 'drink'));
-  assert.deepEqual(stock, before);
-});
-
-test('팩은 등급 오름차순(레어는 뒤쪽), 모두 소진되면 만들 수 없다', async () => {
-  assert.deepEqual((await fixedPack()).map((p) => p.rarity), ['C', 'R', 'R', 'SR', 'UR']);
-  const empty = createInventory();
-  for (const s of empty) s.remaining = 0;
-  await assert.rejects(drawPack(empty));
-});
-
-test('최종 선택한 1개만 차감하고 0 아래로 내려가지 않으며, 합계·최고등급·카테고리 수량에 반영된다', () => {
-  const stock = createInventory();
-  assert.deepEqual(totalCounts(stock), { remaining: 1000, total: 1000 });
-  assert.deepEqual(topRarityCounts(stock), { remaining: 10, total: 10 });
-  consume(stock, 'card');
-  assert.deepEqual(topRarityCounts(stock), { remaining: 9, total: 10 });
-  assert.deepEqual(categoryCounts(stock, 'card'), { remaining: 9, total: 10 });
-  assert.equal(totalCounts(stock).remaining, 999);
-  stock[0].remaining = 0;
-  consume(stock, 'card');
-  assert.equal(stock[0].remaining, 0);
-});
 
 test('팩 자리: 큰 원 위에 같은 간격으로 서서 바깥을 향하고, 옆으로 갈수록 더 물러나 더 돌아선다', () => {
   const center = slotAt(0);
@@ -150,18 +107,22 @@ test('캐러셀: 놓으면 손 속도 그대로 미끄러지다가 넘치지 않
 test('오리파 화면: 수량 표시, 스와이프·옆 팩 탭·방향키로 이동, 가운데 팩 탭으로 열기, 소진 시 차단', () => {
   const { get } = setup();
   const carousel = new PackCarousel(tex(), new Texture());
-  const stock = createInventory();
-  const screen = new OripaScreen(carousel, stock);
+  const counts = (remaining, total) => ({ remaining, total });
+  const shop = {
+    packId: 1,
+    all: counts(1000, 1000),
+    top: counts(9, 10),
+    categories: [counts(9, 10), counts(20, 20), counts(50, 50), counts(70, 70), counts(150, 150), counts(200, 200), counts(500, 500)],
+  };
+  let opened = 0;
+  const screen = new OripaScreen(carousel, shop, () => opened++);
   screen.show();
   assert.equal(carousel.group.visible, true);
   assert.equal(get('oripa-remaining').textContent, (1000).toLocaleString('ko-KR'));
-  assert.equal(get('oripa-top').textContent, '10 / 10');
+  assert.equal(get('oripa-top').textContent, '9 / 10');
   const items = get('oripa-stock').children;
   assert.equal(items.length, 7);
-  assert.match(items[0].attributes.get('aria-label'), /카드 10개 남음/);
-  consume(stock, 'card');
-  screen.render();
-  assert.equal(get('oripa-top').textContent, '9 / 10');
+  assert.match(items[0].attributes.get('aria-label'), /카드 9개 남음, 전체 10개/);
 
   const stage = get('oripa-stage');
   stage.rect = { left: 0, top: 100, width: 390, height: 400 };
@@ -184,17 +145,19 @@ test('오리파 화면: 수량 표시, 스와이프·옆 팩 탭·방향키로 �
     pointer(stage, 'pointerdown', { pointerId: id, clientX: 195 });
     pointer(stage, 'pointerup', { pointerId: id, clientX: 195 });
   };
-  for (const s of stock) s.remaining = 0;
+  shop.all = counts(0, 1000);
   screen.render();
   assert.equal(get('oripa-soldout').hidden, false);
   tapCenter(3);
   assert.equal(carousel.picking, true);
+  assert.equal(opened, 0);
 
-  stock[0].remaining = 1;
+  shop.all = counts(1, 1000);
   screen.render();
   assert.equal(get('oripa-soldout').hidden, true);
   tapCenter(4);
   assert.equal(carousel.picking, false);
+  assert.equal(opened, 1, '어느 팩이든 열면 서버 팩에서 뽑는다');
   assert.equal(carousel.index, afterSwipe);
   assert.equal(get('oripa').inert, true);
   screen.hide();

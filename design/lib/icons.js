@@ -16,6 +16,15 @@ const ICONS = {
 <circle cx="12" cy="11" r="2.6"/><path d="M9 15.6h6"/>`,
   // 카드 슬리브: 카드가 반쯤 들어간 보호용 필름
   sleeve: `<path d="M5 3.5h9l5 5v12H5z"/><path d="M14 3.5v5h5M8 12h8M8 15h8"/><path d="M3 7v14h14"/>`,
+  // 베이커리: 윗면에 칼집 세 개가 비스듬히 난 둥근 빵 덩어리 (옆에서 본 모양)
+  bakery: `<path d="M12 5.4c5.9 0 9.8 4.3 9.8 9 0 3-2.6 4.4-9.8 4.4s-9.8-1.4-9.8-4.4c0-4.7 3.9-9 9.8-9Z"/>
+<path d="M6.9 7.4l-.8 2.9a.85.85 0 0 0 1.6.5l.9-3.6M11.3 5.5l-1 3.8a.85.85 0 0 0 1.6.5l1.1-4.1M15.8 6.1l-.8 3.2a.85.85 0 0 0 1.6.5l.7-2.7"/>`,
+  // 카드 세이버: 위쪽에 손가락 홈이 파인 단단한 케이스 + 안에 든 카드
+  saver: `<path d="M5 3.2h4.2a2.8 2.8 0 0 0 5.6 0H19v17.6H5Z"/>
+<path d="M8.4 8.4h7.2v9.4H8.4Z"/><path d="M17 11v4.4"/>`,
+  // 카드: 일러스트 창에 반짝임이 있는 트레이딩 카드
+  card: `<path d="M6.4 2.8h11.2a1.4 1.4 0 0 1 1.4 1.4v15.6a1.4 1.4 0 0 1-1.4 1.4H6.4A1.4 1.4 0 0 1 5 19.8V4.2a1.4 1.4 0 0 1 1.4-1.4Z"/>
+<path d="M7.8 5.6h8.4v7H7.8Z"/><path d="M12 7.2l.6 1.3 1.3.6-1.3.6-.6 1.3-.6-1.3-1.3-.6 1.3-.6Z"/><path d="M8 15.6h8M8 18.2h5"/>`,
 };
 
 export const CATEGORY_LABEL = {
@@ -31,6 +40,5 @@ export const CATEGORY_LABEL = {
 
 export function icon(name, { x, y, size = 24, color, sw = 1.6 }) {
   const s = size / 24;
-  const iconName = { bakery: 'cafe', saver: 'sleeve', card: 'sleeve' }[name] || name;
-  return `<g transform="translate(${x} ${y}) scale(${s})" fill="none" stroke="${color}" stroke-width="${sw / s}" stroke-linecap="round" stroke-linejoin="round">${ICONS[iconName]}</g>`;
+  return `<g transform="translate(${x} ${y}) scale(${s})" fill="none" stroke="${color}" stroke-width="${sw / s}" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</g>`;
 }

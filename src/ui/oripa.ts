@@ -1,6 +1,6 @@
 // 오리파 화면: 남은 카드·최고등급 수량(위), 팩 고르기 캐러셀 조작(가운데), 카테고리별 남은 수량(아래).
 // 팩은 캔버스(WebGL)에 그리고, 이 화면은 그 위에 수량 표시와 조작 영역을 덮는다.
-import { CATEGORIES, categoryCounts, topRarityCounts, totalCounts, type Stock } from '../data/inventory';
+import { CATEGORIES, type Shop } from '../data/api';
 import type { PackCarousel } from '../pack/carousel';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -26,7 +26,9 @@ export class OripaScreen {
 
   constructor(
     private readonly carousel: PackCarousel,
-    private readonly stock: Stock[],
+    private readonly shop: Shop,
+    /** 가운데 팩을 열 때 (어느 팩이든 같은 서버 팩에서 뽑는다) */
+    private readonly onOpen?: () => void,
   ) {
     this.root.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft') this.carousel.go(-1);
@@ -50,16 +52,15 @@ export class OripaScreen {
     this.stage.focus({ preventScroll: true });
   }
 
-  /** 현재 재고로 수량 표시를 다시 그린다 */
+  /** 서버에서 받은 수량으로 표시를 그린다 */
   render() {
-    const total = totalCounts(this.stock);
-    const top = topRarityCounts(this.stock);
-    el('oripa-remaining').textContent = fmt(total.remaining);
+    const top = this.shop.top;
+    el('oripa-remaining').textContent = fmt(this.shop.all.remaining);
     el('oripa-top').textContent = `${fmt(top.remaining)} / ${fmt(top.total)}`;
     const list = el('oripa-stock');
     list.replaceChildren(
-      ...CATEGORIES.map((c) => {
-        const { remaining, total } = categoryCounts(this.stock, c.id);
+      ...CATEGORIES.map((c, i) => {
+        const { remaining, total } = this.shop.categories[i];
         const li = document.createElement('li');
         li.className = remaining > 0 ? 'oripa-item' : 'oripa-item is-empty';
         li.setAttribute('aria-label', `${c.name} ${remaining}개 남음, 전체 ${total}개`);
@@ -78,11 +79,12 @@ export class OripaScreen {
       }),
     );
     // 남은 경품이 없으면 팩을 만들 수 없다 (열기는 open()에서 막음)
-    el('oripa-soldout').hidden = total.remaining > 0;
+    el('oripa-soldout').hidden = this.shop.all.remaining > 0;
   }
 
   private open() {
-    if (!this.carousel.picking || totalCounts(this.stock).remaining <= 0) return;
+    if (!this.carousel.picking || this.shop.all.remaining <= 0) return;
+    this.onOpen?.();
     this.carousel.pick();
     this.root.classList.add('is-leaving');
     this.root.inert = true;
