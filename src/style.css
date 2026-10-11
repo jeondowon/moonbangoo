@@ -1,5 +1,5 @@
 :root {
-  --bg: #e9dec8;
+  --bg: #f5efe4;
   --text: #2f2418;
   --muted: #6e5d47;
   --gold: #7a5520;
@@ -58,7 +58,7 @@ html, body {
   padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
   text-align: center;
   cursor: pointer;
-  background: radial-gradient(120% 80% at 50% 42%, #eee4d4 0%, #e7dac2 45%, #d6c5a6 100%);
+  background: radial-gradient(120% 80% at 50% 42%, #faf6ef 0%, #f5eee2 45%, #eae0ce 100%);
   transition: opacity .6s ease, visibility 0s linear .6s;
   outline: none;
 }
@@ -371,11 +371,9 @@ button:focus-visible, a:focus-visible {
 }
 .flow-primary { background: #dfc28c; color: #352716; }
 .flow-primary:hover { background: #ebd3a5; }
-.flow-secondary { border-color: transparent; background: transparent; color: var(--text); }
-.flow-secondary:hover:not(:disabled) {
-  background: #302419;
-  border-color: #80633d;
-  color: #f3dfb6;
+.flow-secondary {
+  justify-self: center; border: 0; border-radius: 0; padding-inline: 0;
+  background: transparent; color: var(--text);
 }
 .flow-primary:disabled, .flow-secondary:disabled { cursor: default; opacity: .6; }
 .flow-preview.is-confirming .focus-card { pointer-events: none; }

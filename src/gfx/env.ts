@@ -31,12 +31,13 @@ export function createStudioEnv(renderer: WebGLRenderer, profile: 'default' | 'p
   const scene = new Scene();
   const pack = profile === 'pack';
 
-  // 방: 위는 따뜻하고 밝게, 아래는 어둡게 (정점 색 그라디언트)
+  // 팩은 차분한 베이지색 방으로 채워 포장지 전체에 부드러운 주변광을 준다.
+  // 카드용 환경은 기존의 위가 밝고 아래가 어두운 그라디언트를 유지한다.
   const room = new BoxGeometry(16, 10, 16, 1, 8, 1);
   const p = room.getAttribute('position');
   const colors: number[] = [];
-  const top = new Color('#8a7358');
-  const bottom = new Color('#3a2e22');
+  const top = new Color(pack ? '#c3b6a3' : '#8a7358');
+  const bottom = new Color(pack ? '#887b69' : '#3a2e22');
   const c = new Color();
   for (let i = 0; i < p.count; i++) {
     const t = (p.getY(i) + 5) / 10;
@@ -47,7 +48,9 @@ export function createStudioEnv(renderer: WebGLRenderer, profile: 'default' | 'p
   scene.add(new Mesh(room, new MeshBasicMaterial({ side: BackSide, vertexColors: true })));
 
   // 키 라이트: 카메라 뒤 위쪽의 넓은 소프트박스
-  panel(scene, 5.5, 2.4, pack ? 2.2 : 3.2, '#fff4e2', 0, 3.4, 4.6);
+  panel(scene, 5.5, 2.4, pack ? 2.5 : 3.2, '#fff4e2', 0, 3.4, 4.6);
+  // 넓고 약한 정면 보조광: 강한 반사띠 없이 캐러셀·개봉 중 포장지의 중간톤을 밝힌다.
+  if (pack) panel(scene, 9, 7, 0.6, '#fffaf2', 0, 0, 7.8);
   // 좌우 세로 스트립 (좌우로 기울일 때 금박을 가로지르는 선 하이라이트)
   panel(scene, 0.55, 5.5, pack ? 3 : 5, '#fff1d6', -3.6, 0.4, 3.6);
   panel(scene, 0.55, 5.5, pack ? 2.6 : 4, '#ffe8c4', 3.6, 0.4, 3.6);

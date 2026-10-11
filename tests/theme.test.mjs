@@ -20,7 +20,7 @@ test('저장된 값이 없으면 라이트로 시작하고, 누를 때마다 다
   const t = setup(undefined);
   assert.equal(t.root.dataset.theme, undefined);
   assert.deepEqual(t.changes, [false]);
-  assert.equal(t.meta.content, '#e9dec8');
+  assert.equal(t.meta.content, '#f5efe4');
   assert.equal(t.attrs.get('aria-label'), '다크 모드로 전환');
   assert.equal(t.storage.size, 0);
 

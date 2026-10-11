@@ -1,6 +1,6 @@
 // 라이트/다크 전환. 첫 화면 깜빡임을 막으려고 저장된 값은 index.html의 인라인 스크립트가 먼저 적용한다.
 export const THEME_KEY = 'theme';
-const THEME_COLOR = { light: '#e9dec8', dark: '#1a1511' };
+const THEME_COLOR = { light: '#f5efe4', dark: '#1a1511' };
 
 export function createThemeToggle(
   button: HTMLElement,

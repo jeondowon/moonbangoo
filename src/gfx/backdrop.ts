@@ -9,9 +9,9 @@ import {
   Vector2,
 } from 'three';
 
-// 톤매핑 후 화면에서 라이트는 가운데 #eee4d4 → 가장자리 #d7c5a7 정도로 보인다 (블룸 기준 1.0 미만 유지)
+// 라이트는 밝은 아이보리에서 연한 베이지로 이어진다 (블룸 기준 1.0 미만 유지).
 const PALETTES = {
-  light: { uCenter: '#f7eedf', uMid: '#efe4cf', uEdge: '#dccbae', uGlow: '#5c4c32' },
+  light: { uCenter: '#fdf9f1', uMid: '#faf3e7', uEdge: '#efe3ce', uGlow: '#302820' },
   dark: { uCenter: '#3d3226', uMid: '#241d16', uEdge: '#110d0a', uGlow: '#6b5534' },
 };
 

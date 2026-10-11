@@ -18,6 +18,7 @@ import { PackCarousel } from './pack/carousel';
 import { Cutter } from './pack/cutter';
 import { Pack, PACK_H, PACK_W, packX, packY, TEAR_Z } from './pack/pack';
 import { TEAR_V } from './pack/tear';
+import { PackReflection, PACK_FLOOR_Y } from './pack/reflection';
 import { buildPackTextures } from './pack/textures';
 import { createHint } from './ui/hint';
 import { OripaScreen } from './ui/oripa';
@@ -46,9 +47,6 @@ createThemeToggle(
 
 const stage = new Group(); // 팩 위치·회전 담당
 scene.add(stage);
-const shadow = createShadow(PACK_W, PACK_H);
-shadow.position.z = -0.45;
-scene.add(shadow);
 const deckShadow = createShadow(CARD_W, CARD_H);
 deckShadow.position.z = -0.45;
 deckShadow.visible = false;
@@ -75,6 +73,7 @@ const guide = new Spring(0, 1.5, 1);
 const openDrop = new Spring(0, 1.6, 0.9);
 
 let pack: Pack | null = null;
+let packReflection: PackReflection | null = null;
 let cutter: Cutter | null = null;
 let deck: Deck | null = null;
 let prizeFlow: PrizeFlow | null = null;
@@ -155,6 +154,9 @@ async function prepare() {
   ]);
   pack = new Pack(tex, packEnvironment);
   stage.add(pack.root);
+  packReflection = new PackReflection(pack.root);
+  scene.add(packReflection.group);
+  packReflection.update(PACK_FLOOR_Y);
   setupCutter(pack);
   // 카드 뭉치는 처음부터 팩 안에 뒷면으로 들어 있다
   deck = new Deck(canvas, camera, result.cards, cardTex.fronts, cardTex.back, cardTex.store, pack.uniforms);
@@ -176,7 +178,7 @@ async function prepare() {
   reveal.warmup(scene);
   await renderer.compileAsync(scene, camera);
   reveal.warmup(null);
-  stage.visible = shadow.visible = carousel.group.visible = false;
+  stage.visible = packReflection!.group.visible = carousel.group.visible = false;
   ready = true;
   intro.classList.remove('is-loading');
   if (wantsStart) showOripa();
@@ -206,7 +208,7 @@ function start() {
   if (started) return;
   oripa?.hide();
   choosing = false;
-  stage.visible = shadow.visible = true;
+  stage.visible = packReflection!.group.visible = true;
   // 캐러셀에서 이미 자리를 잡았으므로 아래에서 올라오는 등장 연출 없이 그 자리에서 시작
   enterY.snap(0);
   enterSpin.snap(0);
@@ -306,7 +308,7 @@ function updateOpening(p: Pack, d: Deck, dt: number) {
   if (packFall && stage.visible) {
     packFall.v -= 9 * dt;
     packFall.y += packFall.v * dt;
-    if (packFall.y < -6) stage.visible = shadow.visible = false;
+    if (packFall.y < -6) stage.visible = packReflection!.group.visible = false;
   }
   if (stage.visible) d.clipBelowOpening(p.root);
   else d.clearOpeningClip();
@@ -403,10 +405,6 @@ function frame(dt: number) {
       ry.value + enterSpin.value + flip.value,
       roll.value + Math.sin(time * 0.7) * 0.006,
     );
-    // 그림자는 기울기 반대쪽으로 살짝 밀리고, 팩과 함께 움직인다
-    shadow.position.x = stage.position.x - ry.value * 0.25;
-    shadow.position.y = stage.position.y - 0.07 + rx.value * 0.25;
-    shadow.material.opacity = 0.55 * Math.max(0, 1 + fall / 1.2);
 
     if (detachAt >= 0 && time >= detachAt && !pack.opened) {
       pack.detachTop(scene, flyVel, flySpin);
@@ -441,6 +439,12 @@ function frame(dt: number) {
       reveal.update(dt);
       updateDeckShadow(deck);
     }
+  }
+  if (started && packReflection) {
+    // 카드가 나올 때 반사를 걷어 팩이 바닥을 통과하며 퇴장하는 모습은 비치지 않게 한다.
+    const opacity = openedAt < 0 ? 1 : Math.max(0, 1 - (time - openedAt) / 0.35);
+    packReflection.group.visible = stage.visible && opacity > 0;
+    if (packReflection.group.visible) packReflection.update(PACK_FLOOR_Y, PACK_H, opacity);
   }
   // 시작 전에는 불투명한 인트로가 캔버스를 덮고 있으므로 그리지 않는다 (로딩 중 텍스처 생성과 경쟁하지 않게)
   if (started || choosing) composer.render(dt);
