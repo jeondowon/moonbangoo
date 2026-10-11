@@ -31,13 +31,14 @@ export function createStudioEnv(renderer: WebGLRenderer, profile: 'default' | 'p
   const scene = new Scene();
   const pack = profile === 'pack';
 
-  // 팩은 차분한 베이지색 방으로 채워 포장지 전체에 부드러운 주변광을 준다.
+  // 팩은 무채색 방·조명으로 채워 포장지 인쇄색(밝은 아이보리)이 노랗게 물들지 않게 한다.
   // 카드용 환경은 기존의 위가 밝고 아래가 어두운 그라디언트를 유지한다.
   const room = new BoxGeometry(16, 10, 16, 1, 8, 1);
   const p = room.getAttribute('position');
   const colors: number[] = [];
-  const top = new Color(pack ? '#c3b6a3' : '#8a7358');
-  const bottom = new Color(pack ? '#887b69' : '#3a2e22');
+  const top = new Color(pack ? '#d0d0d0' : '#8a7358');
+  const bottom = new Color(pack ? '#929292' : '#3a2e22');
+  const tint = (c: string) => (pack ? '#ffffff' : c);
   const c = new Color();
   for (let i = 0; i < p.count; i++) {
     const t = (p.getY(i) + 5) / 10;
@@ -48,20 +49,20 @@ export function createStudioEnv(renderer: WebGLRenderer, profile: 'default' | 'p
   scene.add(new Mesh(room, new MeshBasicMaterial({ side: BackSide, vertexColors: true })));
 
   // 키 라이트: 카메라 뒤 위쪽의 넓은 소프트박스
-  panel(scene, 5.5, 2.4, pack ? 2.5 : 3.2, '#fff4e2', 0, 3.4, 4.6);
+  panel(scene, 5.5, 2.4, pack ? 2.5 : 3.2, tint('#fff4e2'), 0, 3.4, 4.6);
   // 넓고 약한 정면 보조광: 강한 반사띠 없이 캐러셀·개봉 중 포장지의 중간톤을 밝힌다.
-  if (pack) panel(scene, 9, 7, 0.6, '#fffaf2', 0, 0, 7.8);
+  if (pack) panel(scene, 9, 7, 0.6, tint('#fffaf2'), 0, 0, 7.8);
   // 좌우 세로 스트립 (좌우로 기울일 때 금박을 가로지르는 선 하이라이트)
-  panel(scene, 0.55, 5.5, pack ? 3 : 5, '#fff1d6', -3.6, 0.4, 3.6);
-  panel(scene, 0.55, 5.5, pack ? 2.6 : 4, '#ffe8c4', 3.6, 0.4, 3.6);
+  panel(scene, 0.55, 5.5, pack ? 3 : 5, tint('#fff1d6'), -3.6, 0.4, 3.6);
+  panel(scene, 0.55, 5.5, pack ? 2.6 : 4, tint('#ffe8c4'), 3.6, 0.4, 3.6);
   // 팩에는 중앙 글자를 덮는 반사광이 약해지도록 패널을 짧게 줄이고 양옆으로 옮긴다.
-  panel(scene, 3.2, 2.2, pack ? 0.9 : 1.6, '#fff4e6', 1.4, 1.1, 7.5);
-  panel(scene, pack ? 5 : 9, 0.5, pack ? 2.2 : 4.5, '#fff8ee', pack ? -3.2 : 0, -0.6, 7.2, 0.5);
-  panel(scene, pack ? 5 : 9, 0.28, pack ? 1.6 : 3.2, '#fff8ee', pack ? 3.2 : -0.6, 1.2, 7.2, 0.5);
+  panel(scene, 3.2, 2.2, pack ? 0.9 : 1.6, tint('#fff4e6'), 1.4, 1.1, 7.5);
+  panel(scene, pack ? 5 : 9, 0.5, pack ? 2.2 : 4.5, tint('#fff8ee'), pack ? -3.2 : 0, -0.6, 7.2, 0.5);
+  panel(scene, pack ? 5 : 9, 0.28, pack ? 1.6 : 3.2, tint('#fff8ee'), pack ? 3.2 : -0.6, 1.2, 7.2, 0.5);
   // 아래쪽 반사판 (아래로 기울여도 금박이 까맣게 죽지 않도록)
-  panel(scene, 8, 2.4, 1.1, '#e3c79a', 0, -4, 4);
+  panel(scene, 8, 2.4, 1.1, tint('#e3c79a'), 0, -4, 4);
   // 뒤쪽 림 (측면 접힌 곳에 윤곽광)
-  panel(scene, 3, 6, 1.6, '#ffd9a6', 0, 1, -7);
+  panel(scene, 3, 6, 1.6, tint('#ffd9a6'), 0, 1, -7);
 
   // 반짝이용 작은 광점들
   const dotGeo = new SphereGeometry(0.07, 8, 6);
