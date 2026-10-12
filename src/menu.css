@@ -30,8 +30,6 @@ a.menu-option:hover .game-thumbnail img { transform: scale(1.035); }
 .game-caption { display: flex; align-items: center; gap: 20px; padding: clamp(20px, 1.8vw, 32px) 2px; border-bottom: 1px solid #dcd2bf; }
 .game-name { font-size: clamp(23px, 2vw, 38px); font-weight: 500; line-height: 1.4; letter-spacing: -.045em; }
 .menu-arrow { width: clamp(28px, 2.2vw, 40px); height: clamp(28px, 2.2vw, 40px); margin-left: auto; flex: none; stroke: #a08449; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
-.is-unavailable .game-name { letter-spacing: -.02em; font-weight: 400; }
-.game-status { margin-left: auto; color: #897d69; font-size: clamp(12px, 1vw, 18px); font-weight: 400; white-space: nowrap; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 640px) {
   .game-menu { padding-inline: max(24px, env(safe-area-inset-left)) max(24px, env(safe-area-inset-right)); }

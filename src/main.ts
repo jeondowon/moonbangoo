@@ -7,7 +7,8 @@ import { buildCardTextures, prepareCardTextures } from './card/textures';
 import { updateHoloTime } from './card/holo';
 import { Spring } from './core/spring';
 import { TiltInput } from './core/tilt';
-import { confirmPrize, drawCards, fetchShop } from './data/api';
+import * as backend from './data/api';
+import { createDemoGame } from './data/demo';
 import { CutFx } from './fx/cutFx';
 import { RevealFx } from './fx/revealFx';
 import { createShadow } from './gfx/backdrop';
@@ -23,6 +24,9 @@ import { PrizeFlow } from './ui/prizeFlow';
 import { createThemeToggle } from './ui/theme';
 
 const MAX_TILT = (18 * Math.PI) / 180; // 명세 R10: 최대 ±15~20°
+const isDemo = import.meta.env.VITE_GAME_MODE !== 'backend';
+const { confirmPrize, drawCards, fetchShop } = isDemo ? createDemoGame() : backend;
+document.querySelector<HTMLElement>('#demo-notice')!.hidden = !isDemo;
 const TAP_MOVE = 10; // px — 이보다 적게 움직이고
 const TAP_TIME = 350; // ms — 이보다 빨리 떼면 탭
 const RISE_MARGIN = 0.15; // 빠져나오는 카드 윗변과 화면 윗끝 사이 여백
@@ -157,7 +161,7 @@ async function prepare() {
   setupCutter(pack);
   carousel = new PackCarousel(tex, packEnvironment);
   scene.add(carousel.group);
-  // 팩을 고르는 순간 서버에서 카드를 뽑고, 팩이 가운데로 모이는 동안 카드를 준비한다
+  // 팩을 고르는 순간 카드를 뽑고, 팩이 가운데로 모이는 동안 카드를 준비한다
   oripa = new OripaScreen(carousel, shop, () => {
     openPack(shop.packId!).catch(showError);
   });
@@ -174,7 +178,7 @@ async function prepare() {
   if (wantsStart) showOripa();
 }
 
-/** 고른 팩의 카드 5장을 서버에서 받아 팩 안에 넣는다. 준비가 끝나야 deck이 생기고 개봉 화면이 시작된다. */
+/** 고른 팩의 카드 5장을 받아 팩 안에 넣는다. 준비가 끝나야 deck이 생기고 개봉 화면이 시작된다. */
 async function openPack(packId: number) {
   const result = await drawCards(packId);
   const cardTex = await buildCardTextures(renderer, result.cards);
@@ -185,7 +189,7 @@ async function openPack(packId: number) {
   setupDeck(d);
   prizeFlow = new PrizeFlow(canvas, camera, result.cards, reveal, (rarity, prize) => {
     sound.confirm(rarity);
-    confirmPrize(result.drawId, prize.id).catch(showError); // 최종 선택한 1장만 서버에서 차감
+    confirmPrize(result.drawId, prize.id).catch(showError); // 최종 선택한 1장만 차감
   });
   for (const t of [cardTex.back, cardTex.store, ...cardTex.fronts]) renderer.initTexture(t);
   await renderer.compileAsync(d.root, camera, scene);
