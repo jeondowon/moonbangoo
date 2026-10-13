@@ -295,7 +295,8 @@ html, body {
   text-decoration: none;
   font-size: 12px;
 }
-.intro.is-hidden ~ .menu-back { display: none; }
+/* 인트로·팩 고르기 화면에서만 보인다 */
+.intro.is-hidden ~ .oripa[hidden] ~ .menu-back { display: none; }
 /* ── 라이트/다크 전환 버튼 ─────────────────── */
 /* 다른 화면·안내 오버레이보다 위에 둔다 */
 .theme-toggle {
