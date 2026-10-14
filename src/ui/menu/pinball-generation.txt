@@ -1,6 +1,0 @@
-Tool: built-in image_gen (2026-10-12)
-Asset: src/ui/menu/pinball.png
-Card pack asset reused unchanged: design/concepts/booster-pack-concept-v3.png
-
-Prompt:
-Use case: product-mockup. Create a premium website game-menu thumbnail, landscape 3:2 composition. A refined miniature pinball playfield viewed from elevated three-quarter front, centered fully in frame with ample breathing room, ivory enamel board with rounded brass rails, three circular gold bumpers, two ivory and brass flippers and a clearly visible polished golden ball. Minimal sculptural industrial design, physically plausible detailed 3D product render, soft studio lighting, subtle grounded shadows. Seamless warm ivory background #f3eee4. Restrained ivory and champagne gold palette; no green, no black cabinet, no arcade neon. No lettering, numbers, logos, captions, UI or watermark anywhere. Board fills roughly 70 percent of the image, angled very slightly diagonally. Output asset for local website; save generated image and return its file path.

@@ -42,7 +42,7 @@ function loadArtwork(category: string): Promise<string> {
   return data;
 }
 
-export interface CardTextures {
+interface CardTextures {
   back: Texture;
   /** 경품 카드 앞에 끼우는 매장 안내 카드 */
   store: Texture;

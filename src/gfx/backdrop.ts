@@ -52,13 +52,14 @@ export function createBackdrop() {
         gl_FragColor = vec4(col, 1.0);
         #include <colorspace_fragment>
       }`,
-    depthTest: false,
     depthWrite: false,
     toneMapped: false,
   });
   const mesh = new Mesh(new PlaneGeometry(2, 2), mat);
   mesh.frustumCulled = false;
-  mesh.renderOrder = -10;
+  // 가장 먼 깊이(1.0)에 놓고 불투명 물체 다음에 그려, 카드·팩에 가려진 픽셀은 깊이 검사로 건너뛴다.
+  // 결과는 먼저 그릴 때와 같다 (투명 이펙트·그림자는 항상 불투명 다음에 그려짐).
+  mesh.renderOrder = 10;
   return {
     mesh,
     resize(aspect: number) {
