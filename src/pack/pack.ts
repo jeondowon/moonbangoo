@@ -116,7 +116,7 @@ function packMaterial(t: SideTextures, environment: Texture) {
     clearcoatNormalMap: t.normal,
     clearcoatNormalScale: new Vector2(0.35, 0.35),
     alphaTest: 0.5,
-    alphaToCoverage: true,
+    alphaToCoverage: false,
   });
 }
 

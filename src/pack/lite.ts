@@ -68,7 +68,7 @@ export function liteMaterial(t: SideTextures) {
     normalMap: t.normal,
     normalScale: new Vector2(1, 1),
     alphaTest: 0.5,
-    alphaToCoverage: true,
+    alphaToCoverage: false,
   });
 }
 
