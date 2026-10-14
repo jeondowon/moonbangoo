@@ -15,6 +15,7 @@ import {
 import { PACK } from '../../design/lib/pack.js';
 import { smooth } from '../core/math';
 import { QUALITY } from '../gfx/quality';
+import { applyLiteMix, applyLiteShading, liteMaterial, type PackMatcaps } from './lite';
 import { TEAR_MAX_DEV, TEAR_V, TearState } from './tear';
 import { applyTear, createTearUniforms, type TearPiece, type TearUniforms } from './tearShader';
 import type { PackTextures, SideTextures } from './textures';
@@ -87,6 +88,20 @@ function packSurface(side: 1 | -1, v0 = 0, v1 = 1, segX = SEG_X, segY = SEG_Y): 
   return g;
 }
 
+/** 포장지 부위별 거칠기 (거칠기 텍스처를 만들 때와 가벼운 팩의 반사 그림을 구울 때 같이 쓴다) */
+export const ROUGH = { paper: 0.58, crimp: 0.42, foil: 0.28, frontFoil: 0.88 };
+
+/** 포장 필름의 광택층·무지갯빛. 캐러셀용 가벼운 팩의 반사 그림(lite.ts)도 같은 값으로 굽는다 */
+export const FILM = {
+  // 포장 필름의 얇은 광택층 (주름은 따라가되 박 눌림은 덮음)
+  clearcoat: QUALITY.gloss ? 0.35 : 0,
+  clearcoatRoughness: 0.3,
+  // 펄 포장지의 은은한 무지갯빛
+  iridescence: QUALITY.gloss ? 0.12 : 0,
+  iridescenceIOR: 1.35,
+  iridescenceThicknessRange: [220, 480] as [number, number],
+};
+
 function packMaterial(t: SideTextures, environment: Texture) {
   return new MeshPhysicalMaterial({
     map: t.albedo,
@@ -97,15 +112,9 @@ function packMaterial(t: SideTextures, environment: Texture) {
     metalness: 1,
     normalMap: t.normal,
     normalScale: new Vector2(1, 1),
-    // 포장 필름의 얇은 광택층 (주름은 따라가되 박 눌림은 덮음)
-    clearcoat: QUALITY.gloss ? 0.35 : 0,
-    clearcoatRoughness: 0.3,
+    ...FILM,
     clearcoatNormalMap: t.normal,
     clearcoatNormalScale: new Vector2(0.35, 0.35),
-    // 펄 포장지의 은은한 무지갯빛
-    iridescence: QUALITY.gloss ? 0.12 : 0,
-    iridescenceIOR: 1.35,
-    iridescenceThicknessRange: [220, 480],
     alphaTest: 0.5,
     alphaToCoverage: true,
   });
@@ -141,12 +150,19 @@ export class Pack {
   readonly lining: Mesh;
   private flight: Flight | null = null;
 
-  constructor(tex: PackTextures, environment: Texture) {
+  /** 1이면 실사 재질 팩이 가벼운 팩과 같은 색으로 보인다 (캐러셀에서 바꿔 끼운 직후 서서히 0으로) */
+  readonly liteMix = { value: 0 };
+
+  /** lite: 캐러셀용 가벼운 팩. 실사 재질 대신 미리 구운 반사 그림(matcaps)으로 그린다 (lite.ts) */
+  constructor(tex: PackTextures, environment: Texture, matcaps: PackMatcaps, lite = false) {
     this.uniforms = createTearUniforms(this.tear.texture);
     const surface = (side: 1 | -1, piece: TearPiece) => {
       const [v0, v1] = piece === 'top' ? [0, TEAR_V + OVERLAP] : [TEAR_V - OVERLAP, 1];
-      const mat = packMaterial(side === 1 ? tex.front : tex.back, environment);
+      const t = side === 1 ? tex.front : tex.back;
+      const mat = lite ? liteMaterial(t) : packMaterial(t, environment);
       applyTear(mat, this.uniforms, { piece, flipU: side === -1, side, guide: side === 1 });
+      if (lite) applyLiteShading(mat, t, matcaps);
+      else applyLiteMix(mat, t, matcaps, this.liteMix);
       return new Mesh(packSurface(side, v0, v1), mat);
     };
     this.top.add(surface(1, 'top'), surface(-1, 'top'));
@@ -156,6 +172,7 @@ export class Pack {
     const lining = new MeshStandardMaterial({ color: '#b9b4ac', metalness: 1, roughness: 0.38 });
     applyTear(lining, this.uniforms, { piece: 'body', flipU: false, side: 0, guide: false });
     this.lining = new Mesh(flatStrip(TEAR_V - OVERLAP, TEAR_V + TEAR_MAX_DEV + 0.06), lining);
+    this.lining.visible = !lite; // 가벼운 팩은 자르지 않으므로 속지가 보일 일이 없다
     this.body.add(this.lining);
 
     this.root.add(this.top, this.body);

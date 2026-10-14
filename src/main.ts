@@ -5,6 +5,7 @@ import { CARD_H, CARD_W } from './card/card';
 import { Deck, RISE_TOP } from './card/deck';
 import { buildCardTextures, prepareCardTextures } from './card/textures';
 import { updateHoloTime } from './card/holo';
+import { smooth } from './core/math';
 import { Spring } from './core/spring';
 import { TiltInput } from './core/tilt';
 import * as backend from './data/api';
@@ -15,6 +16,7 @@ import { createShadow } from './gfx/backdrop';
 import { QUALITY } from './gfx/quality';
 import { createRendering } from './gfx/rendering';
 import { PackCarousel } from './pack/carousel';
+import { bakePackMatcaps } from './pack/lite';
 import { Cutter } from './pack/cutter';
 import { Pack, PACK_H, PACK_W, packX, packY, TEAR_Z } from './pack/pack';
 import { PackReflection, PACK_FLOOR_Y } from './pack/reflection';
@@ -25,6 +27,7 @@ import { PrizeFlow } from './ui/prizeFlow';
 import { createThemeToggle } from './ui/theme';
 
 const MAX_TILT = (18 * Math.PI) / 180; // 명세 R10: 최대 ±15~20°
+const LITE_FADE = 1.2; // 바꿔 끼운 팩이 가벼운 팩 색에서 실사 재질로 넘어가는 시간(초)
 const isDemo = import.meta.env.VITE_GAME_MODE !== 'backend';
 const { confirmPrize, drawCards, fetchShop } = isDemo ? createDemoGame() : backend;
 document.querySelector<HTMLElement>('#demo-notice')!.hidden = !isDemo;
@@ -154,13 +157,14 @@ async function prepare() {
     return shop;
   });
   const [tex, shop] = await Promise.all([buildPackTextures(renderer), shopReady]);
-  pack = new Pack(tex, packEnvironment);
+  const matcaps = bakePackMatcaps(renderer, packEnvironment);
+  pack = new Pack(tex, packEnvironment, matcaps);
   stage.add(pack.root);
   packReflection = new PackReflection(pack.root);
   scene.add(packReflection.group);
   packReflection.update(PACK_FLOOR_Y);
   setupCutter(pack);
-  carousel = new PackCarousel(tex, packEnvironment);
+  carousel = new PackCarousel(tex, packEnvironment, matcaps);
   scene.add(carousel.group);
   // 팩을 고르는 순간 카드를 뽑고, 팩이 가운데로 모이는 동안 카드를 준비한다
   oripa = new OripaScreen(carousel, shop, () => {
@@ -239,6 +243,7 @@ function start() {
   enterY.snap(0);
   enterSpin.snap(0);
   enterPitch.snap(0);
+  pack!.liteMix.value = 1; // 캐러셀의 가벼운 팩과 같은 색에서 시작해 실사 재질로 넘어간다
   started = true;
   startedAt = time;
 }
@@ -439,6 +444,7 @@ function frame(dt: number) {
 
     guide.target = !cutTouched && cutter.enabled && time - startedAt > 1.4 ? 1 : 0;
     pack.uniforms.uGuide.value = guide.step(dt);
+    pack.liteMix.value = 1 - smooth(0, LITE_FADE, time - startedAt);
     pack.update(dt, time);
     updateHint();
     fx.update(dt, cutter.active ? headWorld(cutter.headU) : null, !cutter.inBand);

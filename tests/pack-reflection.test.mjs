@@ -7,6 +7,7 @@ import { PackCarousel, POOL_SIDE } from '../src/pack/carousel.ts';
 
 const side = () => ({ albedo: new Texture(), orm: new Texture(), normal: new Texture() });
 const textures = () => ({ front: side(), back: side() });
+const matcaps = () => ({ paper: new Texture(), paperGloss: new Texture(), foil: new Texture(), foilGloss: new Texture() });
 const surfaces = (root) => {
   const result = [];
   root.traverse((node) => { if (node instanceof Mesh) result.push(node); });
@@ -29,7 +30,7 @@ test('바닥 반사: 부모 이동·크기·세 축 기울기·뒤집기를 월�
   const scene = new Group();
   const stage = new Group();
   scene.add(stage);
-  const pack = new Pack(textures(), new Texture());
+  const pack = new Pack(textures(), new Texture(), matcaps());
   const reflection = new PackReflection(pack.root);
   stage.add(pack.root, reflection.group);
   stage.position.set(.3, .4, -.2);
@@ -44,7 +45,7 @@ test('바닥 반사: 부모 이동·크기·세 축 기울기·뒤집기를 월�
 
 test('절취 상태와 날아가는 윗조각을 반사에 공유하고, 나중에 추가한 카드는 제외한다', () => {
   const scene = new Group();
-  const pack = new Pack(textures(), new Texture());
+  const pack = new Pack(textures(), new Texture(), matcaps());
   const reflection = new PackReflection(pack.root);
   scene.add(pack.root, reflection.group);
   const original = surfaces(pack.root);
@@ -69,10 +70,10 @@ test('절취 상태와 날아가는 윗조각을 반사에 공유하고, 나중�
   assert.equal(reflection.group.children[original.indexOf(pack.lining)].visible, false);
 });
 
-test('캐러셀과 개봉용의 표면·절취 구조가 같고 선택 완료 시에도 반사를 유지한다', () => {
+test('캐러셀과 개봉용의 표면·절취 구조가 같고(재질만 가벼운 팩) 선택 완료 시에도 반사를 유지한다', () => {
   const tex = textures();
   const environment = new Texture();
-  const carousel = new PackCarousel(tex, environment);
+  const carousel = new PackCarousel(tex, environment, matcaps());
   carousel.group.visible = true;
   carousel.setLayout(.4, .6);
   carousel.pick();
@@ -80,14 +81,14 @@ test('캐러셀과 개봉용의 표면·절취 구조가 같고 선택 완료 �
   assert.equal(carousel.opened, true);
   const [shell, reflection] = carousel.group.children[POOL_SIDE].children;
   const source = surfaces(shell);
-  const opened = surfaces(new Pack(tex, environment).root);
+  const opened = surfaces(new Pack(tex, environment, matcaps()).root);
   assert.equal(source.length, opened.length);
   source.forEach((surface, i) => {
     assert.deepEqual(surface.geometry.attributes.position.array, opened[i].geometry.attributes.position.array);
     assert.deepEqual(surface.geometry.attributes.normal.array, opened[i].geometry.attributes.normal.array);
     assert.equal(surface.material.map, opened[i].material.map);
-    assert.equal(surface.material.customProgramCacheKey(), opened[i].material.customProgramCacheKey());
-    assert.equal(reflection.children[i].visible, true);
+    assert.equal(surface.material.isMeshMatcapMaterial, opened[i].material.isMeshPhysicalMaterial, '팩 표면은 가벼운 재질');
+    assert.equal(reflection.children[i].visible, surface.visible, '보이는 표면은 반사도 보임 (가벼운 팩은 속지를 숨김)');
     assert.equal(reflection.children[i].material.opacity, .3);
   });
 });

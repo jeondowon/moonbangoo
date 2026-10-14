@@ -1,12 +1,13 @@
 // 팩 고르기 캐러셀 (포켓몬 카드게임 Pocket의 팩 선택 연출 참고).
 // 같은 팩 여러 개가 큰 원을 따라 늘어서 있고, 좌우로 넘기면 원이 돌며 다음 팩이 옆에서 들어온다. 가운데 한 팩을 고른다.
 // 팩이 많아도(PACK_COUNT) 가운데 근처 몇 개만 메시로 만들어 두고, 넘길 때마다 자리를 돌려 쓴다.
-// 팩은 개봉용과 동일한 윗조각·본체·곡면·재질을 공유한다.
+// 팩은 개봉용과 동일한 윗조각·본체·곡면을 공유하고, 재질만 미리 구운 반사 그림을 쓰는 가벼운 재질이다.
 // 팩은 바닥에서 떠 있고, 그 아래 바닥에 반사가 비친다.
 // 고른 팩이 실제 팩 자리(원점·원래 크기·정면)로 모이면 opened가 되고, 그때 실제 팩으로 바꿔 끼운다.
 import { Group, Vector3, type Texture } from 'three';
 import { clamp } from '../core/math';
 import { Spring } from '../core/spring';
+import type { PackMatcaps } from './lite';
 import { Pack, PACK_H } from './pack';
 import { PackReflection, PACK_FLOOR_Y } from './reflection';
 import type { PackTextures } from './textures';
@@ -49,8 +50,9 @@ export class PackCarousel {
   /** 고른 팩이 실제 팩 자리에 도착함 */
   opened = false;
 
-  constructor(tex: PackTextures, environment: Texture, readonly count = PACK_COUNT) {
-    const template = new Pack(tex, environment);
+  constructor(tex: PackTextures, environment: Texture, matcaps: PackMatcaps, readonly count = PACK_COUNT) {
+    // 캐러셀은 팩 여러 장이 화면을 크게 덮으므로 가벼운 팩으로 그린다 (lite.ts). 고른 팩은 실제 팩으로 바꿔 끼워 연다
+    const template = new Pack(tex, environment, matcaps, true);
     for (let i = 0; i < 2 * POOL_SIDE + 1; i++) {
       const pack = new Group();
       const shell = template.root.clone(true); // 지오메트리·재질은 공유, 배치만 독립

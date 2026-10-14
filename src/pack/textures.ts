@@ -8,6 +8,7 @@ import { PACK, packBack, packFront } from '../../design/lib/pack.js';
 import { embeddedFontCss } from '../gfx/fonts';
 import { boxBlur, HeightField, readChannel, valueNoise, whiteNoise } from '../gfx/surface';
 import { parseSvg, rasterize, svgText, toTexture } from '../gfx/svg';
+import { ROUGH } from './pack';
 
 /** 텍스처 해상도 배율 (SVG 600×1040 → 900×1560). 화면에서 팩 높이가 1500px를 넘을 일이 드물다 */
 const SCALE = 1.5;
@@ -15,7 +16,6 @@ const SCALE = 1.5;
 // 금속 박의 기본색(PBR base color). 2D 시안의 금색 그라디언트 중간 톤
 const FOIL_ALBEDO = '#e2c486';
 
-const ROUGH = { paper: 0.58, crimp: 0.42, foil: 0.28, frontFoil: 0.88 };
 const FRONT_FOIL_METALNESS = 0.08;
 
 export interface SideTextures {

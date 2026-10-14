@@ -7,6 +7,7 @@ import { pointer, setup } from './helpers/flow.mjs';
 
 const side = () => ({ albedo: new Texture(), orm: new Texture(), normal: new Texture() });
 const tex = () => ({ front: side(), back: side() });
+const matcaps = () => ({ paper: new Texture(), paperGloss: new Texture(), foil: new Texture(), foilGloss: new Texture() });
 const run = (carousel, seconds) => {
   for (let t = 0; t < seconds; t += 1 / 60) carousel.update(1 / 60);
 };
@@ -29,7 +30,7 @@ test('팩 자리: 큰 원 위에 같은 간격으로 서서 바깥을 향하고,
 
 test('캐러셀: 팩이 많아도 가운데 근처만 메시로 두고, 어디까지 넘겨도 가운데에 팩이 선다', () => {
   setup();
-  const carousel = new PackCarousel(tex(), new Texture());
+  const carousel = new PackCarousel(tex(), new Texture(), matcaps());
   assert.equal(PACK_COUNT, 100);
   assert.equal(carousel.group.children.length, 2 * POOL_SIDE + 1);
   for (let i = 0; i < 57; i++) carousel.go(1);
@@ -51,7 +52,7 @@ test('캐러셀: 팩이 많아도 가운데 근처만 메시로 두고, 어디�
 
 test('캐러셀: 끝에서 처음으로 이어지고, 놓으면 가까운 팩에 멈추며, 고른 팩은 실제 팩 자리로 모인다', () => {
   setup(); // document 대역
-  const carousel = new PackCarousel(tex(), new Texture());
+  const carousel = new PackCarousel(tex(), new Texture(), matcaps());
   carousel.setLayout(0.4, 0.6);
   carousel.go(-1);
   assert.equal(carousel.index, PACK_COUNT - 1);
@@ -82,7 +83,7 @@ test('캐러셀: 끝에서 처음으로 이어지고, 놓으면 가까운 팩에
 
 test('캐러셀: 놓으면 손 속도 그대로 미끄러지다가 넘치지 않고 멈추고, 세게 튕기면 여러 칸 간다', () => {
   setup();
-  const carousel = new PackCarousel(tex(), new Texture());
+  const carousel = new PackCarousel(tex(), new Texture(), matcaps());
   carousel.dragBy(0.3);
   carousel.release(6); // 6칸/초로 놓음
   const target = carousel.index;
@@ -106,7 +107,7 @@ test('캐러셀: 놓으면 손 속도 그대로 미끄러지다가 넘치지 않
 
 test('오리파 화면: 수량 표시, 스와이프·옆 팩 탭·방향키로 이동, 가운데 팩 탭으로 열기, 소진 시 차단', () => {
   const { get } = setup();
-  const carousel = new PackCarousel(tex(), new Texture());
+  const carousel = new PackCarousel(tex(), new Texture(), matcaps());
   const counts = (remaining, total) => ({ remaining, total });
   const shop = {
     packId: 1,
