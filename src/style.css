@@ -297,6 +297,19 @@ html, body {
 }
 /* 인트로·팩 고르기 화면에서만 보인다 */
 .intro.is-hidden ~ .oripa[hidden] ~ .menu-back { display: none; }
+/* ?fps 점검용 표시. 조작을 가리지 않게 터치는 통과시킨다 */
+.fps-meter {
+  position: fixed;
+  left: max(10px, env(safe-area-inset-left));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  z-index: 10;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, .6);
+  color: #fff;
+  font: 12px/1.2 monospace;
+  pointer-events: none;
+}
 /* ── 라이트/다크 전환 버튼 ─────────────────── */
 /* 다른 화면·안내 오버레이보다 위에 둔다 */
 .theme-toggle {

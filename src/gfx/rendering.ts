@@ -14,11 +14,12 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { createBackdrop } from './backdrop';
 import { createStudioEnv } from './env';
+import { QUALITY } from './quality';
 
 export function createRendering(canvas: HTMLCanvasElement) {
-  // 장면은 composer의 MSAA 타깃에 그리므로 캔버스의 중복 안티앨리어싱은 끈다.
+  // 장면은 composer 타깃에 그리므로 캔버스의 안티앨리어싱은 끈다 (MSAA는 ?msaa=1일 때 타깃에서만).
   const renderer = new WebGLRenderer({ canvas, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+  renderer.setPixelRatio(Math.min(QUALITY.maxPixelRatio, window.devicePixelRatio));
   renderer.toneMapping = NeutralToneMapping; // 인쇄 색(시안 팔레트)을 최대한 유지
   renderer.toneMappingExposure = 1;
 
@@ -31,10 +32,10 @@ export function createRendering(canvas: HTMLCanvasElement) {
   scene.add(backdrop.mesh);
 
   // HDR의 밝은 부분(>1)만 번지게 해 커팅 헤드·불티·잔광을 표현한다 (명세 5.2).
-  const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType, samples: 4 });
+  const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType, samples: QUALITY.msaa ? 4 : 0 });
   const composer = new EffectComposer(renderer, target);
   composer.addPass(new RenderPass(scene, camera));
-  composer.addPass(new UnrealBloomPass(new Vector2(1, 1), 0.7, 0.45, 1.0));
+  if (QUALITY.bloom) composer.addPass(new UnrealBloomPass(new Vector2(1, 1), 0.7, 0.45, 1.0));
   const output = new OutputPass();
   // 마지막 패스는 화면에 직접 출력. 버퍼 교환으로 MSAA 타깃이 추가 할당되는 것을 막는다.
   output.needsSwap = false;

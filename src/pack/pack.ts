@@ -14,6 +14,7 @@ import {
 } from 'three';
 import { PACK } from '../../design/lib/pack.js';
 import { smooth } from '../core/math';
+import { QUALITY } from '../gfx/quality';
 import { TEAR_MAX_DEV, TEAR_V, TearState } from './tear';
 import { applyTear, createTearUniforms, type TearPiece, type TearUniforms } from './tearShader';
 import type { PackTextures, SideTextures } from './textures';
@@ -97,12 +98,12 @@ export function packMaterial(t: SideTextures, environment: Texture) {
     normalMap: t.normal,
     normalScale: new Vector2(1, 1),
     // 포장 필름의 얇은 광택층 (주름은 따라가되 박 눌림은 덮음)
-    clearcoat: 0.35,
+    clearcoat: QUALITY.gloss ? 0.35 : 0,
     clearcoatRoughness: 0.3,
     clearcoatNormalMap: t.normal,
     clearcoatNormalScale: new Vector2(0.35, 0.35),
     // 펄 포장지의 은은한 무지갯빛
-    iridescence: 0.12,
+    iridescence: QUALITY.gloss ? 0.12 : 0,
     iridescenceIOR: 1.35,
     iridescenceThicknessRange: [220, 480],
     alphaTest: 0.5,

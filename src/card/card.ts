@@ -13,6 +13,7 @@ import {
 } from 'three';
 import { CARD } from '../../design/lib/card.js';
 import { Spring } from '../core/spring';
+import { QUALITY } from '../gfx/quality';
 import { applyHoloFront, applyRimGlow, RARITY_STYLE, type RarityCode } from './holo';
 
 /** 월드 단위 카드 크기 (팩 안에 들어가는 크기 기준. 보여줄 때는 덱 전체를 키운다) */
@@ -129,7 +130,7 @@ function printMaterial(map: Texture, rarity: RarityCode, face: 'front' | 'back',
     map,
     roughness: style.roughness,
     metalness: style.metalness,
-    clearcoat: style.clearcoat,
+    clearcoat: QUALITY.gloss ? style.clearcoat : 0,
     clearcoatRoughness: style.clearcoatRoughness,
     emissive: 0x000000,
   });
@@ -168,7 +169,10 @@ export class Card {
     let backMat = backMaterials.get(backKey);
     if (!backMat) backMaterials.set(backKey, (backMat = printMaterial(back, rarity, 'back')));
     // 옆면도 앞면과 함께 어두워져야 금속 옆면이 어두운 화면에서 빛나지 않는다. 밝기가 카드마다 달라 재질은 카드별.
-    const edgeMat = dimmable(new MeshPhysicalMaterial(EDGE_STYLE[rarity]), this.brightness);
+    const edgeMat = dimmable(
+      new MeshPhysicalMaterial(QUALITY.gloss ? EDGE_STYLE[rarity] : { ...EDGE_STYLE[rarity], iridescence: 0 }),
+      this.brightness,
+    );
     this.mesh = new Mesh(sharedGeometry, [printMaterial(front, rarity, 'front', this.brightness), backMat, edgeMat]);
     this.flipper.rotation.y = Math.PI;
     this.flipper.add(this.mesh);
