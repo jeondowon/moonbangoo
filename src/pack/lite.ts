@@ -91,38 +91,25 @@ vec3 liteLight(vec3 albedo, vec3 n, vec3 viewPosition, vec2 mapUv) {
 }
 `;
 
-const liteUniforms = (t: SideTextures, matcaps: PackMatcaps) => ({
-  uOrm: { value: t.orm },
-  uPaper: { value: matcaps.paper },
-  uPaperGloss: { value: matcaps.paperGloss },
-  uFoil: { value: matcaps.foil },
-  uFoilGloss: { value: matcaps.foilGloss },
-});
-
-/** 가벼운 팩 재질(liteMaterial)에 색 계산을 끼운다. 절취 셰이더(applyTear)를 먼저 적용한 재질에 이어서 끼운다 */
-export function applyLiteShading(material: Material, t: SideTextures, matcaps: PackMatcaps) {
-  const own = liteUniforms(t, matcaps);
-  const compile = material.onBeforeCompile;
-  const cacheKey = material.customProgramCacheKey();
-  material.onBeforeCompile = (shader, renderer) => {
-    compile.call(material, shader, renderer);
-    Object.assign(shader.uniforms, own);
-    shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', `#include <common>\n${LITE_GLSL}`)
-      .replace(
-        'vec3 outgoingLight = diffuseColor.rgb * matcapColor.rgb;',
-        'vec3 outgoingLight = liteLight(diffuseColor.rgb, normal, vViewPosition, vMapUv);',
-      );
-  };
-  material.customProgramCacheKey = () => `${cacheKey}-lite`;
-}
-
 /**
- * 실사 재질 팩이 amount(0~1)만큼 가벼운 팩 색으로 보이게 한다.
- * 캐러셀에서 고른 가벼운 팩을 실제 팩으로 바꿔 끼울 때 같은 색에서 시작해 실사 재질로 서서히 넘어가도록 (툭 바뀌지 않게).
+ * 팩 재질에 가벼운 팩 색 계산을 끼운다. 절취 셰이더(applyTear)를 먼저 적용한 재질에 이어서 끼운다.
+ *   amount 없음: 가벼운 팩 재질(liteMaterial)의 색을 이것으로 바꾼다
+ *   amount 있음: 실사 재질 팩이 amount(0~1)만큼 가벼운 팩 색으로 보인다.
+ *     캐러셀에서 고른 가벼운 팩을 실제 팩으로 바꿔 끼울 때 같은 색에서 시작해 실사 재질로 서서히 넘어가도록 (툭 바뀌지 않게).
  */
-export function applyLiteMix(material: Material, t: SideTextures, matcaps: PackMatcaps, amount: IUniform<number>) {
-  const own = { ...liteUniforms(t, matcaps), uLiteMix: amount };
+export function applyLiteShading(material: Material, t: SideTextures, matcaps: PackMatcaps, amount?: IUniform<number>) {
+  const own = {
+    uOrm: { value: t.orm },
+    uPaper: { value: matcaps.paper },
+    uPaperGloss: { value: matcaps.paperGloss },
+    uFoil: { value: matcaps.foil },
+    uFoilGloss: { value: matcaps.foilGloss },
+    uLiteMix: amount ?? { value: 1 },
+  };
+  const lite = 'liteLight(diffuseColor.rgb, normal, vViewPosition, vMapUv)';
+  const [from, to] = amount
+    ? ['#include <opaque_fragment>', `if (uLiteMix > 0.0) outgoingLight = mix(outgoingLight, ${lite}, uLiteMix);\n#include <opaque_fragment>`]
+    : ['vec3 outgoingLight = diffuseColor.rgb * matcapColor.rgb;', `vec3 outgoingLight = ${lite};`];
   const compile = material.onBeforeCompile;
   const cacheKey = material.customProgramCacheKey();
   material.onBeforeCompile = (shader, renderer) => {
@@ -130,10 +117,7 @@ export function applyLiteMix(material: Material, t: SideTextures, matcaps: PackM
     Object.assign(shader.uniforms, own);
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>\n${LITE_GLSL}\nuniform float uLiteMix;`)
-      .replace(
-        '#include <opaque_fragment>',
-        `if (uLiteMix > 0.0) outgoingLight = mix(outgoingLight, liteLight(diffuseColor.rgb, normal, vViewPosition, vMapUv), uLiteMix);\n#include <opaque_fragment>`,
-      );
+      .replace(from, to);
   };
-  material.customProgramCacheKey = () => `${cacheKey}-lite-mix`;
+  material.customProgramCacheKey = () => `${cacheKey}-lite${amount ? '-mix' : ''}`;
 }

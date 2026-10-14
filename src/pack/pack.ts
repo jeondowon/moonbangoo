@@ -15,7 +15,7 @@ import {
 import { PACK } from '../../design/lib/pack.js';
 import { smooth } from '../core/math';
 import { QUALITY } from '../gfx/quality';
-import { applyLiteMix, applyLiteShading, liteMaterial, type PackMatcaps } from './lite';
+import { applyLiteShading, liteMaterial, type PackMatcaps } from './lite';
 import { TEAR_MAX_DEV, TEAR_V, TearState } from './tear';
 import { applyTear, createTearUniforms, type TearPiece, type TearUniforms } from './tearShader';
 import type { PackTextures, SideTextures } from './textures';
@@ -161,8 +161,7 @@ export class Pack {
       const t = side === 1 ? tex.front : tex.back;
       const mat = lite ? liteMaterial(t) : packMaterial(t, environment);
       applyTear(mat, this.uniforms, { piece, flipU: side === -1, side, guide: side === 1 });
-      if (lite) applyLiteShading(mat, t, matcaps);
-      else applyLiteMix(mat, t, matcaps, this.liteMix);
+      applyLiteShading(mat, t, matcaps, lite ? undefined : this.liteMix);
       return new Mesh(packSurface(side, v0, v1), mat);
     };
     this.top.add(surface(1, 'top'), surface(-1, 'top'));
