@@ -132,6 +132,9 @@ export async function buildCardTextures(renderer: WebGLRenderer, cards: Prize[])
     await fitTexts(svg);
     return toTexture(await rasterize(svg, w, h, { fontCss }), renderer);
   };
-  const [b, s, ...f] = await Promise.all([back, store, ...fronts].map(draw));
+  // 팩이 가운데로 모이는 애니메이션 도중에 그리므로, 한꺼번에 그려 프레임이 끊기지 않게 한 장씩 차례로 그린다
+  const textures: Texture[] = [];
+  for (const markup of [back, store, ...fronts]) textures.push(await draw(markup));
+  const [b, s, ...f] = textures;
   return { back: b, store: s, fronts: f };
 }

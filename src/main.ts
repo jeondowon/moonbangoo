@@ -196,7 +196,11 @@ async function openPack(packId: number) {
     sound.confirm(rarity);
     confirmPrize(result.drawId, prize.id).catch(showError); // 최종 선택한 1장만 차감
   });
-  for (const t of [cardTex.back, cardTex.store, ...cardTex.fronts]) renderer.initTexture(t);
+  // 텍스처를 GPU로 올리는 것도 한 프레임에 한 장씩 (애니메이션 도중이라 한꺼번에 올리면 끊긴다)
+  for (const t of [cardTex.back, cardTex.store, ...cardTex.fronts]) {
+    renderer.initTexture(t);
+    await new Promise(requestAnimationFrame);
+  }
   await renderer.compileAsync(d.root, camera, scene);
   deck = d;
 }
