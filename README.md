@@ -116,7 +116,7 @@ npm test           # 화면 흐름·API·안내 회귀 테스트
 - 렌더링 설정은 `src/gfx/rendering.ts`, 화면 흐름은 `src/ui`, CSS는 `src/style.css`에서 관리합니다.
 - 의존성 변경 시 `package.json`과 `package-lock.json`을 함께 커밋합니다. 명세·디자인 원본·테스트도 공유합니다.
 - 로컬 환경·IDE 설정과 산출물은 `.gitignore`로 제외합니다. 환경 변수 예제와 VS Code 공용 확장 추천·작업 설정은 허용합니다. 시연/운영 전환은 `.env.example`을 참고합니다.
-- PR 전 `npm test`와 `npm run build`를 실행합니다. PR 검사와 배포에서도 동일하게 실행합니다. 테스트는 DOM 대역을 사용하므로 실제 화면·모바일 조작·성능은 브라우저에서 별도 확인합니다.
+- PR 전 `npm test`와 `npm run build`를 실행합니다. PR 검사와 배포에서도 동일하게 실행합니다. 테스트는 DOM 대역을 사용하므로 실제 화면·모바일 조작·성능은 브라우저에서 별도 확인합니다. 성능(FPS) 점검 방법은 [PERFORMANCE.md](PERFORMANCE.md)를 봅니다.
 
 테스트는 추가 라이브러리 없이 Node 내장 테스트 러너와 TypeScript 변환을 사용합니다. 실행 중 `Transform Types` 실험 기능 경고가 표시될 수 있습니다.
 
