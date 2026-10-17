@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<!-- 코인 뒷면 임시 도안. 뒷면 로고가 준비되면 이 파일을 교체한다 (색은 무시되고 모양만 쓰인다). -->
+<path d="M100 18l23.5 52.6 57.3 5.8-42.8 38.5 12.3 56.3L100 142.2 49.7 171.2 62 114.9 19.2 76.4l57.3-5.8z" fill="none" stroke="#000" stroke-width="10" stroke-linejoin="round"/>
+<circle cx="100" cy="104" r="12" fill="#000"/>
+</svg>

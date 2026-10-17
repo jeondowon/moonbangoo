@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f8f5ee">
+<title>어른뭉방구 코인 플립</title>
+<link rel="stylesheet" href="/src/coin/coin.css">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
+</head>
+<body>
+<canvas id="stage" aria-label="코인. 위로 튕겨서 던지고, 떠 있는 동안 문질러서 돌려요"></canvas>
+<a class="menu-back" href="./" aria-label="게임 메뉴로 돌아가기">← <span>게임 메뉴</span></a>
+<div class="coin-hud">
+  <p id="altitude" class="hud-altitude"></p>
+  <p id="best" class="hud-best"></p>
+</div>
+<p id="toast" class="coin-toast" role="status" aria-live="polite"></p>
+<p id="result" class="coin-result" role="status" aria-live="polite"></p>
+<p id="hint" class="coin-hint"></p>
+<script type="module" src="/src/coin/main.ts"></script>
+</body>
+</html>

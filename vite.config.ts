@@ -6,7 +6,7 @@ export default defineConfig(({ command }) => ({
   base: command === 'build' ? '/moonbangoo/' : '/',
   build: {
     rollupOptions: {
-      input: { menu: 'index.html', card: 'card.html' },
+      input: { menu: 'index.html', card: 'card.html', coin: 'coin.html' },
     },
   },
 }));
