@@ -82,7 +82,7 @@ ${pressFilter(id('press-logo'), 0.75)}
 <g data-layer="foil" fill="${u('foil')}" stroke="${u('foil')}">
   <g filter="url(#${id('press')})">
     <text x="${W / 2}" y="${(crimp + tear) / 2 + 5}" text-anchor="middle" stroke="none"
-      font-family="Cormorant Garamond, serif" font-weight="700" font-size="15.5" letter-spacing="5">EOREUN MUNGBANGGU · SPECIAL CARD PACK</text>
+      font-family="Cormorant Garamond, serif" font-weight="700" font-size="15.5" letter-spacing="5">EOREUN MOONGBANGU · SPECIAL CARD PACK</text>
     <path d="M20 ${tear}H${W - 20}" fill="none" stroke-width="1.6" stroke-dasharray="6 5" stroke-linecap="round"/>
     <text x="${W / 2}" y="614" text-anchor="middle" stroke="none"
       font-family="Cormorant Garamond, serif" font-weight="700" font-size="17" letter-spacing="7">EVENT BOOSTER PACK</text>
@@ -173,7 +173,7 @@ ${pressFilter(id('press'), 0.75)}
   <g data-layer="foil" fill="${u('foil')}" stroke="${u('foil')}">
     <g filter="url(#${id('press')})">
       ${logoMarkup({ uid: id('logo'), paint: u('foil-logo'), x: W / 2 - 34 - 24 - 170, y: 760, width: 170 })}
-      <text x="${W / 2 + 34 + 24}" y="840" stroke="none" font-family="Cormorant Garamond, serif" font-weight="600" font-size="13" letter-spacing="4">EOREUN MUNGBANGGU</text>
+      <text x="${W / 2 + 34 + 24}" y="840" stroke="none" font-family="Cormorant Garamond, serif" font-weight="600" font-size="13" letter-spacing="4">EOREUN MOONGBANGU</text>
       <text x="${W / 2 + 34 + 24}" y="862" stroke="none" font-family="Cormorant Garamond, serif" font-weight="600" font-size="13" letter-spacing="4">POHANG · KOREA</text>
     </g>
   </g>

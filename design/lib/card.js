@@ -159,7 +159,7 @@ ${pressFilter(`${uid}-press`, 0.7)}
   <g data-layer="strip">
     <rect x="${win.x - 5}" y="480" width="${win.w + 10}" height="30" rx="4" fill="${u('metal-h')}" opacity=".9"/>
     <text x="${win.x + 12}" y="500" fill="${darkText}" font-family="${SANS}" font-weight="600" font-size="14.5">${CATEGORY_LABEL[prize.category]}</text>
-    <text x="${win.x + win.w - 12}" y="500" text-anchor="end" fill="${darkText}" font-family="${LATIN}" font-style="italic" font-weight="600" font-size="15" letter-spacing="1.5">Eoreun Mungbanggu Prize Card</text>
+    <text x="${win.x + win.w - 12}" y="500" text-anchor="end" fill="${darkText}" font-family="${LATIN}" font-style="italic" font-weight="600" font-size="15" letter-spacing="1.5">Eoreun Moongbangu Prize Card</text>
   </g>
 
   <g data-layer="panel">
@@ -304,7 +304,7 @@ ${pressFilter(`${uid}-press-logo`, 0.75)}
       <text x="${cx}" y="100" text-anchor="middle" stroke="none" font-family="${LATIN}" font-weight="700" font-size="14" letter-spacing="7">PRIZE CARD</text>
       ${divider(cx, 122, 60, 12, 4, 1)}
       ${divider(cx, H - 124, 60, 12, 4, 1)}
-      <text x="${cx}" y="${H - 92}" text-anchor="middle" stroke="none" font-family="${LATIN}" font-weight="700" font-size="14" letter-spacing="7">EOREUN MUNGBANGGU</text>
+      <text x="${cx}" y="${H - 92}" text-anchor="middle" stroke="none" font-family="${LATIN}" font-weight="700" font-size="14" letter-spacing="7">EOREUN MOONGBANGU</text>
     </g>
     ${logoMarkup({ uid: `${uid}-logo`, paint: u('foil-logo'), x: cx - lw / 2, y: cy - lh / 2 - 6, width: lw, filter: `${uid}-press-logo` })}
   </g>
