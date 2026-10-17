@@ -19,7 +19,7 @@ body { margin: 0; }
 }
 .menu-brand { margin-bottom: clamp(32px, 5vh, 64px); }
 .menu-brand img { display: block; width: clamp(116px, 9vw, 180px); height: auto; }
-.menu-options { width: min(88vw, 1680px); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(24px, 3.5vw, 64px); }
+.menu-options { width: min(88vw, 1680px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(24px, 3.5vw, 64px); }
 .menu-option { display: block; min-width: 0; color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
 a.menu-option:focus-visible { outline: 2px solid #a08449; outline-offset: 8px; }
 .game-thumbnail { aspect-ratio: 3 / 2; overflow: hidden; border: 1px solid #e3d9c6; border-radius: 4px; background: #f0e9dc; }
@@ -27,8 +27,6 @@ a.menu-option:focus-visible { outline: 2px solid #a08449; outline-offset: 8px; }
 /* 캡처 높이의 8~80%만 표시해 수량·테마 버튼·하단 상품 목록을 제외한다. */
 .carousel-thumbnail { position: relative; }
 .carousel-thumbnail img { position: absolute; left: 0; top: -11.1111%; height: 138.8889%; }
-.coin-thumbnail { display: grid; place-items: center; }
-.coin-thumbnail img { width: 34%; height: auto; object-fit: contain; }
 a.menu-option:hover .game-thumbnail img { transform: scale(1.035); }
 .game-caption { display: flex; align-items: center; gap: 20px; padding: clamp(20px, 1.8vw, 32px) 2px; border-bottom: 1px solid #dcd2bf; }
 .game-name { font-size: clamp(23px, 2vw, 38px); font-weight: 500; line-height: 1.4; letter-spacing: -.045em; }
