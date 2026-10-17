@@ -4,11 +4,12 @@
 import {
   AdditiveBlending,
   BufferGeometry,
-  CanvasTexture,
   Color,
+  DataTexture,
   DoubleSide,
   Float32BufferAttribute,
   Group,
+  LinearFilter,
   LinearMipmapLinearFilter,
   LineBasicMaterial,
   LineLoop,
@@ -61,10 +62,41 @@ type Rgb = [number, number, number];
 const rgb = (hex: string): Rgb => [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
 const mixRgb = (a: Rgb, b: Rgb, t: number): Rgb => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
-function canvasTexture(c: HTMLCanvasElement) {
-  const t = new CanvasTexture(c);
+type Rgba = readonly [number, number, number, number]; // rgb 0~255, a 0~1
+
+/**
+ * 픽셀마다 계산해 텍스처를 만든다 (x·y는 위에서부터 센 픽셀 가운데 좌표).
+ * 2D 캔버스로 그리지 않는다: iOS WebKit은 캔버스를 텍스처로 올릴 때 추적 방지 잡음을 섞어, 옅은 부분이 무지갯빛 점으로 보인다.
+ */
+export function pixelTexture(w: number, h: number, pixel: (x: number, y: number) => Rgba) {
+  const data = new Uint8Array(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const [r, g, b, a] = pixel(x + 0.5, y + 0.5);
+      const i = ((h - 1 - y) * w + x) * 4; // 캔버스처럼 첫 줄이 텍스처 위쪽
+      data[i] = Math.round(r);
+      data[i + 1] = Math.round(g);
+      data[i + 2] = Math.round(b);
+      data[i + 3] = Math.round(a * 255);
+    }
+  }
+  const t = new DataTexture(data, w, h);
   t.colorSpace = SRGBColorSpace;
+  t.magFilter = LinearFilter;
+  t.minFilter = LinearMipmapLinearFilter;
+  t.generateMipmaps = true;
+  t.needsUpdate = true;
   return t;
+}
+
+/** 가운데에서 바깥으로 갈수록 투명해지는 원 (캔버스 원형 그라데이션과 같은 모양). stops: [반지름 비율, 불투명도] */
+export function radialAlpha(d: number, stops: readonly (readonly [number, number])[]) {
+  if (d <= stops[0][0]) return stops[0][1];
+  const i = stops.findIndex((s) => s[0] >= d);
+  if (i < 0) return stops[stops.length - 1][1];
+  const [d0, a0] = stops[i - 1];
+  const [d1, a1] = stops[i];
+  return a0 + ((a1 - a0) * (d - d0)) / (d1 - d0);
 }
 
 // ---- 행성 표면: GLSL로 그려 불러올 때 GPU에서 한 번만 텍스처로 굽는다 (CPU로 그리면 몇 초 걸린다) ----
@@ -436,26 +468,36 @@ const UNIT_SPHERE = new SphereGeometry(1, 64, 32);
 const planet = (map: Texture, rim: string) => new Mesh(UNIT_SPHERE, planetMaterial(map, rim));
 
 function saturnRing(radius: number) {
-  const c = document.createElement('canvas');
-  c.width = c.height = 512;
-  const ctx = c.getContext('2d')!;
   const inner = (256 * 1.35) / 2.3;
   const pale = rgb('#ecdcb4'), dusty = rgb('#b39f7c');
+  // 반지름 1픽셀 간격의 고리 띠들: 띠마다 색·불투명도가 다르다
+  const bands: { r: number; col: Rgb; a: number }[] = [];
   for (let r = inner; r < 256; r += 1) {
     const t = (r - inner) / (256 - inner);
     const n = noise1(t * 40, 1) * 0.6 + noise1(t * 140, 2) * 0.4;
     const gap = t > 0.6 && t < 0.66 ? 0.08 : t > 0.9 && t < 0.91 ? 0.3 : 1; // 카시니·엥케 간극
     const a = (0.25 + 0.65 * n) * smooth(0, 0.08, t) * gap;
-    const [cr, cg, cb] = mixRgb(dusty, pale, smooth(0.15, 0.55, t) * (0.6 + 0.4 * n));
-    ctx.strokeStyle = `rgba(${cr | 0},${cg | 0},${cb | 0},${a})`;
-    ctx.beginPath();
-    ctx.arc(256, 256, r, 0, Math.PI * 2);
-    ctx.stroke();
+    bands.push({ r, col: mixRgb(dusty, pale, smooth(0.15, 0.55, t) * (0.6 + 0.4 * n)), a });
   }
+  const map = pixelTexture(512, 512, (x, y) => {
+    const d = Math.hypot(x - 256, y - 256);
+    // 1픽셀 굵기 띠가 걸친 만큼 안쪽 띠부터 차례로 겹친다 (캔버스에서 원을 차례로 그은 것과 같게)
+    let a = 0;
+    let col: Rgb = [0, 0, 0];
+    const from = Math.max(0, Math.ceil(d - 1 - inner));
+    for (let k = from; k < bands.length && bands[k].r < d + 1; k++) {
+      const band = bands[k];
+      const src = band.a * Math.max(0, 1 - Math.abs(d - band.r));
+      const out = src + a * (1 - src);
+      if (out > 0) col = mixRgb(col, band.col, src / out);
+      a = out;
+    }
+    return [...col, a];
+  });
   const ring = new Mesh(
     new RingGeometry(radius * 1.35, radius * 2.3, 96),
     new ShaderMaterial({
-      uniforms: { map: { value: canvasTexture(c) } },
+      uniforms: { map: { value: map } },
       vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
       fragmentShader: 'uniform sampler2D map; varying vec2 vUv; void main() { gl_FragColor = texture2D(map, vUv); #include <colorspace_fragment>\n }',
       transparent: true,
@@ -674,35 +716,27 @@ function farGalaxy(map: Texture, tint: Color, opacity: { value: number }) {
 const PLANE = new PlaneGeometry(2, 2);
 
 function mistTexture(seed: number) {
-  const c = document.createElement('canvas');
-  c.width = 256;
-  c.height = 128;
-  const ctx = c.getContext('2d')!;
   // 옅은 빛 덩어리를 가로로 길게 흩뿌려 겹친다: 테두리 없이 번지는 안개 띠
-  for (let i = 0; i < 40; i++) {
+  const puffs = Array.from({ length: 40 }, (_, i) => {
     const t = hash(seed, i, 1);
-    const x = 128 + (t - 0.5) * 190;
-    const y = 64 + (hash(seed, i, 2) - 0.5) * 40 * Math.sin(t * Math.PI);
-    const r = 18 + hash(seed, i, 3) * 30;
-    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, 'rgba(255,255,255,0.22)');
-    g.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(x - r, y - r, r * 2, r * 2);
-  }
-  return canvasTexture(c);
+    return {
+      x: 128 + (t - 0.5) * 190,
+      y: 64 + (hash(seed, i, 2) - 0.5) * 40 * Math.sin(t * Math.PI),
+      r: 18 + hash(seed, i, 3) * 30,
+    };
+  });
+  return pixelTexture(256, 128, (x, y) => {
+    let a = 0;
+    for (const p of puffs) {
+      const src = radialAlpha(Math.hypot(x - p.x, y - p.y) / p.r, [[0, 0.22], [1, 0]]);
+      a = src + a * (1 - src);
+    }
+    return [255, 255, 255, a];
+  });
 }
 
 function dotTexture() {
-  const c = document.createElement('canvas');
-  c.width = c.height = 32;
-  const ctx = c.getContext('2d')!;
-  const g = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-  g.addColorStop(0, 'rgba(255,255,255,1)');
-  g.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 32, 32);
-  return canvasTexture(c);
+  return pixelTexture(32, 32, (x, y) => [255, 255, 255, radialAlpha(Math.hypot(x - 16, y - 16) / 16, [[0, 1], [1, 0]])]);
 }
 
 const DUST = 220;

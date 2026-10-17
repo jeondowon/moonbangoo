@@ -17,19 +17,22 @@ import {
   type Material,
   type MeshStandardMaterial,
 } from "three";
-import { smooth } from "../core/math";
+import { clamp, smooth } from "../core/math";
 import { Spring } from "../core/spring";
 import { createStudioEnv } from "../gfx/env";
 import { QUALITY } from "../gfx/quality";
 import { altitudeAt, formatAltitude, heightFor, loadBest, MILESTONES, saveBest } from "./altitude";
 import { createCoin, createCoinMaterials, type CoinMaterials } from "./coinMesh";
 import { CoinSim, COIN_R, COIN_T, type CoinEvent, type Face } from "./physics";
-import { createScenery } from "./scenery";
+import { createScenery, pixelTexture, radialAlpha } from "./scenery";
 import { CoinSound } from "./sound";
 
 const GROUND = "#f3ecdc";
 const LOOK_Y = 0.45; // 쉬는 코인이 화면 가운데보다 조금 아래에 보이게
 const FOLLOW_FROM = 1.1; // 코인이 이보다 높이 뜨면 카메라가 따라 올라간다
+// 빠르게 오르내리면 카메라 스프링이 뒤처져 코인이 화면을 벗어나므로, 뒤처지는 거리를 이만큼까지로 묶는다
+const LAG_UP = 0.3;
+const LAG_DOWN = 1;
 const GHOSTS = 3; // 빠르게 돌 때 직전 자세를 겹쳐 그려 잔상을 만든다
 const SWIPE_WINDOW = 100; // ms — 손을 떼기 직전 이 시간 동안의 속도로 던진다
 const RUB_HINT_DONE = 0.6; // 화면 높이의 이만큼 문질러 보면 문지르기 안내를 끈다
@@ -106,16 +109,16 @@ const buzz = (ms: number) => {
 };
 
 function blobTexture() {
-  const c = document.createElement("canvas");
-  c.width = c.height = 128;
-  const ctx = c.getContext("2d")!;
-  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-  g.addColorStop(0, "rgba(0,0,0,.42)");
-  g.addColorStop(0.45, "rgba(0,0,0,.22)");
-  g.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 128, 128);
-  return new CanvasTexture(c);
+  return pixelTexture(128, 128, (x, y) => [
+    0,
+    0,
+    0,
+    radialAlpha(Math.hypot(x - 64, y - 64) / 64, [
+      [0, 0.42],
+      [0.45, 0.22],
+      [1, 0],
+    ]),
+  ]);
 }
 
 /** 재진입 불꽃: 아래(코인 쪽)가 하얗게 뜨겁고 위로 갈수록 주황에서 사라지는 꼬리 */
@@ -384,7 +387,8 @@ async function start() {
     shadowMat.opacity = indoor / (1 + height * 0.6);
 
     follow.target = Math.max(0, height - FOLLOW_FROM);
-    const y = follow.step(dt) + LOOK_Y;
+    follow.value = clamp(follow.step(dt), follow.target - LAG_UP, follow.target + LAG_DOWN);
+    const y = follow.value + LOOK_Y;
     pitch.target = pitchAt(height);
     const p = pitch.step(dt);
     camera.position.set(0, y + Math.sin(p) * camDist, Math.cos(p) * camDist);
