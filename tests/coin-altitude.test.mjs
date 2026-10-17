@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { altitudeAt, BEST_KEY, formatAltitude, loadBest, MILESTONES, saveBest } from '../src/coin/altitude.ts';
+import { altitudeAt, BEST_KEY, formatAltitude, heightFor, loadBest, MILESTONES, saveBest } from '../src/coin/altitude.ts';
 
 test('고도는 높이에 따라 끊김 없이 계속 커지고, 쉬는 코인은 0m', () => {
   assert.equal(altitudeAt(0.036 - 0.036), 0);
@@ -19,6 +19,10 @@ test('구간 이름의 높이는 실제 천체 거리와 맞는다', () => {
   assert.ok(Math.abs(at('우주') - 1e5) < 1);
   assert.ok(Math.abs(at('달') / 3.84e8 - 1) < 0.01);
   assert.ok(at('은하 밖') > 5e20);
+});
+
+test('고도에 닿는 높이를 거꾸로 찾는다', () => {
+  for (const m of [5, 500, 1e5, 3.84e8]) assert.ok(Math.abs(altitudeAt(heightFor(m)) / m - 1) < 1e-6, `${m}m`);
 });
 
 test('한국어 큰 수 단위로 보여 준다', () => {

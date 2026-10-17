@@ -230,12 +230,23 @@ const NEPTUNE = /* glsl */ `
 /** 불러올 때 GPU에서 한 번 그려 두는 텍스처. glsl은 vec3 bakeColor(vec2 uv)를 정의한다 (sRGB 값).
  * BAKE_RGBA를 정의하면 대신 알파까지 담은 vec4 bakeRGBA(vec2 uv) */
 function bake(renderer: WebGLRenderer, w: number, h: number, glsl: string) {
-  const target = new WebGLRenderTarget(w, h, {
+  const target = bakeTarget(w, h);
+  paint(renderer, target, glsl);
+  return target.texture;
+}
+
+function bakeTarget(w: number, h: number) {
+  return new WebGLRenderTarget(w, h, {
     colorSpace: SRGBColorSpace,
     generateMipmaps: true,
     minFilter: LinearMipmapLinearFilter,
   });
+}
+
+/** bake와 같지만 이미 있는 타깃에 그린다 (다시 굽기용). uniforms는 glsl에서 쓰는 텍스처 등 */
+function paint(renderer: WebGLRenderer, target: WebGLRenderTarget, glsl: string, uniforms: Record<string, { value: unknown }> = {}) {
   const mat = new ShaderMaterial({
+    uniforms,
     vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
     fragmentShader: /* glsl */ `
       varying vec2 vUv;
@@ -259,7 +270,68 @@ function bake(renderer: WebGLRenderer, w: number, h: number, glsl: string) {
   renderer.setRenderTarget(null);
   quad.geometry.dispose();
   mat.dispose();
-  return target.texture;
+}
+
+/** 지구 표면을 위경도 지도로 굽는다. 하늘 셰이더가 매 프레임 픽셀마다 하던 육지·바다 가르기와 해안선 잡음을 여기서 한 번만 한다.
+ * 기본은 세계 지도(가로 경도 -180~180°, 세로 위도 -90~90°), KOREA를 정의하면 포항 주변 정밀 지도(동경 124~134°, 북위 31~41°).
+ * rgb 땅 무늬, a 육지 정도(0.5가 해안선). 해안선과 모래톱·얕은 바다는 그릴 때 화면 픽셀 단위로 갈라 어느 배율에서도 또렷하다.
+ * 값은 하늘 셰이더가 쓰던 그대로 담기게 sRGB로 바꿔 내보낸다 (bake가 다시 선형으로 바꿔 저장하고, 읽으면 원래 값이 나온다) */
+const EARTH_SURFACE = /* glsl */ `
+  #define BAKE_RGBA
+  uniform sampler2D uEarthMap, uLand;
+  uniform mat3 uEarthRot;
+  const vec2 KR0 = vec2(124.0, 31.0) * 0.01745329;
+  const float KR_SPAN = 10.0 * 0.01745329;
+  float hash2(vec2 p) {
+    vec3 q = fract(vec3(p.xyx) * 0.1031);
+    q += dot(q, q.yzx + 33.33);
+    return fract((q.x + q.y) * q.z);
+  }
+  float noise2(vec2 p) {
+    vec2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash2(i), hash2(i + vec2(1, 0)), f.x), mix(hash2(i + vec2(0, 1)), hash2(i + vec2(1, 1)), f.x), f.y);
+  }
+  /** 윤곽 지도 한 칸(cell km)보다 잘고 지도 한 칸(px km)보다 굵은 결만 쌓은 잡음 (-0.5~0.5) */
+  float detail(vec2 q, float cell, float px) {
+    float sum = 0.0, amp = 0.25;
+    for (int i = 0; i < 10; i++) {
+      float fade = smoothstep(px * 1.5, px * 4.0, cell);
+      if (fade <= 0.0) break;
+      sum += (noise2(q / cell + float(i) * 17.0) - 0.5) * amp * fade;
+      cell *= 0.5;
+      amp *= 0.5;
+    }
+    return sum;
+  }
+  vec3 toSrgb(vec3 c) { return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }
+  vec4 bakeRGBA(vec2 uv) {
+    #ifdef KOREA
+    vec2 ll = KR0 + uv * KR_SPAN;
+    float cell = 1.1;
+    #else
+    vec2 ll = vec2(uv.x - 0.5, (uv.y - 0.5) * 0.5) * 6.2831853;
+    float cell = 20.0;
+    #endif
+    vec3 e = vec3(cos(ll.y) * cos(ll.x), sin(ll.y), -cos(ll.y) * sin(ll.x));
+    vec3 n = transpose(uEarthRot) * e;
+    vec4 tex = textureLod(uEarthMap, fract(vec2(atan(e.z, e.x) / 6.2831853, ll.y / 3.14159265 + 0.5)), 0.0);
+    vec2 q = vec2(n.x, -n.z) * 6371.0; // 발사 지점 기준 동·북 km
+    float fine = detail(q, cell, length(fwidth(q)) * 0.7);
+    return vec4(toSrgb(tex.rgb * (1.0 + fine * 0.8)), texture(uLand, uv).r + fine);
+  }`;
+
+/** 지구 표면 지도 두 장(세계·포항 주변)과 그 재료. 육지 윤곽 이미지를 받는 대로 그 지역을 굽는다.
+ * 받기 전엔 비어 있어 까맣지만 그땐 매장 바닥에 가려 있다 */
+function bakeEarth(renderer: WebGLRenderer, earthMap: Texture) {
+  const region = (url: string, w: number, h: number, defines: string) => {
+    const target = bakeTarget(w, h);
+    const uniforms = { uEarthMap: { value: earthMap }, uLand: { value: null as Texture | null }, uEarthRot: { value: earthRotation() } };
+    const land = landMap(url, () => paint(renderer, target, defines + EARTH_SURFACE, uniforms));
+    uniforms.uLand.value = land;
+    return { surface: target.texture, land };
+  };
+  return { earthMap, world: region(landUrl, 2048, 1024, ''), korea: region(landKoreaUrl, 2048, 2048, '#define KOREA\n') };
 }
 
 /** 행성 표면: 등장방형(가로 경도, 세로 위도) */
@@ -397,8 +469,8 @@ function saturnRing(radius: number) {
 
 // ---- 하늘: 화면 전체 사각형. 카메라 방향마다 색을 정하고 별·은하수를 얹는다 ----
 const SKY: readonly [number, string, string][] = [
-  [0, '#f8f5ee', '#f8f5ee'],
-  [4, '#f4f1e9', '#eef1ee'],
+  [0, '#f8f3e6', '#f8f3e6'],
+  [4, '#f8f8f7', '#f0f3f2'],
   [8, '#dcedf5', '#a9d3ef'],
   [16, '#c2e1f3', '#5e9fdc'],
   [21, '#5d7fbd', '#1c3670'],
@@ -409,7 +481,7 @@ const SKY: readonly [number, string, string][] = [
 ];
 
 /** 하늘과 지구. 지구는 화면 픽셀마다 광선이 구에 닿는지 계산해 그려, 땅에 붙어 있을 때부터 은하 밖까지 어느 배율에서도 둥글고 매끈하다 */
-function createSky(camera: PerspectiveCamera, earthMap: Texture, land: Texture, landKorea: Texture) {
+function createSky(camera: PerspectiveCamera, surface: ReturnType<typeof bakeEarth>) {
   const mat = new ShaderMaterial({
     uniforms: {
       uHorizon: { value: new Color() },
@@ -419,9 +491,11 @@ function createSky(camera: PerspectiveCamera, earthMap: Texture, land: Texture, 
       uTime: { value: 0 },
       uInvProj: { value: camera.projectionMatrixInverse },
       uCamWorld: { value: camera.matrixWorld },
-      uEarthMap: { value: earthMap },
-      uLand: { value: land },
-      uLandKr: { value: landKorea },
+      uEarthMap: { value: surface.earthMap },
+      uLand: { value: surface.world.land },
+      uLandKr: { value: surface.korea.land },
+      uSurface: { value: surface.world.surface },
+      uSurfaceKr: { value: surface.korea.surface },
       uEarthRot: { value: earthRotation() }, // 땅 위 카메라 바로 아래가 포항, 화면 안쪽이 북쪽
       uEarthC: { value: new Vector3() }, // 카메라에서 지구 중심 (장면 단위)
       uEarthR: { value: 1 },
@@ -443,7 +517,7 @@ function createSky(camera: PerspectiveCamera, earthMap: Texture, land: Texture, 
     fragmentShader: /* glsl */ `
       uniform vec3 uHorizon, uZenith, uEarthC, uSun;
       uniform float uStars, uBand, uTime, uEarthR, uEarthQ, uMeter, uFar, uHaze, uAir;
-      uniform sampler2D uEarthMap, uLand, uLandKr;
+      uniform sampler2D uEarthMap, uLand, uLandKr, uSurface, uSurfaceKr;
       uniform mat3 uEarthRot;
       varying vec3 vDir;
       // 정밀 육지 윤곽(earth-land-korea.png)의 범위: 동경 124~134°, 북위 31~41°
@@ -465,30 +539,7 @@ function createSky(camera: PerspectiveCamera, earthMap: Texture, land: Texture, 
         float twinkle = 0.75 + 0.25 * sin(uTime * (1.5 + hash(c + 9.0) * 3.0) + hash(c) * 40.0);
         return smoothstep(0.12, 0.0, r) * twinkle * (0.4 + 0.6 * hash(c + 2.3));
       }
-      float hash2(vec2 p) {
-        vec3 q = fract(vec3(p.xyx) * 0.1031);
-        q += dot(q, q.yzx + 33.33);
-        return fract((q.x + q.y) * q.z);
-      }
-      float noise2(vec2 p) {
-        vec2 i = floor(p), f = fract(p);
-        f = f * f * (3.0 - 2.0 * f);
-        return mix(mix(hash2(i), hash2(i + vec2(1, 0)), f.x), mix(hash2(i + vec2(0, 1)), hash2(i + vec2(1, 1)), f.x), f.y);
-      }
-      /** 윤곽 지도 한 칸(cell km)보다 잘고 화면 픽셀(px km)보다 굵은 결만 쌓은 잡음 (-0.5~0.5).
-       * 가까이 갈수록 더 잘게 쌓여 어느 고도에서도 해안선과 땅이 또렷하다 */
-      float detail(vec2 q, float cell, float px) {
-        float sum = 0.0, amp = 0.25;
-        for (int i = 0; i < 10; i++) {
-          float fade = smoothstep(px * 1.5, px * 4.0, cell);
-          if (fade <= 0.0) break;
-          sum += (noise2(q / cell + float(i) * 17.0) - 0.5) * amp * fade;
-          cell *= 0.5;
-          amp *= 0.5;
-        }
-        return sum;
-      }
-      /** 지구 표면 색: 행성 재질과 같은 명암 + 멀수록 옅은 하늘색 대기, 낮은 고도에선 지평선 색 안개 */
+      /** 지구 표면 색: 구워 둔 표면 지도 + 행성 재질과 같은 명암 + 멀수록 옅은 하늘색 대기, 낮은 고도에선 지평선 색 안개 */
       vec3 earth(vec3 d, float t) {
         vec3 n = normalize(d * t - uEarthC);
         vec3 e = uEarthRot * n;
@@ -501,25 +552,22 @@ function createSky(camera: PerspectiveCamera, earthMap: Texture, land: Texture, 
         float light = 0.2 + 0.8 * smoothstep(-0.05, 0.25, sun);
         vec3 dusk = vec3(1.0, 0.55, 0.3) * (smoothstep(-0.12, 0.05, sun) - smoothstep(0.05, 0.3, sun)) * 0.25;
         float rim = pow(1.0 - max(dot(n, -d), 0.0), 3.0);
-        // 육지·바다는 픽셀마다 실제 윤곽으로 가른다: 포항 주변은 정밀 지도, 나머지는 세계 지도
+        // 포항 주변은 정밀 지도, 나머지는 세계 지도. 육지·바다는 화면 픽셀마다 갈라 해안선이 또렷하다
         float lon = atan(-e.z, e.x), lat = asin(clamp(e.y, -1.0, 1.0));
         vec2 gw = vec2(lon / 6.2831853 + 0.5, lat / 3.14159265 + 0.5);
         vec2 gdx = dFdx(gw), gdy = dFdy(gw);
         gdx.x -= floor(gdx.x + 0.5);
         gdy.x -= floor(gdy.x + 0.5);
         vec2 kr = (vec2(lon, lat) - KR0) / KR_SPAN;
-        float inKr = smoothstep(0.0, 0.05, min(min(kr.x, kr.y), 1.0 - max(kr.x, kr.y)));
-        float m = mix(textureGrad(uLand, fract(gw), gdx, gdy).r, texture(uLandKr, kr).r, inKr);
+        float inKr = smoothstep(0.0, 0.15, min(min(kr.x, kr.y), 1.0 - max(kr.x, kr.y))); // 두 지도의 결이 달라 넓게 섞는다
+        vec4 land = mix(textureGrad(uSurface, fract(gw), gdx, gdy), texture(uSurfaceKr, kr), inKr);
         float coast = mix(textureGrad(uLand, fract(gw), gdx * 16.0, gdy * 16.0).r, texture(uLandKr, kr, 4.0).r, inKr); // 번진 윤곽: 해안 가까울수록 얕게
-        vec2 q = vec2(n.x, -n.z) * 6371.0; // 발사 지점 기준 동·북 km
-        float fine = detail(q, mix(20.0, 1.1, inKr), length(fwidth(q)) * 0.7);
-        m += fine;
+        float m = land.a;
         float aa = fwidth(m) * 0.7 + 1e-3;
-        vec4 tex = textureGrad(uEarthMap, fract(uv), dx, dy);
-        vec3 ground = mix(${v3('#ecdcaa')}, tex.rgb * (1.0 + fine * 0.8), smoothstep(0.5, 0.62, m));
-        vec3 sea = mix(${v3('#123f8c')}, ${v3('#1f5fb3')}, smoothstep(0.0, 0.3, coast));
-        sea = mix(sea, ${v3('#4a9fd6')}, smoothstep(0.3, 0.5, m) * smoothstep(0.02, 0.1, coast)); // 먼 바다엔 얕은 빛이 안 뜨게
-        vec3 surface = mix(mix(sea, ground, smoothstep(0.5 - aa, 0.5 + aa, m)), ${v3('#f7f8f6')}, tex.a);
+        vec3 water = mix(${v3('#123f8c')}, ${v3('#1f5fb3')}, smoothstep(0.0, 0.3, coast));
+        water = mix(water, ${v3('#4a9fd6')}, smoothstep(0.3, 0.5, m) * smoothstep(0.02, 0.1, coast)); // 먼 바다엔 얕은 빛이 안 뜨게
+        vec3 ground = mix(${v3('#ecdcaa')}, land.rgb, smoothstep(0.5, 0.62, m));
+        vec3 surface = mix(mix(water, ground, smoothstep(0.5 - aa, 0.5 + aa, m)), ${v3('#f7f8f6')}, textureGrad(uEarthMap, fract(uv), dx, dy).a);
         vec3 col = surface * (light + dusk) + vec3(0.1, 0.27, 0.55) * rim * 0.8 * uAir;
         float distant = 1.0 - exp(-t * uMeter / 6e5);
         col = mix(col, vec3(0.42, 0.62, 0.85), distant * 0.8 * light * uFar);
@@ -660,9 +708,9 @@ function dotTexture() {
 const DUST = 220;
 const DUST_SPAN = 30; // 카메라 주변 이 높이 안에서 먼지를 되감아 돌린다
 
-/** 육지 윤곽 지도 (Natural Earth 육지를 등장방형으로 그린 것, 흰색이 육지). 받기 전엔 온통 바다로 보이지만 그땐 매장 바닥에 가려 있다 */
-function landMap(url: string) {
-  const t = new TextureLoader().load(url);
+/** 육지 윤곽 지도 (Natural Earth 육지를 등장방형으로 그린 것, 흰색이 육지) */
+function landMap(url: string, onLoad: () => void) {
+  const t = new TextureLoader().load(url, onLoad);
   t.format = RedFormat;
   return t;
 }
@@ -680,7 +728,7 @@ export function createScenery(camera: PerspectiveCamera, renderer: WebGLRenderer
   // 하늘·지구·천체는 따로 그린다: 코인 카메라와 같은 방향으로 원점에서 본다
   const cosmos = new Scene();
   const cosmosCamera = new PerspectiveCamera(camera.fov, 1, 1, 1e7);
-  const sky = createSky(cosmosCamera, bake(renderer, 2048, 1024, EARTH), landMap(landUrl), landMap(landKoreaUrl));
+  const sky = createSky(cosmosCamera, bakeEarth(renderer, bake(renderer, 2048, 1024, EARTH)));
   const moon = planet(bakePlanet(renderer, MOON, 1024), '#ffffff');
   const paints = {
     mercury: [MERCURY, '#e8e0d6'],

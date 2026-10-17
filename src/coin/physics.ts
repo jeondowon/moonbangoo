@@ -33,7 +33,7 @@ const RUB_FULL = 0.25; // 이보다 빠르면 완전히 떠받친다
 const CLIMB = 8; // 문지르는 빠르기 1당 올라가는 속도
 const CATCH = 4; // 떨어지던 코인이 올라가는 속도에 맞춰지는 빠르기 (1/초)
 const TERMINAL = 18; // 떨어지는 속도 상한 (아주 높이서 떨어져도 착지가 과하지 않게)
-const RESTITUTION = 0.38;
+const RESTITUTION = 0.55;
 const BOUNCE_KICK = 1.5; // 두 번째부터의 튕김에 섞이는 앞뒤 회전 (충돌 속도 1당 rad/s 폭)
 const FAIR_TURNS = 1.2; // 첫 튕김 회전 후보의 폭: 다음 착지까지 도는 각도가 이 바퀴 수만큼 달라진다
 const FAIR_TRIES = 48;
@@ -150,7 +150,7 @@ export class CoinSim {
     const speed = -this.vel.y;
     if (speed > SETTLE_SPEED) {
       this.vel.y = speed * RESTITUTION;
-      this.omega.multiplyScalar(0.55);
+      this.omega.multiplyScalar(0.7);
       if (this.bounces++ === 0 && !this.predicting) this.fairKick();
       else this.omega.x += (this.rng() - 0.5) * speed * BOUNCE_KICK;
       events.push({ type: 'bounce', strength: Math.min(1, speed / 10) });

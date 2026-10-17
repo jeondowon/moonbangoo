@@ -54,6 +54,18 @@ export function altitudeAt(height: number) {
   return 10 ** (ll + (height - hl) * BEYOND);
 }
 
+/** altitudeAt의 역함수: 고도 m에 닿는 물리 높이 (고도가 계속 커지므로 이분법으로 찾는다) */
+export function heightFor(m: number) {
+  let lo = 0;
+  let hi = 200;
+  for (let i = 0; i < 50; i++) {
+    const mid = (lo + hi) / 2;
+    if (altitudeAt(mid) < m) lo = mid;
+    else hi = mid;
+  }
+  return hi;
+}
+
 const LIGHT_YEAR = 9.4607e15;
 const trim = (n: number) => (n < 10 ? n.toFixed(1) : Math.round(n).toLocaleString('ko-KR'));
 
