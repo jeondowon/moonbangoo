@@ -224,7 +224,7 @@ function onEvent(e: CoinEvent) {
     hand?.motion.strike();
     sound.clink(0.16 + e.strength * 0.12, 0.65);
     buzz(18);
-    toast("1억 광년 · 톡! 다시 도전해 보세요", true);
+    toast("1억 광년", true);
     flightPeak = MAX_ALTITUDE;
   } else if (e.type === "bounce") {
     sound.clink(0.3 + 0.7 * e.strength);
