@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { altitudeAt, BEST_KEY, formatAltitude, heightFor, loadBest, MILESTONES, saveBest } from '../src/coin/altitude.ts';
+import { altitudeAt, BEST_KEY, formatAltitude, heightFor, loadBest, MAX_ALTITUDE, MAX_HEIGHT, MILESTONES, saveBest } from '../src/coin/altitude.ts';
 
 test('고도는 높이에 따라 끊김 없이 계속 커지고, 쉬는 코인은 0m', () => {
   assert.equal(altitudeAt(0.036 - 0.036), 0);
@@ -48,4 +48,11 @@ test('최고 기록을 저장하고 불러오며, 저장소가 없거나 깨져�
   assert.equal(loadBest(null), 0);
   assert.equal(loadBest({ getItem() { throw new Error('blocked'); } }), 0);
   saveBest({ setItem() { throw new Error('blocked'); } }, 1);
+});
+
+
+test('1억 광년 상한의 높이 변환과 표시가 일치한다', () => {
+  assert.equal(MAX_ALTITUDE, 1e8 * 9.4607e15);
+  assert.ok(Math.abs(altitudeAt(MAX_HEIGHT) / MAX_ALTITUDE - 1) < 1e-12);
+  assert.equal(formatAltitude(MAX_ALTITUDE), '1억 광년');
 });

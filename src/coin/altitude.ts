@@ -67,7 +67,10 @@ export function heightFor(m: number) {
 }
 
 const LIGHT_YEAR = 9.4607e15;
-const trim = (n: number) => (n < 10 ? n.toFixed(1) : Math.round(n).toLocaleString('ko-KR'));
+/** 표시 고도와 물리가 공유하는 상한: 1억 광년. 변환 곡선 자체는 역함수 계산을 위해 유지한다. */
+export const MAX_ALTITUDE = 1e8 * LIGHT_YEAR;
+export const MAX_HEIGHT = heightFor(MAX_ALTITUDE);
+const trim = (n: number) => (n < 10 ? n.toFixed(1).replace(/\.0$/, '') : Math.round(n).toLocaleString('ko-KR'));
 
 /** 38만 km, 7.8억 km, 10만 광년처럼 한국어 큰 수 단위로 */
 export function formatAltitude(m: number) {

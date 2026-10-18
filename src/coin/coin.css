@@ -69,6 +69,8 @@ html, body {
   transform: translateY(10px);
   transition: opacity .35s ease, transform .35s ease, color .6s ease;
 }
+/* 천장 안내는 코인·충돌 파문을 가리지 않게 HUD 아래에 작게 둔다. */
+.coin-toast.is-ceiling { top: max(92px, calc(env(safe-area-inset-top) + 78px)); font-size: clamp(15px, 1.5vw, 20px); }
 .coin-toast.is-shown { opacity: 1; transform: none; }
 .is-night .hud-altitude, .is-night .coin-toast { color: #f4e3b8; }
 .is-night .hud-best, .is-night .coin-hint { color: #c9bfa8; }

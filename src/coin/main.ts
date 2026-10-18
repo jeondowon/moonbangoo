@@ -1,6 +1,8 @@
 // 코인 플립: 위로 튕겨 던지기 → 공중에서 문질러 돌리며 우주·은하까지 → 튕기고 흔들리다 멈추며 결과 (50:50).
 import {
   CanvasTexture,
+  DoubleSide,
+  RingGeometry,
   AdditiveBlending,
   Fog,
   Mesh,
@@ -21,11 +23,12 @@ import { clamp, smooth } from "../core/math";
 import { Spring } from "../core/spring";
 import { createStudioEnv } from "../gfx/env";
 import { QUALITY } from "../gfx/quality";
-import { altitudeAt, formatAltitude, heightFor, loadBest, MILESTONES, saveBest } from "./altitude";
+import { altitudeAt, formatAltitude, heightFor, loadBest, MAX_ALTITUDE, MILESTONES, saveBest } from "./altitude";
 import { createCoin, createCoinMaterials, type CoinMaterials } from "./coinMesh";
-import { CoinSim, COIN_R, COIN_T, type CoinEvent, type Face } from "./physics";
+import { CoinSim, COIN_R, COIN_T, CEILING_Y, type CoinEvent, type Face } from "./physics";
 import { createScenery, pixelTexture, radialAlpha } from "./scenery";
 import { CoinSound } from "./sound";
+import { createDivineHand } from "./divineHand";
 
 const GROUND = "#f3ecdc";
 const LOOK_Y = 0.45; // 쉬는 코인이 화면 가운데보다 조금 아래에 보이게
@@ -95,6 +98,19 @@ const shadow = new Mesh(new PlaneGeometry(1, 1), shadowMat);
 shadow.rotation.x = -Math.PI / 2;
 shadow.position.y = 0.002;
 scene.add(shadow);
+
+// 손끝 접촉 순간에만 퍼지는 파문.
+const ceilingMat = new MeshBasicMaterial({
+  color: '#ffe4a0', transparent: true, opacity: 0, depthWrite: false, side: DoubleSide, fog: false,
+  blending: AdditiveBlending, toneMapped: false,
+});
+const ceilingRipple = new Mesh(new RingGeometry(0.94, 1, 128), ceilingMat);
+ceilingRipple.rotation.x = -Math.PI / 2;
+ceilingRipple.position.y = CEILING_Y + COIN_R * 0.65;
+ceilingRipple.visible = false;
+scene.add(ceilingRipple);
+let ceilingPulse = 0;
+let hand: Awaited<ReturnType<typeof createDivineHand>> | null = null;
 
 const sim = new CoinSim();
 const sound = new CoinSound();
@@ -193,7 +209,8 @@ let toastTimer = 0;
 function showBest() {
   bestEl.textContent = best > 0 ? `최고 기록 ${formatAltitude(best)}` : "";
 }
-function toast(text: string) {
+function toast(text: string, ceiling = false) {
+  toastEl.classList.toggle("is-ceiling", ceiling);
   toastEl.textContent = text;
   toastEl.classList.add("is-shown");
   clearTimeout(toastTimer);
@@ -202,7 +219,14 @@ function toast(text: string) {
 showBest();
 
 function onEvent(e: CoinEvent) {
-  if (e.type === "bounce") {
+  if (e.type === "ceiling") {
+    ceilingPulse = 1;
+    hand?.motion.strike();
+    sound.clink(0.16 + e.strength * 0.12, 0.65);
+    buzz(18);
+    toast("1억 광년 · 톡! 다시 도전해 보세요", true);
+    flightPeak = MAX_ALTITUDE;
+  } else if (e.type === "bounce") {
     sound.clink(0.3 + 0.7 * e.strength);
     buzz(10 + 30 * e.strength);
   } else if (e.type === "tick") {
@@ -276,6 +300,8 @@ canvas.addEventListener("pointerup", (e) => {
     showResult(null);
     setHint(rubbed < RUB_HINT_DONE ? "떠 있는 동안 화면을 스와이프하여 더 돌려 보세요" : "");
     flightPeak = 0;
+    hand?.motion.reset();
+    ceilingPulse = 0;
     passed = new Set();
     altitudeEl.classList.add("is-shown");
   }
@@ -295,7 +321,9 @@ function ghostOf(mats: CoinMaterials) {
 }
 
 async function start() {
-  const mats = await createCoinMaterials(renderer);
+  const [mats, divineHand] = await Promise.all([createCoinMaterials(renderer), createDivineHand()]);
+  hand = divineHand;
+  scene.add(hand.group);
   const coin = createCoin(mats);
   const glowing = mats as unknown as MeshStandardMaterial[];
   // 잔상은 이 재질을 복제하므로 꺼진 상태(세기 0)로 둔 채 복제되게 한다
@@ -366,7 +394,7 @@ async function start() {
     );
 
     // 고도 표시. 구간을 지날 때는 글 없이 소리로만 알린다
-    const altitude = altitudeAt(height - COIN_T / 2);
+    const altitude = Math.min(MAX_ALTITUDE, altitudeAt(height - COIN_T / 2));
     if (sim.phase === "air") {
       flightPeak = Math.max(flightPeak, altitude);
       climb = Math.max(climb, height - COIN_T / 2);
@@ -378,6 +406,10 @@ async function start() {
       }
     }
     document.body.classList.toggle("is-night", height > 19);
+    ceilingPulse = Math.max(0, ceilingPulse - dt / 0.85);
+    ceilingRipple.visible = ceilingPulse > 0;
+    ceilingRipple.scale.setScalar(0.55 + 2.4 * (1 - ceilingPulse));
+    ceilingMat.opacity = 0.48 * ceilingPulse * ceilingPulse;
 
     // 바닥·그림자는 매장을 벗어나면 사라지고 지구가 드러난다. 그림자는 높이 뜰수록 넓고 옅어진다
     const indoor = 1 - smooth(3, 9, height);
@@ -388,11 +420,15 @@ async function start() {
 
     follow.target = Math.max(0, height - FOLLOW_FROM);
     follow.value = clamp(follow.step(dt), follow.target - LAG_UP, follow.target + LAG_DOWN);
-    const y = follow.value + LOOK_Y;
+    // 높은 곳에서는 코인을 조금 아래에 두어, 위에서 다가오는 손이 화면에 들어오게 한다.
+    const handRoom = smooth(CEILING_Y - 10, CEILING_Y - 4, height);
+    const y = follow.value + LOOK_Y + handRoom * 1.1;
     pitch.target = pitchAt(height);
     const p = pitch.step(dt);
     camera.position.set(0, y + Math.sin(p) * camDist, Math.cos(p) * camDist);
     camera.lookAt(0, y, 0);
+    camera.updateMatrixWorld();
+    divineHand.update(dt, height, sim.vel.y, camera);
     scenery.update(height, now / 1000);
     fog.color.copy(scenery.horizon);
     renderer.clear();
