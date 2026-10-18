@@ -6,7 +6,7 @@ export const VALID_M = 500;
 export const VALID_HEIGHT = heightFor(VALID_M);
 const RETURN_TIME = 0.6;
 
-/** 유효 고도에 닿기 전에 하강하면 착지 대신 공중 코인과 시작 위치 코인을 교차 페이드한다. */
+/** 유효 고도에 닿지 못하면 첫 바닥 충돌에서 코인과 시작 위치 코인을 교차 페이드한다. */
 export class CoinRetry {
   climb = 0;
   private elapsed: number | null = null;
@@ -29,12 +29,12 @@ export class CoinRetry {
       return [];
     }
     const events: CoinEvent[] = [];
-    // 정점과 500m 통과를 프레임 간격에 관계없이 잡고, 바닥 충돌 전에 중단한다.
+    // 500m 통과와 첫 바닥 충돌을 프레임 간격에 관계없이 잡는다.
     for (let left = dt; left > 1e-8; left -= 1 / 240) {
-      events.push(...sim.step(Math.min(left, 1 / 240)));
-      if (sim.phase !== 'air') continue;
+      const stepEvents = sim.step(Math.min(left, 1 / 240));
+      events.push(...stepEvents);
       this.climb = Math.max(this.climb, sim.pos.y - COIN_T / 2);
-      if (this.climb < VALID_HEIGHT && sim.vel.y <= 0 && sim.bounces === 0) {
+      if (this.climb < VALID_HEIGHT && stepEvents.some(e => e.type === 'bounce' || e.type === 'settle')) {
         this.elapsed = 0;
         break;
       }

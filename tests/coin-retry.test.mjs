@@ -3,17 +3,25 @@ import { test } from 'node:test';
 import { CoinSim, COIN_T, seeded } from '../src/coin/physics.ts';
 import { CoinRetry, VALID_HEIGHT } from '../src/coin/retry.ts';
 
-test('500m 미만은 정점에서 취소하고 충돌 없이 0.6초 안에 복귀·재발사한다', () => {
+test('500m 미만은 정점과 하강을 거쳐 첫 바닥 충돌부터 0.6초 동안 복귀·재발사한다', () => {
   for (const dt of [1 / 240, 1 / 60, 1 / 20]) {
     const sim = new CoinSim(seeded(4));
     const retry = new CoinRetry();
     sim.launch(0, 2);
     const events = [];
-    for (let t = 0; t < 2 && !retry.active; t += dt) events.push(...retry.step(sim, dt));
+    let descending = false;
+    for (let t = 0; t < 2 && !retry.active; t += dt) {
+      events.push(...retry.step(sim, dt));
+      if (sim.vel.y < 0 && sim.bounces === 0) {
+        descending = true;
+        assert.equal(retry.active, false, '바닥에 닿기 전에는 복귀하지 않는다');
+      }
+    }
+    assert.ok(descending, '정점 이후 하강이 진행된다');
     assert.ok(retry.active);
     assert.ok(sim.pos.y > COIN_T / 2);
-    assert.equal(sim.bounces, 0);
-    assert.deepEqual(events, []);
+    assert.equal(sim.bounces, 1);
+    assert.deepEqual(events.map(e => e.type), ['bounce']);
     const thrownHeight = sim.pos.y;
     assert.equal(retry.thrownOpacity, 1);
     assert.equal(retry.waitingOpacity, 0);
