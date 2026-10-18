@@ -266,7 +266,7 @@ canvas.addEventListener("pointermove", (e) => {
   const h = canvas.clientHeight;
   const dx = (e.clientX - prev.x) / h;
   const up = -(e.clientY - prev.y) / h;
-  if (sim.phase === "air" && sim.bounces === 0) {
+  if (sim.canSpin) {
     sim.spin(dx, up);
     rubbed += Math.hypot(dx, up);
     // 쓸 때마다 엄지로 튕기는 소리. 손을 떼지 않아도 반대 방향으로 쓸기 시작하면 새로 쓴 것으로 친다

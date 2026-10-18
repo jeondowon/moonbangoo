@@ -76,7 +76,7 @@ export class CoinSim {
   private rng: () => number;
   private predicting = false;
   private acc = 0;
-  private ceilingCooldown = 0;
+  private ceilingHit = false;
   private rubbed = 0; // 최근에 문지른 거리 (RUB_TAU로 서서히 잊는다)
   private wobble = { t: 0, dur: 1, tilt0: 0, tilt: 0, fall: 0, phi: 0, psi: 0, ticks: 0 };
   private dq = new Quaternion();
@@ -96,7 +96,7 @@ export class CoinSim {
     if (this.phase !== 'rest' || up < LAUNCH_MIN || up < Math.abs(dx)) return false;
     this.phase = 'air';
     this.bounces = 0;
-    this.ceilingCooldown = 0;
+    this.ceilingHit = false;
     this.rubbed = 0;
     this.acc = 0;
     this.vel.set(0, clamp(up * LAUNCH_RISE, 5, MAX_RISE), 0);
@@ -105,14 +105,18 @@ export class CoinSim {
     return true;
   }
 
+  get canSpin() {
+    return this.phase === 'air' && this.bounces === 0 && !this.ceilingHit;
+  }
+
   /** 공중에서 문지른 만큼 회전을 더한다 (dx·up: 이번 이동량, 화면 높이 단위). 방향과 무관하게 문지르는 동안 위로 뜬다 */
   spin(dx: number, up: number) {
-    if (this.phase !== 'air' || this.bounces > 0) return;
+    if (!this.canSpin) return;
     // 코인 앞쪽을 위로 쓸면 가까운 쪽 가장자리가 올라가고, 옆으로 쓸면 팽이처럼 돈다
     this.omega.x -= up * SPIN_GAIN;
     this.omega.y += dx * SPIN_GAIN;
     this.clampSpin();
-    if (this.ceilingCooldown <= 0) this.rubbed += Math.hypot(dx, up);
+    this.rubbed += Math.hypot(dx, up);
   }
 
   step(dt: number): CoinEvent[] {
@@ -131,7 +135,6 @@ export class CoinSim {
   }
 
   private stepAir(events: CoinEvent[]) {
-    this.ceilingCooldown = Math.max(0, this.ceilingCooldown - H);
     const fall = Math.max(-TERMINAL, this.vel.y - G * H);
     if (this.bounces === 0) {
       // 문지르는 동안엔 그 빠르기에 맞는 속도로 올라간다. 이미 더 빨리 솟고 있으면 중력대로 둔다
@@ -142,7 +145,7 @@ export class CoinSim {
       this.vel.y = fall + (Math.max(fall, lifted) - fall) * smooth(RUB_MIN, RUB_FULL, rate);
     } else this.vel.y = fall;
     // 천장 가까이에서 상승 속도만 부드럽게 줄인다. 낙하와 회전은 그대로 이어진다.
-    // 손끝이 닿으면 아래로 튕겨 떨어뜨린다. 잠깐 뒤 다시 문질러 올릴 수 있다.
+    // 손끝이 닿으면 아래로 튕겨 떨어뜨리고, 다음 던지기까지 문지르기를 막는다.
     const gap = Math.max(0, CEILING_Y - this.pos.y);
     if (this.vel.y > 0) this.vel.y = Math.min(this.vel.y, 1.5 + Math.sqrt(40 * gap));
     this.pos.y += this.vel.y * H;
@@ -153,7 +156,7 @@ export class CoinSim {
       this.omega.x -= 10;
       this.clampSpin();
       this.rubbed = 0;
-      this.ceilingCooldown = 0.65;
+      this.ceilingHit = true;
       events.push({ type: 'ceiling', strength: Math.min(1, speed / 4) });
     }
     const spin = this.omega.length();

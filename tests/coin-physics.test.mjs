@@ -218,7 +218,7 @@ test("1억 광년 천장은 먼저 감속한 뒤 되튕기며, 바닥 충돌로 
   assert.equal(events.some(e => e.type === 'bounce'), false);
 });
 
-test("계속 문질러도 1억 광년을 넘지 않고, 손을 떼면 낙하해 정상 결과로 멈춘다", async () => {
+test("1억 광년에서 딱밤을 맞으면 계속 문질러도 낙하해 멈추고, 다음 던지기에서 입력이 복구된다", async () => {
   const { CEILING_Y } = await import('../src/coin/physics.ts');
   const { MAX_ALTITUDE, altitudeAt } = await import('../src/coin/altitude.ts');
   for (const dt of [1 / 240, 1 / 60, 0.05]) {
@@ -226,19 +226,27 @@ test("계속 문질러도 1억 광년을 넘지 않고, 손을 떼면 낙하해 
     sim.launch(0, 6);
     let hits = 0;
     for (let t = 0; t < 25; t += dt) {
+      const spinBefore = sim.omega.clone();
       sim.spin(0, 4 * dt);
+      if (hits > 0) {
+        assert.equal(sim.canSpin, false);
+        assert.deepEqual(sim.omega, spinBefore, '접촉 이후 스와이프는 회전을 바꾸지 않는다');
+      }
       const events = sim.step(dt);
       hits += events.filter(e => e.type === 'ceiling').length;
       assert.ok(sim.pos.y <= CEILING_Y);
       assert.ok(altitudeAt(sim.pos.y - COIN_T / 2) <= MAX_ALTITUDE * (1 + 1e-12));
     }
-    assert.ok(hits > 1, '실제 발사부터 상승해 반복 충돌까지 검사');
-    assert.equal(sim.bounces, 0);
-    const events = runUntilRest(sim);
+    assert.equal(hits, 1, '계속 문질러도 천장에 다시 올라가지 않는다');
+    runUntilRest(sim);
     assert.equal(sim.phase, 'rest');
-    assert.equal(events.at(-1).type, 'rest');
+    assert.ok(sim.bounces > 0, '계속 문질러도 바닥에 착지한다');
     assert.equal(sim.normal().y > 0 ? 'front' : 'back', sim.face);
     assert.ok(sim.launch(0, 3), '다음 발사도 정상');
     assert.ok(sim.vel.y > 0);
+    assert.equal(sim.canSpin, true);
+    const spinBefore = sim.omega.clone();
+    sim.spin(0.1, 0.1);
+    assert.notDeepEqual(sim.omega, spinBefore, '다음 던지기에서는 다시 조작할 수 있다');
   }
 });

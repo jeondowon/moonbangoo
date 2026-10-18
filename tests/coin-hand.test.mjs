@@ -12,7 +12,7 @@ test('손은 상한 접근 중 나타나고, 멀리 있거나 그냥 낙하 중�
   assert.equal(hand.step(1, 2, false).ready, 0);
 });
 
-test('손은 접촉 → 후속 자세 → 사라짐을 거쳐 재충돌 때 동일한 동작으로 돌아온다', () => {
+test('손은 접촉 → 후속 자세 → 사라짐을 거쳐 다음 던지기에서 동일한 동작으로 돌아온다', () => {
   const hand = new HandMotion();
   const play = () => {
     hand.strike();
@@ -23,14 +23,15 @@ test('손은 접촉 → 후속 자세 → 사라짐을 거쳐 재충돌 때 동�
   assert.equal(first[0].flash, 1);
   assert.ok(first[3].release > 0);
   assert.equal(first.at(-1).contact + first.at(-1).release, 0);
-  // 같은 비행에서 다시 올렸을 때도 준비 자세가 돌아와야 한다.
+  // 다음 던지기에서 다시 올라오면 준비 자세가 돌아와야 한다.
+  hand.reset();
   assert.ok(hand.step(0.2, 1, true).ready > 0);
   assert.deepEqual(play(), first);
   hand.reset();
   assert.equal(hand.step(0, 20, false).contact, 0);
 });
 
-test('한 비행에서 손에 튕겨 낙하한 코인을 다시 올리면 같은 상한에서 두 번째로 튕겨 낙하한다', () => {
+test('손에 튕겨 낙하한 뒤 스와이프를 재개해도 다시 올라가지 않고 착지한다', () => {
   for (const dt of [1 / 240, 1 / 60, 0.05]) {
     const sim = new CoinSim(seeded(42));
     sim.launch(0, 6);
@@ -38,7 +39,7 @@ test('한 비행에서 손에 튕겨 낙하한 코인을 다시 올리면 같은
     let hits = 0;
     let fallen = false;
     let lowest = Infinity;
-    for (let time = 0; time < 40 && hits < 2; time += dt) {
+    for (let time = 0; time < 40 && sim.phase !== 'rest'; time += dt) {
       if (hits === 1) {
         lowest = Math.min(lowest, sim.pos.y);
         if (sim.pos.y < CEILING_Y - 8) fallen = true;
@@ -58,7 +59,7 @@ test('한 비행에서 손에 튕겨 낙하한 코인을 다시 올리면 같은
       hand.step(dt, CEILING_Y - sim.pos.y, sim.vel.y > 0);
     }
     assert.ok(fallen && lowest < CEILING_Y - 8);
-    assert.equal(hits, 2);
-    assert.equal(sim.phase, 'air');
+    assert.equal(hits, 1);
+    assert.equal(sim.phase, 'rest');
   }
 });
