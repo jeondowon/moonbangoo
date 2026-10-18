@@ -1,5 +1,5 @@
 // 코인 모양과 재질. 면은 거울처럼 광낸 금색 바탕에 무광 처리한 로고만 크게 얹는다 (프루프 주화풍).
-// 로고는 색과 무관하게 모양(알파)만 쓰므로 뒷면 로고가 어떤 색 SVG여도 그대로 바꿔 끼우면 된다.
+// SVG와 투명 PNG의 알파만 써서 두 로고에 같은 금색·거칠기·양각을 입힌다.
 import {
   CircleGeometry,
   CylinderGeometry,
@@ -7,6 +7,7 @@ import {
   Mesh,
   MeshStandardMaterial,
   RepeatWrapping,
+  ImageLoader,
   type Material,
   type WebGLRenderer,
 } from 'three';
@@ -17,7 +18,7 @@ import { parseSvg, rasterize, toTexture } from '../gfx/svg';
 import { COIN_R, COIN_T } from './physics';
 
 const FRONT_LOGO = new URL('../../design/logo/logo-mono.svg', import.meta.url).href;
-const BACK_LOGO = new URL('../../design/logo/coin-back.svg', import.meta.url).href;
+const BACK_LOGO = new URL('../../design/logo/preem-mask.png', import.meta.url).href;
 const SIZE = 1024;
 const LOGO_WIDTH = 0.72; // 지름 대비
 // 연한 샴페인 골드. 로고는 바탕보다 눈에 띄게 밝게
@@ -55,14 +56,16 @@ function tinted(shape: HTMLCanvasElement, color: string) {
   return c;
 }
 
-async function logoLayer(url: string) {
-  const svg = parseSvg(await (await fetch(url)).text());
-  const box = svg.viewBox.baseVal;
-  const scale = (SIZE * LOGO_WIDTH) / Math.max(box.width, box.height);
+async function logoLayer(url: string, width: number) {
+  const png = new URL(url, location.href).pathname.endsWith('.png');
+  const svg = png ? null : parseSvg(await (await fetch(url)).text());
+  const source = png ? await new ImageLoader().loadAsync(url) : null;
+  const box = svg ? svg.viewBox.baseVal : { width: source!.naturalWidth, height: source!.naturalHeight };
+  const scale = (SIZE * width) / Math.max(box.width, box.height);
   const w = Math.round(box.width * scale);
   const h = Math.round(box.height * scale);
-  const image = await rasterize(svg, w, h);
-  return layer((ctx) => ctx.drawImage(image, (SIZE - w) / 2, (SIZE - h) / 2));
+  const image = source ?? await rasterize(svg!, w, h);
+  return layer((ctx) => ctx.drawImage(image, (SIZE - w) / 2, (SIZE - h) / 2, w, h));
 }
 
 /** 넓은 얼룩(0~1). 손때로 색과 광택이 고르지 않은 곳 */
@@ -117,8 +120,8 @@ function colorMap(renderer: WebGLRenderer, logo: HTMLCanvasElement, grime: HTMLC
   return toTexture(color.c, renderer);
 }
 
-async function faceMaterial(renderer: WebGLRenderer, url: string) {
-  const logo = await logoLayer(url);
+async function faceMaterial(renderer: WebGLRenderer, url: string, width = LOGO_WIDTH) {
+  const logo = await logoLayer(url, width);
   const height = canvas2d();
   height.ctx.fillStyle = '#000';
   height.ctx.fillRect(0, 0, SIZE, SIZE);
@@ -177,7 +180,7 @@ function edgeMaterial(renderer: WebGLRenderer) {
 export type CoinMaterials = [front: Material, back: Material, edge: Material];
 
 export async function createCoinMaterials(renderer: WebGLRenderer): Promise<CoinMaterials> {
-  const [front, back] = await Promise.all([faceMaterial(renderer, FRONT_LOGO), faceMaterial(renderer, BACK_LOGO)]);
+  const [front, back] = await Promise.all([faceMaterial(renderer, FRONT_LOGO), faceMaterial(renderer, BACK_LOGO, 0.86)]);
   const mats: CoinMaterials = [front, back, edgeMaterial(renderer)];
   // 장면과 같은 베이지 방을 비춘다. 장면 환경(scene.environment)에 기대면 envMapIntensity가 듣지 않으므로 재질에 직접 단다
   const envMap = createStudioEnv(renderer, 'pack');

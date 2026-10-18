@@ -1,0 +1,24 @@
+{
+  "input": "Pointer Events only; no physics state injection",
+  "low": 123.65189937834886,
+  "ceiling": 131.79523271168222,
+  "hits": [
+    {
+      "height": 131.79523271168222,
+      "vy": -6,
+      "phase": "air",
+      "bounces": 0,
+      "texture": "3dfe783e-7b82-44ca-85f9-43adfad46922"
+    },
+    {
+      "height": 131.76995493390444,
+      "vy": -6.066666666666666,
+      "phase": "air",
+      "bounces": 0,
+      "texture": "3dfe783e-7b82-44ca-85f9-43adfad46922"
+    }
+  ],
+  "result": "앞면",
+  "best": "최고 기록 1억 광년",
+  "errors": []
+}

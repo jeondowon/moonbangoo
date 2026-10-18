@@ -1,0 +1,22 @@
+[
+  {
+    "name": "desktop",
+    "label": {
+      "text": "1억 광년",
+      "fontSize": "30px",
+      "fontWeight": "700",
+      "visible": "0.72151"
+    },
+    "errors": []
+  },
+  {
+    "name": "mobile",
+    "label": {
+      "text": "1억 광년",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "visible": "0.654375"
+    },
+    "errors": []
+  }
+]

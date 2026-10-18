@@ -191,3 +191,54 @@ test("높이 올렸다가 떨어지는 동안에도 회전이 줄어 사라지�
   }
   assert.ok(spin > 20, `착지 직전 회전 ${spin}`);
 });
+
+test("1억 광년 천장은 먼저 감속한 뒤 되튕기며, 바닥 충돌로 세지 않는다", async () => {
+  const { CEILING_Y } = await import('../src/coin/physics.ts');
+  const sim = new CoinSim(seeded(23));
+  sim.launch(0, 6);
+  sim.pos.y = CEILING_Y - 0.2;
+  sim.vel.y = 14;
+  const events = [];
+  let hit = false;
+  for (let f = 0; f < 240; f++) {
+    sim.spin(0, 0.01);
+    const step = sim.step(1 / 240);
+    events.push(...step);
+    assert.ok(sim.pos.y <= CEILING_Y, '천장을 넘지 않는다');
+    if (step.some(e => e.type === 'ceiling')) {
+      assert.ok(sim.vel.y < 0, '충돌 뒤 아래로 되튕긴다');
+      hit = true;
+      break;
+    }
+    assert.ok(sim.vel.y < 14, '상한 직전에 미리 감속한다');
+  }
+  assert.ok(hit);
+  assert.equal(sim.bounces, 0);
+  assert.equal(sim.phase, 'air');
+  assert.equal(events.some(e => e.type === 'bounce'), false);
+});
+
+test("계속 문질러도 1억 광년을 넘지 않고, 손을 떼면 낙하해 정상 결과로 멈춘다", async () => {
+  const { CEILING_Y } = await import('../src/coin/physics.ts');
+  const { MAX_ALTITUDE, altitudeAt } = await import('../src/coin/altitude.ts');
+  for (const dt of [1 / 240, 1 / 60, 0.05]) {
+    const sim = new CoinSim(seeded(24));
+    sim.launch(0, 6);
+    let hits = 0;
+    for (let t = 0; t < 25; t += dt) {
+      sim.spin(0, 4 * dt);
+      const events = sim.step(dt);
+      hits += events.filter(e => e.type === 'ceiling').length;
+      assert.ok(sim.pos.y <= CEILING_Y);
+      assert.ok(altitudeAt(sim.pos.y - COIN_T / 2) <= MAX_ALTITUDE * (1 + 1e-12));
+    }
+    assert.ok(hits > 1, '실제 발사부터 상승해 반복 충돌까지 검사');
+    assert.equal(sim.bounces, 0);
+    const events = runUntilRest(sim);
+    assert.equal(sim.phase, 'rest');
+    assert.equal(events.at(-1).type, 'rest');
+    assert.equal(sim.normal().y > 0 ? 'front' : 'back', sim.face);
+    assert.ok(sim.launch(0, 3), '다음 발사도 정상');
+    assert.ok(sim.vel.y > 0);
+  }
+});

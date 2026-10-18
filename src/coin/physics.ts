@@ -4,14 +4,19 @@
 // 튕김 회전 후보를 끝까지 미리 굴려 보아 그 결과로 끝나는 후보를 고른다 (튕김 모양은 원래 분포 그대로).
 import { Quaternion, Vector3 } from 'three';
 import { clamp, smooth } from '../core/math';
+import { MAX_HEIGHT } from './altitude';
 
 export const COIN_R = 0.5;
 export const COIN_T = 0.072; // 500원 동전 비율 (지름 26.5mm, 두께 1.92mm)
+
+// HUD는 중심 높이에서 두께 반을 빼므로, 중심의 한계도 같은 기준에 맞춘다.
+export const CEILING_Y = MAX_HEIGHT + COIN_T / 2;
 
 export type Face = 'front' | 'back';
 export type Phase = 'rest' | 'air' | 'settle';
 export type CoinEvent =
   | { type: 'bounce'; strength: number }
+  | { type: 'ceiling'; strength: number }
   | { type: 'settle'; face: Face }
   | { type: 'tick'; strength: number; rate: number }
   | { type: 'rest'; face: Face };
@@ -71,6 +76,7 @@ export class CoinSim {
   private rng: () => number;
   private predicting = false;
   private acc = 0;
+  private ceilingCooldown = 0;
   private rubbed = 0; // 최근에 문지른 거리 (RUB_TAU로 서서히 잊는다)
   private wobble = { t: 0, dur: 1, tilt0: 0, tilt: 0, fall: 0, phi: 0, psi: 0, ticks: 0 };
   private dq = new Quaternion();
@@ -90,6 +96,7 @@ export class CoinSim {
     if (this.phase !== 'rest' || up < LAUNCH_MIN || up < Math.abs(dx)) return false;
     this.phase = 'air';
     this.bounces = 0;
+    this.ceilingCooldown = 0;
     this.rubbed = 0;
     this.acc = 0;
     this.vel.set(0, clamp(up * LAUNCH_RISE, 5, MAX_RISE), 0);
@@ -105,7 +112,7 @@ export class CoinSim {
     this.omega.x -= up * SPIN_GAIN;
     this.omega.y += dx * SPIN_GAIN;
     this.clampSpin();
-    this.rubbed += Math.hypot(dx, up);
+    if (this.ceilingCooldown <= 0) this.rubbed += Math.hypot(dx, up);
   }
 
   step(dt: number): CoinEvent[] {
@@ -124,6 +131,7 @@ export class CoinSim {
   }
 
   private stepAir(events: CoinEvent[]) {
+    this.ceilingCooldown = Math.max(0, this.ceilingCooldown - H);
     const fall = Math.max(-TERMINAL, this.vel.y - G * H);
     if (this.bounces === 0) {
       // 문지르는 동안엔 그 빠르기에 맞는 속도로 올라간다. 이미 더 빨리 솟고 있으면 중력대로 둔다
@@ -133,7 +141,21 @@ export class CoinSim {
       const lifted = fall < climb ? this.vel.y + (climb - this.vel.y) * (1 - Math.exp(-CATCH * H)) : fall;
       this.vel.y = fall + (Math.max(fall, lifted) - fall) * smooth(RUB_MIN, RUB_FULL, rate);
     } else this.vel.y = fall;
+    // 천장 가까이에서 상승 속도만 부드럽게 줄인다. 낙하와 회전은 그대로 이어진다.
+    // 손끝이 닿으면 아래로 튕겨 떨어뜨린다. 잠깐 뒤 다시 문질러 올릴 수 있다.
+    const gap = Math.max(0, CEILING_Y - this.pos.y);
+    if (this.vel.y > 0) this.vel.y = Math.min(this.vel.y, 1.5 + Math.sqrt(40 * gap));
     this.pos.y += this.vel.y * H;
+    if (this.pos.y >= CEILING_Y && this.vel.y > 0) {
+      const speed = this.vel.y;
+      this.pos.y = CEILING_Y;
+      this.vel.y = -6;
+      this.omega.x -= 10;
+      this.clampSpin();
+      this.rubbed = 0;
+      this.ceilingCooldown = 0.65;
+      events.push({ type: 'ceiling', strength: Math.min(1, speed / 4) });
+    }
     const spin = this.omega.length();
     const keep = this.bounces === 0 ? Math.min(spin, SPIN_KEEP) : 0;
     if (spin > keep) this.omega.setLength(keep + (spin - keep) * Math.exp(-SPIN_DRAG * H));

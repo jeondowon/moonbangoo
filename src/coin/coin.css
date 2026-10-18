@@ -69,6 +69,8 @@ html, body {
   transform: translateY(10px);
   transition: opacity .35s ease, transform .35s ease, color .6s ease;
 }
+/* 상한 도달 시 고도만 강조하고, 손·코인을 가리지 않게 HUD 아래에 둔다. */
+.coin-toast.is-ceiling { top: max(92px, calc(env(safe-area-inset-top) + 78px)); font-size: clamp(26px, 3vw, 38px); font-weight: 700; letter-spacing: .02em; }
 .coin-toast.is-shown { opacity: 1; transform: none; }
 .is-night .hud-altitude, .is-night .coin-toast { color: #f4e3b8; }
 .is-night .hud-best, .is-night .coin-hint { color: #c9bfa8; }
