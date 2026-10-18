@@ -83,18 +83,3 @@ export function formatAltitude(m: number) {
   if (ly < 1e8) return `${trim(ly / 1e4)}만 광년`;
   return `${trim(ly / 1e8)}억 광년`;
 }
-
-export const BEST_KEY = 'coin-best-altitude';
-
-export function loadBest(storage: Pick<Storage, 'getItem'> | null) {
-  try {
-    const v = Number(storage?.getItem(BEST_KEY));
-    return Number.isFinite(v) && v > 0 ? v : 0;
-  } catch {
-    return 0;
-  }
-}
-
-export function saveBest(storage: Pick<Storage, 'setItem'> | null, m: number) {
-  try { storage?.setItem(BEST_KEY, String(m)); } catch { /* 저장 불가(사생활 보호 모드 등)면 이번 방문만 */ }
-}

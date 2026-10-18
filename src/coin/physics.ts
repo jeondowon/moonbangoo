@@ -86,6 +86,19 @@ export class CoinSim {
     this.rng = rng;
   }
 
+  /** 취소된 던지기를 최초 자세로 되돌린다. 결과 난수는 소비하지 않는다. */
+  reset() {
+    this.pos.set(0, COIN_T / 2, 0);
+    this.vel.set(0, 0, 0);
+    this.q.identity();
+    this.omega.set(0, 0, 0);
+    this.phase = 'rest';
+    this.face = 'front';
+    this.bounces = 0;
+    this.ceilingHit = false;
+    this.rubbed = this.acc = 0;
+  }
+
   /** 위를 향한 면의 법선 (앞면 기준) */
   normal(out = new Vector3()) {
     return out.copy(Y).applyQuaternion(this.q);

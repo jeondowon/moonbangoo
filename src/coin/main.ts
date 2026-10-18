@@ -23,11 +23,12 @@ import { clamp, smooth } from "../core/math";
 import { Spring } from "../core/spring";
 import { createStudioEnv } from "../gfx/env";
 import { QUALITY } from "../gfx/quality";
-import { altitudeAt, formatAltitude, heightFor, loadBest, MAX_ALTITUDE, MILESTONES, saveBest } from "./altitude";
+import { altitudeAt, formatAltitude, MAX_ALTITUDE, MILESTONES } from "./altitude";
 import { createCoin, createCoinMaterials, type CoinMaterials } from "./coinMesh";
 import { CoinSim, COIN_R, COIN_T, CEILING_Y, type CoinEvent, type Face } from "./physics";
 import { createScenery, pixelTexture, radialAlpha } from "./scenery";
 import { CoinSound } from "./sound";
+import { CoinRetry, VALID_M, VALID_HEIGHT } from "./retry";
 import { createDivineHand } from "./divineHand";
 
 const GROUND = "#f3ecdc";
@@ -42,9 +43,7 @@ const RUB_HINT_DONE = 0.6; // 화면 높이의 이만큼 문질러 보면 문지
 const FLICK_AT = 0.015; // 공중에서 한 번 쓸 때 화면 높이의 이만큼 움직이면 튕기는 소리를 낸다
 const FACE_NAME: Record<Face, string> = { front: "앞면", back: "뒷면" };
 const DEG = Math.PI / 180;
-const TOAST_MS = 1800;
-const VALID_M = 500; // 이 고도를 넘겨야 앞뒤 결과를 인정한다
-const VALID_HEIGHT = heightFor(VALID_M);
+const retry = new CoinRetry();
 
 /** 카메라가 내려다보는 각도: 매장에선 코인을 내려다보고, 떠오르면 지평선이 보이게 든 뒤로는 은하까지 그대로 (cosmos.ts PITCH) */
 const pitchAt = (h: number) => (40 - 26 * smooth(1.5, 7, h)) * DEG;
@@ -59,17 +58,7 @@ const canvas = document.querySelector<HTMLCanvasElement>("#stage")!;
 const resultEl = document.querySelector<HTMLElement>("#result")!;
 const hintEl = document.querySelector<HTMLElement>("#hint")!;
 const altitudeEl = document.querySelector<HTMLElement>("#altitude")!;
-const bestEl = document.querySelector<HTMLElement>("#best")!;
-const toastEl = document.querySelector<HTMLElement>("#toast")!;
 const gaugeEl = document.querySelector<HTMLElement>("#gauge")!;
-const storage = (() => {
-  try {
-    return localStorage;
-  } catch {
-    return null;
-  }
-})();
-
 const renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
 renderer.setPixelRatio(Math.min(QUALITY.maxPixelRatio, window.devicePixelRatio));
 renderer.toneMapping = NeutralToneMapping;
@@ -200,23 +189,8 @@ function showResult(face: Face | null) {
   resultEl.classList.toggle("is-shown", Boolean(face));
 }
 
-// ---- 고도·기록 ----
-let best = loadBest(storage);
-let flightPeak = 0;
-let climb = 0; // 이번 비행에서 오른 가장 높은 물리 높이. 게이지를 채운다
+// ---- 고도·결과 조건 ----
 let passed = new Set<number>();
-let toastTimer = 0;
-function showBest() {
-  bestEl.textContent = best > 0 ? `최고 기록 ${formatAltitude(best)}` : "";
-}
-function toast(text: string, ceiling = false) {
-  toastEl.classList.toggle("is-ceiling", ceiling);
-  toastEl.textContent = text;
-  toastEl.classList.add("is-shown");
-  clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => toastEl.classList.remove("is-shown"), TOAST_MS);
-}
-showBest();
 
 function onEvent(e: CoinEvent) {
   if (e.type === "ceiling") {
@@ -224,8 +198,6 @@ function onEvent(e: CoinEvent) {
     hand?.motion.strike();
     sound.clink(0.16 + e.strength * 0.12, 0.65);
     buzz(18);
-    toast("1억 광년", true);
-    flightPeak = MAX_ALTITUDE;
   } else if (e.type === "bounce") {
     sound.clink(0.3 + 0.7 * e.strength);
     buzz(10 + 30 * e.strength);
@@ -236,17 +208,11 @@ function onEvent(e: CoinEvent) {
     sound.clink(0.12, 0.8);
     buzz(20);
     // 500m를 못 넘기면 결과 없이 다시 던지게 한다
-    const valid = flightPeak >= VALID_M;
+    const valid = retry.climb >= VALID_HEIGHT;
     showResult(valid ? e.face : null);
     setHint(valid ? "위로 튕겨서 다시 던지기" : `${VALID_M}m를 넘겨야 결과가 나와요. 다시 던져 보세요`);
-    climb = 0;
+    retry.climb = 0;
     altitudeEl.classList.remove("is-shown");
-    if (flightPeak > best) {
-      best = flightPeak;
-      saveBest(storage, best);
-      showBest();
-      toast(`신기록! ${formatAltitude(best)}`);
-    }
   }
 }
 
@@ -255,18 +221,19 @@ const strokes = new Map<number, { x: number; y: number; t: number }[]>();
 const strokeRub = new Map<number, { rub: number; dx: number; up: number }>(); // 이번에 쓴 방향과 그 방향으로 공중에서 문지른 거리
 
 canvas.addEventListener("pointerdown", (e) => {
+  if (retry.active) return;
   sound.unlock();
   canvas.setPointerCapture(e.pointerId);
   strokes.set(e.pointerId, [{ x: e.clientX, y: e.clientY, t: e.timeStamp }]);
 });
 canvas.addEventListener("pointermove", (e) => {
   const stroke = strokes.get(e.pointerId);
-  if (!stroke) return;
+  if (!stroke || retry.active) return;
   const prev = stroke[stroke.length - 1];
   const h = canvas.clientHeight;
   const dx = (e.clientX - prev.x) / h;
   const up = -(e.clientY - prev.y) / h;
-  if (sim.canSpin) {
+  if (!retry.active && sim.canSpin) {
     sim.spin(dx, up);
     rubbed += Math.hypot(dx, up);
     // 쓸 때마다 엄지로 튕기는 소리. 손을 떼지 않아도 반대 방향으로 쓸기 시작하면 새로 쓴 것으로 친다
@@ -290,16 +257,16 @@ canvas.addEventListener("pointerup", (e) => {
   const stroke = strokes.get(e.pointerId);
   strokes.delete(e.pointerId);
   strokeRub.delete(e.pointerId);
-  if (!stroke) return;
+  if (!stroke || retry.active) return;
   const from = stroke.find((s) => e.timeStamp - s.t <= SWIPE_WINDOW) ?? stroke[stroke.length - 1];
   const sec = Math.max(1, e.timeStamp - from.t) / 1000;
   const h = canvas.clientHeight;
   if (sim.launch((e.clientX - from.x) / h / sec, -(e.clientY - from.y) / h / sec)) {
     sound.clink(0.35, 1.25); // 엄지로 튕기는 소리
     buzz(8);
+    retry.climb = 0;
     showResult(null);
     setHint(rubbed < RUB_HINT_DONE ? "떠 있는 동안 화면을 스와이프하여 더 돌려 보세요" : "");
-    flightPeak = 0;
     hand?.motion.reset();
     ceilingPulse = 0;
     passed = new Set();
@@ -316,7 +283,7 @@ const ghostAxis = new Vector3();
 const ghostTurn = new Quaternion();
 
 function ghostOf(mats: CoinMaterials) {
-  const clones = mats.map((m) => Object.assign(m.clone(), { transparent: true, depthWrite: false })) as Material[];
+  const clones = mats.map((m) => Object.assign(m.clone(), { transparent: true, depthWrite: false, alphaHash: false })) as Material[];
   return { coin: createCoin(clones as CoinMaterials), mats: clones };
 }
 
@@ -324,6 +291,8 @@ async function start() {
   const [mats, divineHand] = await Promise.all([createCoinMaterials(renderer), createDivineHand()]);
   hand = divineHand;
   scene.add(hand.group);
+  // 표면 전체의 투명도를 바꿔 부드럽게 페이드한다.
+  for (const m of mats) m.transparent = true;
   const coin = createCoin(mats);
   const glowing = mats as unknown as MeshStandardMaterial[];
   // 잔상은 이 재질을 복제하므로 꺼진 상태(세기 0)로 둔 채 복제되게 한다
@@ -341,7 +310,10 @@ async function start() {
   flame.scale.set(1.1, 2.6, 1);
   scene.add(flame);
   const ghosts = Array.from({ length: GHOSTS }, () => ghostOf(mats));
-  scene.add(coin, ...ghosts.map((g) => g.coin));
+  const waiting = ghostOf(mats);
+  waiting.coin.position.set(0, COIN_T / 2, 0);
+  waiting.coin.visible = false;
+  scene.add(coin, waiting.coin, ...ghosts.map((g) => g.coin));
   gaugeEl.hidden = false;
   await renderer.compileAsync(scenery.cosmos, scenery.cosmosCamera);
   await renderer.compileAsync(scene, camera);
@@ -365,12 +337,27 @@ async function start() {
         fpsFrom = now;
       }
     }
-    for (const e of sim.step(dt)) onEvent(e);
+    const wasRetrying = retry.active;
+    const events = retry.step(sim, dt);
+    if (!wasRetrying && retry.active) {
+      strokes.clear();
+      strokeRub.clear();
+      showResult(null);
+      setHint(`${VALID_M}m에 닿지 못했어요. 다시 던져 보세요`);
+      altitudeEl.classList.remove("is-shown");
+    }
+    for (const m of mats) {
+      m.opacity = retry.active ? retry.thrownOpacity : 1;
+      m.depthWrite = !retry.active;
+    }
+    waiting.coin.visible = retry.active;
+    for (const m of waiting.mats) m.opacity = retry.waitingOpacity;
+    for (const e of events) onEvent(e);
 
     coin.position.copy(sim.pos);
     coin.quaternion.copy(sim.q);
     const w = sim.omega.length();
-    const trail = sim.phase === "air" ? smooth(12, 36, w) * 0.35 : 0;
+    const trail = !retry.active && sim.phase === "air" ? smooth(12, 36, w) * 0.35 : 0;
     if (w > 1e-6) ghostAxis.copy(sim.omega).divideScalar(w);
     ghosts.forEach((g, i) => {
       const k = (i + 1) / (GHOSTS + 1);
@@ -380,8 +367,11 @@ async function start() {
       g.coin.quaternion.copy(sim.q).premultiply(ghostTurn.setFromAxisAngle(ghostAxis, (-w * k) / 60));
       for (const m of g.mats) m.opacity = trail * (1 - k);
     });
-    const height = sim.pos.y;
-    const glow = sim.phase === "air" ? reentryAt(height, sim.vel.y) : 0;
+    // 교차 페이드에 맞춰 시선과 배경도 대기 위치로 돌아온다.
+    const height = retry.active
+      ? COIN_T / 2 + (sim.pos.y - COIN_T / 2) * retry.thrownOpacity
+      : sim.pos.y;
+    const glow = !retry.active && sim.phase === "air" ? reentryAt(height, sim.vel.y) : 0;
     for (const m of glowing) m.emissiveIntensity = glow * 1.2;
     flame.visible = glow > 0.01;
     flame.position.set(sim.pos.x, sim.pos.y + 1.1, sim.pos.z);
@@ -394,10 +384,11 @@ async function start() {
     );
 
     // 고도 표시. 구간을 지날 때는 글 없이 소리로만 알린다
-    const altitude = Math.min(MAX_ALTITUDE, altitudeAt(height - COIN_T / 2));
-    if (sim.phase === "air") {
-      flightPeak = Math.max(flightPeak, altitude);
-      climb = Math.max(climb, height - COIN_T / 2);
+    // 한 프레임 안에서 접촉 후 낙하까지 계산해도 접촉 프레임에는 상한을 표시한다.
+    const altitude = events.some((e) => e.type === "ceiling")
+      ? MAX_ALTITUDE
+      : Math.min(MAX_ALTITUDE, altitudeAt(height - COIN_T / 2));
+    if (!retry.active && sim.phase === "air") {
       altitudeEl.textContent = formatAltitude(altitude);
       for (const m of MILESTONES) {
         if (height < m.height || passed.has(m.height)) continue;
@@ -416,7 +407,7 @@ async function start() {
     groundMat.opacity = indoor;
     ground.visible = shadow.visible = indoor > 0;
     shadow.scale.setScalar(COIN_R * 2.8 * (1 + height * 0.15));
-    shadowMat.opacity = indoor / (1 + height * 0.6);
+    shadowMat.opacity = (retry.active ? retry.waitingOpacity : 1) * indoor / (1 + height * 0.6);
 
     follow.target = Math.max(0, height - FOLLOW_FROM);
     follow.value = clamp(follow.step(dt), follow.target - LAG_UP, follow.target + LAG_DOWN);
@@ -437,8 +428,8 @@ async function start() {
     renderer.render(scene, camera);
 
     // 500m 게이지: 오른 만큼 차고, 500m를 넘으면 사라진다
-    gaugeEl.style.setProperty("--fill", String(Math.min(1, climb / VALID_HEIGHT)));
-    gaugeEl.classList.toggle("is-done", climb >= VALID_HEIGHT);
+    gaugeEl.style.setProperty("--fill", String(Math.min(1, retry.climb / VALID_HEIGHT)));
+    gaugeEl.classList.toggle("is-done", retry.climb >= VALID_HEIGHT);
   });
 }
 

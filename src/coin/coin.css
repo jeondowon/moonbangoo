@@ -47,33 +47,13 @@ html, body {
 .coin-result.is-shown { opacity: 1; transform: none; }
 .coin-hint { bottom: max(36px, calc(env(safe-area-inset-bottom) + 20px)); font-size: 15px; color: #7a6a52; opacity: 0; }
 .coin-hint.is-shown { opacity: 1; }
-/* 고도·최고 기록. 우주(어두운 하늘)에선 글자를 밝게 */
+/* 고도. 우주(어두운 하늘)에선 글자를 밝게 */
 .coin-hud { position: fixed; top: max(14px, env(safe-area-inset-top)); left: 0; right: 0; text-align: center; pointer-events: none; }
 .coin-hud p { margin: 0; transition: color .6s ease, opacity .35s ease; }
 .hud-altitude { font-size: clamp(26px, 3vw, 44px); font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: #6b5330; opacity: 0; }
 .hud-altitude.is-shown { opacity: 1; }
-.hud-best { margin-top: 2px !important; font-size: clamp(13px, 1.1vw, 17px); color: #8a7a62; }
-.coin-toast {
-  position: fixed;
-  top: 30%;
-  left: 0;
-  right: 0;
-  margin: 0;
-  text-align: center;
-  font-size: clamp(22px, 2.6vw, 38px);
-  font-weight: 600;
-  letter-spacing: -.02em;
-  color: #6b5330;
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity .35s ease, transform .35s ease, color .6s ease;
-}
-/* 상한 도달 시 고도만 강조하고, 손·코인을 가리지 않게 HUD 아래에 둔다. */
-.coin-toast.is-ceiling { top: max(92px, calc(env(safe-area-inset-top) + 78px)); font-size: clamp(26px, 3vw, 38px); font-weight: 700; letter-spacing: .02em; }
-.coin-toast.is-shown { opacity: 1; transform: none; }
-.is-night .hud-altitude, .is-night .coin-toast { color: #f4e3b8; }
-.is-night .hud-best, .is-night .coin-hint { color: #c9bfa8; }
+.is-night .hud-altitude { color: #f4e3b8; }
+.is-night .coin-hint { color: #c9bfa8; }
 .is-night .menu-back { background: rgba(20, 24, 40, .55); color: #efe6d6; }
 /* 500m 게이지. 코인 오른쪽 끝과 화면 오른쪽 끝의 가운데에 고정. 글자가 게이지 왼쪽에 붙는다.
    코인 반지름은 화면 폭의 21%와 높이의 12% 중 작은 쪽 (main.ts resize) */
@@ -106,4 +86,4 @@ html, body {
   font: 12px/1.2 monospace;
   pointer-events: none;
 }
-@media (prefers-reduced-motion: reduce) { .coin-result, .coin-hint, .coin-toast, .coin-hud p, .coin-gauge { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .coin-result, .coin-hint, .coin-hud p, .coin-gauge { transition: none; } }
