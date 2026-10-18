@@ -85,10 +85,15 @@ const toPrize = (c: CardDto): Prize => ({
 });
 
 type PrizeDto = CardDto & { remaining: number; total: number };
-const sum = (rows: PrizeDto[]): Counts => ({
-  remaining: rows.reduce((n, p) => n + p.remaining, 0),
-  total: rows.reduce((n, p) => n + p.total, 0),
-});
+/** 운영·시연 모드 공통 재고 합산. 빈 목록은 남은/전체 수량 모두 0이다. */
+export function sumCounts(rows: readonly Counts[]): Counts {
+  const counts = { remaining: 0, total: 0 };
+  for (const row of rows) {
+    counts.remaining += row.remaining;
+    counts.total += row.total;
+  }
+  return counts;
+}
 
 export async function fetchShop(): Promise<Shop> {
   const { packs } = await call<{ packs: { id: number; active: boolean }[] }>('GET', '/admin/packs');
@@ -96,9 +101,9 @@ export async function fetchShop(): Promise<Shop> {
   const prizes = packId === null ? [] : (await call<{ prizes: PrizeDto[] }>('GET', `/admin/prizes?packId=${packId}`)).prizes;
   return {
     packId,
-    all: sum(prizes),
-    top: sum(prizes.filter((p) => p.rarity === 'UR')),
-    categories: CATEGORIES.map((c) => sum(prizes.filter((p) => category(p.icon) === c.id))),
+    all: sumCounts(prizes),
+    top: sumCounts(prizes.filter((p) => p.rarity === 'UR')),
+    categories: CATEGORIES.map((c) => sumCounts(prizes.filter((p) => category(p.icon) === c.id))),
     prizes: prizes.map(toPrize),
   };
 }

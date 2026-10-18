@@ -1,4 +1,4 @@
-import { CATEGORIES, type Counts, type DrawResult, type Prize, type Shop } from './api';
+import { CATEGORIES, sumCounts, type DrawResult, type Prize, type Shop } from './api';
 
 const PACK_ID = 1;
 const RARITIES = ['C', 'R', 'SR', 'UR'];
@@ -17,25 +17,21 @@ export function createDemoGame() {
   const stock = PRIZES.map((prize) => ({ ...prize, remaining: prize.total }));
   let nextDrawId = 1;
   const draws = new Map<number, { cards: Prize[]; confirmed: boolean }>();
-  const sum = (rows: typeof stock): Counts => ({
-    remaining: rows.reduce((n, p) => n + p.remaining, 0),
-    total: rows.reduce((n, p) => n + p.total, 0),
-  });
   const toPrize = ({ total: _total, remaining: _remaining, ...prize }: typeof stock[number]): Prize => prize;
 
   return {
     async fetchShop(): Promise<Shop> {
       return {
         packId: PACK_ID,
-        all: sum(stock),
-        top: sum(stock.filter((p) => p.rarity === 'UR')),
-        categories: CATEGORIES.map((c) => sum(stock.filter((p) => p.category === c.id))),
+        all: sumCounts(stock),
+        top: sumCounts(stock.filter((p) => p.rarity === 'UR')),
+        categories: CATEGORIES.map((c) => sumCounts(stock.filter((p) => p.category === c.id))),
         prizes: stock.map(toPrize),
       };
     },
     async drawCards(packId: number): Promise<DrawResult> {
       if (packId !== PACK_ID) throw new Error('존재하지 않는 팩이에요.');
-      const remaining = sum(stock).remaining;
+      const remaining = sumCounts(stock).remaining;
       if (!remaining) throw new Error('팩에 남은 경품이 없습니다.');
       const cards = Array.from({ length: 5 }, () => {
         let ticket = Math.floor(Math.random() * remaining);
