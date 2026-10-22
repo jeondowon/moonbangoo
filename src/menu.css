@@ -1,3 +1,4 @@
+@import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
 /* 게임 메뉴는 로고의 아이보리·금색을 고정 사용한다. */
 :root {
   color-scheme: light;

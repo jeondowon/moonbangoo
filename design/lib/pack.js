@@ -124,7 +124,6 @@ export function packBack({ uid = 'pb' } = {}) {
   const L = { x: 58 };
   const lines = [
     ['이벤트 안내', 'h'],
-    ['1인 1회 참여할 수 있어요.', 'p'],
     ['카드 5장 중 원하는 경품', 'p'],
     ['1개를 고릅니다.', 'p2'],
   ];
@@ -165,9 +164,10 @@ ${pressFilter(id('press'), 0.75)}
     ${info}
     <g transform="translate(${W / 2 + 34 + 24} 0)">
       <text x="0" y="200" font-family="Gowun Batang, serif" font-weight="700" font-size="22" fill="${INK.ink}">매장 안내</text>
-      <text x="0" y="236" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="16.5" font-weight="500" fill="${INK.inkSoft}">경북 포항시 ○○구</text>
-      <text x="0" y="262" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="16.5" font-weight="500" fill="${INK.inkSoft}">○○로 00, 1층</text>
-      <text x="0" y="298" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="16.5" font-weight="500" fill="${INK.inkSoft}">매일 10:00 – 21:00</text>
+      <text x="0" y="236" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="16.5" font-weight="500" fill="${INK.inkSoft}">포항시 북구</text>
+      <text x="0" y="262" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="16.5" font-weight="500" fill="${INK.inkSoft}">양학로32번길 11-23</text>
+      <text x="0" y="298" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="16.5" font-weight="500" fill="${INK.inkSoft}">월–토 12:00 – 21:00</text>
+      <text x="0" y="324" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="16.5" font-weight="500" fill="${INK.inkSoft}">일요일 휴무</text>
     </g>
   </g>
   <g data-layer="foil" fill="${u('foil')}" stroke="${u('foil')}">

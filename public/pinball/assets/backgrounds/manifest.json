@@ -1,0 +1,126 @@
+{
+  "generator": "built-in image_gen",
+  "transparentBackground": false,
+  "assets": [
+    {
+      "id": "classic",
+      "name": "연못 정원",
+      "file": "classic-background-v1.png",
+      "prompt": "Use case: stylized-concept. Asset type: detailed vertical 2D pinball game BACKGROUND illustration for \"연못 정원\". Primary request: a jade-green Korean pond garden seen directly from above: detailed lotus leaves and pale blossoms, fine reeds, smooth river pebbles, weathered stone stepping stones and tiny koi near the SIDE MARGINS, delicate water ripples and floating petals. Pale sage, celadon, warm cream and muted gold. Hand-painted engraved storybook game art matching tactile illustrated brass/wood/stone obstacle sprites. Portrait 2:3 canvas. Orthographic overhead, no perspective vanishing point or horizon. Fill the whole frame, opaque background. Keep the central 60 percent broad, quiet, softly textured and low contrast so small colored marbles and physical obstacles remain clearly readable on top. Place the richest environmental details in the outer 20 percent on each side, with subtle smaller details rather than large focal objects. Top and bottom edges should have neutral matching tones and no clipped focal objects, suitable for vertically mirrored repetition during a long scrolling game. Background scenery only: no pinball, no marbles, no UI, no text, no logo, no numbers, no collision-looking barriers across the center, no game obstacles, no frame border, no strong cast shadows. Cohesive refined palette and abundant tiny crafted details, not an empty gradient.",
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGB"
+    },
+    {
+      "id": "twinfold",
+      "name": "바람 도서관",
+      "file": "twinfold-background-v1.png",
+      "prompt": "Use case: stylized-concept. Asset type: detailed vertical 2D pinball game BACKGROUND illustration for \"바람 도서관\". Primary request: an antique breezy library seen directly from above as a flat decorative game backdrop: walnut bookcases full of tiny varied leather books along the side margins, brass reading lamps, a narrow rolling library ladder, loosely curled parchment, soft window light, little fern pots and subtle air-current ribbons at the edges. Warm vellum center, forest green, walnut and aged brass accents. Hand-painted engraved storybook game art matching tactile illustrated brass/wood/stone obstacle sprites. Portrait 2:3 canvas. Orthographic overhead, no perspective vanishing point or horizon. Fill the whole frame, opaque background. Keep the central 60 percent broad, quiet, softly textured and low contrast so small colored marbles and physical obstacles remain clearly readable on top. Place the richest environmental details in the outer 20 percent on each side, with subtle smaller details rather than large focal objects. Top and bottom edges should have neutral matching tones and no clipped focal objects, suitable for vertically mirrored repetition during a long scrolling game. Background scenery only: no pinball, no marbles, no UI, no text, no logo, no numbers, no collision-looking barriers across the center, no game obstacles, no frame border, no strong cast shadows. Cohesive refined palette and abundant tiny crafted details, not an empty gradient.",
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGB"
+    },
+    {
+      "id": "cascade",
+      "name": "빗살 협곡",
+      "file": "cascade-background-v1.png",
+      "prompt": "Use case: stylized-concept. Asset type: detailed vertical 2D pinball game BACKGROUND illustration for \"빗살 협곡\". Primary request: a terracotta sandstone canyon seen directly from above as a flat decorative game backdrop: intricate rock strata, fine copper mineral veins, weathered fossils, small dry grasses and sparse desert succulents along the side margins, distant pale sandy mist. Peach, ochre, copper and warm cream. Do not draw foreground crossing rock ledges or bridge obstacles. Hand-painted engraved storybook game art matching tactile illustrated brass/wood/stone obstacle sprites. Portrait 2:3 canvas. Orthographic overhead, no perspective vanishing point or horizon. Fill the whole frame, opaque background. Keep the central 60 percent broad, quiet, softly textured and low contrast so small colored marbles and physical obstacles remain clearly readable on top. Place the richest environmental details in the outer 20 percent on each side, with subtle smaller details rather than large focal objects. Top and bottom edges should have neutral matching tones and no clipped focal objects, suitable for vertically mirrored repetition during a long scrolling game. Background scenery only: no pinball, no marbles, no UI, no text, no logo, no numbers, no collision-looking barriers across the center, no game obstacles, no frame border, no strong cast shadows. Cohesive refined palette and abundant tiny crafted details, not an empty gradient.",
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGB"
+    },
+    {
+      "id": "rhythm",
+      "name": "태엽 공장",
+      "file": "rhythm-background-v1.png",
+      "prompt": "Use case: stylized-concept. Asset type: detailed vertical 2D pinball game BACKGROUND illustration for \"태엽 공장\". Primary request: an elegant antique clockwork factory seen directly from above as a flat decorative game backdrop: layered brass cogs, copper pipes, small pressure gauges, chain drives, narrow turquoise enamel conduits and metal wall panels ALONG THE SIDE MARGINS, on deep indigo and muted violet. Wide central dark indigo breathing room; no central giant gear or machinery crossing the play area. Brass highlights only near the borders. Hand-painted engraved storybook game art matching tactile illustrated brass/wood/stone obstacle sprites. Portrait 2:3 canvas. Orthographic overhead, no perspective vanishing point or horizon. Fill the whole frame, opaque background. Keep the central 60 percent broad, quiet, softly textured and low contrast so small colored marbles and physical obstacles remain clearly readable on top. Place the richest environmental details in the outer 20 percent on each side, with subtle smaller details rather than large focal objects. Top and bottom edges should have neutral matching tones and no clipped focal objects, suitable for vertically mirrored repetition during a long scrolling game. Background scenery only: no pinball, no marbles, no UI, no text, no logo, no numbers, no collision-looking barriers across the center, no game obstacles, no frame border, no strong cast shadows. Cohesive refined palette and abundant tiny crafted details, not an empty gradient.",
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGB"
+    }
+  ],
+  "brandRevision": {
+    "version": 2,
+    "generator": "built-in image_gen",
+    "useCase": "style-transfer",
+    "brandEvidence": [
+      "assets/logo.png",
+      "README.md paper/foil rendering",
+      "../moonbang/design/lib/common.js INK/METALS palette"
+    ],
+    "assets": [
+      {
+        "id": "classic",
+        "prompt": "Use case: style-transfer. Asset: vertical scrolling pinball background, 2:3 portrait, opaque. Image 1 is the EDIT TARGET: retain its map concept and broad quiet central corridor, but completely revise its overly elaborate fantasy rendering. Image 2 is the BRAND STYLE REFERENCE: the actual Korean stationery-store '어른뭉방구' logo, warm ivory paper, restrained golden-brown linework, tactile foil-print elegance and friendly handmade character. Do not copy the lettering or logo into the background. Match that warm paper-and-print visual identity: elegant small illustrated motifs, subtle offset-print texture, clear warm brown contours, flat softly colored shapes, delicate golden accents. Adult-friendly stationery / collectible paper-board illustration, sophisticated and playful, cohesive not childish. The map subject is: pond garden: lotus leaves and blossoms, tiny koi silhouettes, reed sprigs, river pebble motifs. Celadon green and warm ivory, with restrained ochre-gold outlines. Composition: directly overhead flat ornamental board backdrop, edge motifs mostly in outer 18% left/right; middle 64% very quiet pale paper with at most faint tone-on-tone details. Many carefully drawn small thematic details at edges without visual clutter. No horizon, no perspective room, no photorealism, no baroque flourishes, no strong shadows or stone grunge. Neutral top/bottom for mirrored vertical repetition. No text, no logos, no UI, no marbles, no foreground collision barriers, no border frame. Entire image should feel like a printed illustration in the same ivory/gold stationery collection as the logo, while the map remains instantly distinguishable.",
+        "file": "classic-background-v2.png",
+        "previousFile": "classic-background-v1.png",
+        "references": [
+          "classic-background-v1.png",
+          "../logo.png"
+        ],
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGB",
+        "sha256": "f1538f0fa2cdd787a3a75b0d0a49ab2831c4ad33c38db814a5d7b2773f659c55"
+      },
+      {
+        "id": "twinfold",
+        "prompt": "Use case: style-transfer. Asset: vertical scrolling pinball background, 2:3 portrait, opaque. Image 1 is the EDIT TARGET: retain its map concept and broad quiet central corridor, but completely revise its overly elaborate fantasy rendering. Image 2 is the BRAND STYLE REFERENCE: the actual Korean stationery-store '어른뭉방구' logo, warm ivory paper, restrained golden-brown linework, tactile foil-print elegance and friendly handmade character. Do not copy the lettering or logo into the background. Match that warm paper-and-print visual identity: elegant small illustrated motifs, subtle offset-print texture, clear warm brown contours, flat softly colored shapes, delicate golden accents. Adult-friendly stationery / collectible paper-board illustration, sophisticated and playful, cohesive not childish. The map subject is: breezy library: small books, book spines, paper bookmarks and gently curved loose sheets, a few pencil and ruler details as part of a stationery-store reading world. Muted forest green, walnut brown and ivory. Remove palace-like European ornament, globe, carpets and chandeliers. Composition: directly overhead flat ornamental board backdrop, edge motifs mostly in outer 18% left/right; middle 64% very quiet pale paper with at most faint tone-on-tone details. Many carefully drawn small thematic details at edges without visual clutter. No horizon, no perspective room, no photorealism, no baroque flourishes, no strong shadows or stone grunge. Neutral top/bottom for mirrored vertical repetition. No text, no logos, no UI, no marbles, no foreground collision barriers, no border frame. Entire image should feel like a printed illustration in the same ivory/gold stationery collection as the logo, while the map remains instantly distinguishable.",
+        "file": "twinfold-background-v2.png",
+        "previousFile": "twinfold-background-v1.png",
+        "references": [
+          "twinfold-background-v1.png",
+          "../logo.png"
+        ],
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGB",
+        "sha256": "4b11a99aa43668980105195a0212e0af165d34af5d69611d04d7d1c3b89fe68c"
+      },
+      {
+        "id": "cascade",
+        "prompt": "Use case: style-transfer. Asset: vertical scrolling pinball background, 2:3 portrait, opaque. Image 1 is the EDIT TARGET: retain its map concept and broad quiet central corridor, but completely revise its overly elaborate fantasy rendering. Image 2 is the BRAND STYLE REFERENCE: the actual Korean stationery-store '어른뭉방구' logo, warm ivory paper, restrained golden-brown linework, tactile foil-print elegance and friendly handmade character. Do not copy the lettering or logo into the background. Match that warm paper-and-print visual identity: elegant small illustrated motifs, subtle offset-print texture, clear warm brown contours, flat softly colored shapes, delicate golden accents. Adult-friendly stationery / collectible paper-board illustration, sophisticated and playful, cohesive not childish. The map subject is: sandstone canyon: flat layered rock contours, small fossil and pebble illustrations, sparse grass sprigs. Warm peach, terracotta and ochre on ivory. Render as crafted printed geography illustration rather than photorealistic desert scenery. Composition: directly overhead flat ornamental board backdrop, edge motifs mostly in outer 18% left/right; middle 64% very quiet pale paper with at most faint tone-on-tone details. Many carefully drawn small thematic details at edges without visual clutter. No horizon, no perspective room, no photorealism, no baroque flourishes, no strong shadows or stone grunge. Neutral top/bottom for mirrored vertical repetition. No text, no logos, no UI, no marbles, no foreground collision barriers, no border frame. Entire image should feel like a printed illustration in the same ivory/gold stationery collection as the logo, while the map remains instantly distinguishable.",
+        "file": "cascade-background-v2.png",
+        "previousFile": "cascade-background-v1.png",
+        "references": [
+          "cascade-background-v1.png",
+          "../logo.png"
+        ],
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGB",
+        "sha256": "1229c92d23648e4b440b4c02c79f0ec50d8bd581f0da70b63aef4d7de6d0d3bf"
+      },
+      {
+        "id": "rhythm",
+        "prompt": "Use case: style-transfer. Asset: vertical scrolling pinball background, 2:3 portrait, opaque. Image 1 is the EDIT TARGET: retain its map concept and broad quiet central corridor, but completely revise its overly elaborate fantasy rendering. Image 2 is the BRAND STYLE REFERENCE: the actual Korean stationery-store '어른뭉방구' logo, warm ivory paper, restrained golden-brown linework, tactile foil-print elegance and friendly handmade character. Do not copy the lettering or logo into the background. Match that warm paper-and-print visual identity: elegant small illustrated motifs, subtle offset-print texture, clear warm brown contours, flat softly colored shapes, delicate golden accents. Adult-friendly stationery / collectible paper-board illustration, sophisticated and playful, cohesive not childish. The map subject is: clockwork factory: small brass cogwheel diagrams, winding keys, springs and copper pipe motifs, mechanical toy-workshop character. Warm antique gold, muted teal and softly desaturated ink blue on ivory. Replace oppressive dark metal, industrial pressure cylinders and dense steampunk machinery with refined printed wind-up toy illustrations. Composition: directly overhead flat ornamental board backdrop, edge motifs mostly in outer 18% left/right; middle 64% very quiet pale paper with at most faint tone-on-tone details. Many carefully drawn small thematic details at edges without visual clutter. No horizon, no perspective room, no photorealism, no baroque flourishes, no strong shadows or stone grunge. Neutral top/bottom for mirrored vertical repetition. No text, no logos, no UI, no marbles, no foreground collision barriers, no border frame. Entire image should feel like a printed illustration in the same ivory/gold stationery collection as the logo, while the map remains instantly distinguishable.",
+        "file": "rhythm-background-v2.png",
+        "previousFile": "rhythm-background-v1.png",
+        "references": [
+          "rhythm-background-v1.png",
+          "../logo.png"
+        ],
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGB",
+        "sha256": "187bbf78564ae42ee7bd3bae9fb1f81f3725fc58a7fc1b5224ce4607061a2fa8"
+      }
+    ]
+  }
+}

@@ -1,3 +1,4 @@
+@import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
 /* 코인 플립. 아이보리 배경에 게임 메뉴와 같은 금색 글자 */
 :root {
   color-scheme: light;

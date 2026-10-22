@@ -1,0 +1,72 @@
+{
+  "generator": "built-in image_gen",
+  "transparentBackground": true,
+  "assets": [
+    {
+      "id": "classic",
+      "name": "연못 정원",
+      "file": "classic-surface-v1.png",
+      "prompt": "Use case: stylized-concept. Asset type: production 2D game obstacle material sprite for 연못 정원. Generate ONE straight horizontal solid beam, centered and seen directly from above in strict orthographic front view. Wide 1536x256 canvas, single beam fills almost the full width, narrow fully transparent outer margin. Rectangular continuous body with gently rounded endcaps. Materials: warm bamboo and moss green glazed jade, subtle water ripple carving, aged brass edge inlays, tactile rounded solid body, green and ivory palette. Hand-painted tactile game art, warm engraved storybook aesthetic, clear dimensional bevel along both long edges, restrained fine texture readable when scaled to a thin 16-32 pixel game obstacle. Light from upper left, darker lower edge. The full interior must be opaque material, never a hollow outline. Flat straight axis with no perspective tilt, no supports, no scenery, no drop shadow outside the silhouette, no text, no symbols or letters, no watermark, no loose objects, no background. This is a reusable surface skin clipped to existing colliders, so keep all detail within the single straight beam silhouette.",
+      "size": [
+        2172,
+        724
+      ],
+      "sourceRect": [
+        20,
+        238,
+        2132,
+        242
+      ]
+    },
+    {
+      "id": "twinfold",
+      "name": "바람 도서관",
+      "file": "twinfold-surface-v1.png",
+      "prompt": "Use case: stylized-concept. Asset type: production 2D game obstacle material sprite for 바람 도서관. Generate ONE straight horizontal solid beam, centered and seen directly from above in strict orthographic front view. Wide 1536x256 canvas, single beam fills almost the full width, narrow fully transparent outer margin. Rectangular continuous body with gently rounded endcaps. Materials: dark walnut wood with rich grain, forest green leather inset, small aged brass rivets and ivory page-edge inlays, substantial antique library shelf plank. Hand-painted tactile game art, warm engraved storybook aesthetic, clear dimensional bevel along both long edges, restrained fine texture readable when scaled to a thin 16-32 pixel game obstacle. Light from upper left, darker lower edge. The full interior must be opaque material, never a hollow outline. Flat straight axis with no perspective tilt, no supports, no scenery, no drop shadow outside the silhouette, no text, no symbols or letters, no watermark, no loose objects, no background. This is a reusable surface skin clipped to existing colliders, so keep all detail within the single straight beam silhouette.",
+      "size": [
+        2172,
+        724
+      ],
+      "sourceRect": [
+        11,
+        232,
+        2150,
+        243
+      ]
+    },
+    {
+      "id": "cascade",
+      "name": "빗살 협곡",
+      "file": "cascade-surface-v1.png",
+      "prompt": "Use case: stylized-concept. Asset type: production 2D game obstacle material sprite for 빗살 협곡. Generate ONE straight horizontal solid beam, centered and seen directly from above in strict orthographic front view. Wide 1536x256 canvas, single beam fills almost the full width, narrow fully transparent outer margin. Rectangular continuous body with gently rounded endcaps. Materials: layered terracotta sandstone and copper, warm burnt sienna outer rim, ochre stone bands and irregular mineral fissures, substantial carved canyon rock beam. Hand-painted tactile game art, warm engraved storybook aesthetic, clear dimensional bevel along both long edges, restrained fine texture readable when scaled to a thin 16-32 pixel game obstacle. Light from upper left, darker lower edge. The full interior must be opaque material, never a hollow outline. Flat straight axis with no perspective tilt, no supports, no scenery, no drop shadow outside the silhouette, no text, no symbols or letters, no watermark, no loose objects, no background. This is a reusable surface skin clipped to existing colliders, so keep all detail within the single straight beam silhouette.",
+      "size": [
+        2172,
+        724
+      ],
+      "sourceRect": [
+        11,
+        209,
+        2152,
+        298
+      ]
+    },
+    {
+      "id": "rhythm",
+      "name": "태엽 공장",
+      "file": "rhythm-surface-v2.png",
+      "prompt": "Use case: stylized-concept. Asset type: production 2D game obstacle material sprite for 태엽 공장. Generate ONE straight horizontal solid beam, centered and seen directly from above in strict orthographic front view. Wide 1536x256 canvas, single beam fills almost the full width, narrow fully transparent outer margin. Rectangular continuous body with gently rounded endcaps. Materials: machined antique brass and bronze, beveled gold rim, dark indigo inset with turquoise enamel accents, small recessed rivets and engraved mechanical grooves, substantial clockwork machine beam. Hand-painted tactile game art, warm engraved storybook aesthetic, clear dimensional bevel along both long edges, restrained fine texture readable when scaled to a thin 16-32 pixel game obstacle. Light from upper left, darker lower edge. The full interior must be opaque material, never a hollow outline. Flat straight axis with no perspective tilt, no supports, no scenery, no drop shadow outside the silhouette, no text, no symbols or letters, no watermark, no loose objects, no background. This is a reusable surface skin clipped to existing colliders, so keep all detail within the single straight beam silhouette.",
+      "size": [
+        2172,
+        724
+      ],
+      "sourceRect": [
+        7,
+        213,
+        2158,
+        269
+      ],
+      "editPrompt": "Edit only the central surface material of this transparent horizontal clockwork game obstacle sprite. Replace the broad dark navy center panel with a continuous solid luminous warm antique BRASS and bronze metal face, visibly substantial, not hollow or outlined. Engraved mechanical grooves and tiny turquoise enamel rivets should be restrained accents only, not large dark fields. Preserve the existing exact straight horizontal rounded beam silhouette, orthographic view, beveled rim, dimensions, transparent background and margins, no outside shadow. Strong broad golden surface readable at 20 pixels tall against a dark indigo game board. No text, no scenery, no extra objects.",
+      "initialVariant": "../../docs/obstacle-art/rhythm-first-pass.png"
+    }
+  ]
+}

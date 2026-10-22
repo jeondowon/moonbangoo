@@ -1,11 +1,30 @@
 // SVG를 <img>로 그려 텍스처로 만들 때는 문서에 로드된 웹폰트를 쓸 수 없다(이미지 내부는 격리됨).
-// → 실제로 쓰인 글자가 들어 있는 폰트 조각만 받아서 data URL @font-face로 SVG 안에 넣는다.
-// 폰트 출처는 디자인 시안(design/*.html)과 동일. (배포 단계에서 셀프 호스팅으로 바꾸려면 URL만 교체)
+// → 실제로 쓰인 글자가 들어 있는 폰트 조각만 골라 data URL @font-face로 SVG 안에 넣는다.
+// 매장 PC에서 인터넷 없이도 같은 글꼴이 나오도록 폰트는 npm 패키지에서 빌드에 포함한다.
+import gowun400 from '@fontsource/gowun-batang/400.css?raw';
+import gowun700 from '@fontsource/gowun-batang/700.css?raw';
+import cormorant500 from '@fontsource/cormorant-garamond/500.css?raw';
+import cormorant600 from '@fontsource/cormorant-garamond/600.css?raw';
+import cormorant700 from '@fontsource/cormorant-garamond/700.css?raw';
+import cormorant600Italic from '@fontsource/cormorant-garamond/600-italic.css?raw';
+import pretendard from 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css?raw';
 
-const GOOGLE_CSS =
-  'https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&display=block';
-const PRETENDARD_CSS =
-  'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
+const FONT_CSS = [gowun400, gowun700, cormorant500, cormorant600, cormorant700, cormorant600Italic, pretendard];
+
+/** 폰트 조각 파일 이름 → 빌드된 URL. woff 대체 파일은 쓰지 않으므로 woff2만 포함한다. */
+const FILES = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<string>(
+      [
+        '/node_modules/@fontsource/gowun-batang/files/*-{400,700}-normal.woff2',
+        '/node_modules/@fontsource/cormorant-garamond/files/*-{500,600,700}-normal.woff2',
+        '/node_modules/@fontsource/cormorant-garamond/files/*-600-italic.woff2',
+        '/node_modules/pretendard/dist/web/variable/woff2-dynamic-subset/*.woff2',
+      ],
+      { query: '?url', import: 'default', eager: true },
+    ),
+  ).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1), url]),
+);
 
 type Range = [number, number];
 
@@ -29,25 +48,21 @@ async function toDataUrl(url: string): Promise<string> {
   });
 }
 
-async function embedFrom(cssUrl: string, codepoints: number[]): Promise<string[]> {
-  const css = await (await fetch(cssUrl)).text();
+function embedFrom(css: string, codepoints: number[]): Promise<string>[] {
   const blocks = css.match(/@font-face\s*{[^}]*}/g) ?? [];
-  const jobs = blocks.map(async (block) => {
+  return blocks.map(async (block) => {
     const ranges = parseRanges(block.match(/unicode-range:\s*([^;}]+)/)?.[1]);
     if (ranges && !codepoints.some((c) => ranges.some(([a, b]) => c >= a && c <= b))) return '';
-    const src = block.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/)?.[1];
-    if (!src) return '';
-    const data = await toDataUrl(new URL(src, cssUrl).href);
-    return block.replace(/url\([^)]*\)/, `url(${data})`);
+    const src = block.match(/url\(\s*['"]?([^'")]+\.woff2)['"]?\s*\)/)?.[1];
+    const url = src && FILES[src.slice(src.lastIndexOf('/') + 1)];
+    if (!url) return '';
+    return block.replace(/src:[^;}]*/, `src: url(${await toDataUrl(url)})`);
   });
-  return (await Promise.all(jobs)).filter(Boolean);
 }
 
 /** text에 쓰인 글자를 그릴 수 있는 @font-face CSS (폰트 데이터 내장) */
 export async function embeddedFontCss(text: string): Promise<string> {
-  const chars = [...new Set(text.replace(/\s/g, ''))].join('') + ' ';
-  const codepoints = [...chars].map((c) => c.codePointAt(0)!);
-  const google = `${GOOGLE_CSS}&text=${encodeURIComponent(chars)}`;
-  const parts = await Promise.all([embedFrom(google, codepoints), embedFrom(PRETENDARD_CSS, codepoints)]);
-  return parts.flat().join('\n');
+  const codepoints = [...new Set(text.replace(/\s/g, '') + ' ')].map((c) => c.codePointAt(0)!);
+  const parts = await Promise.all(FONT_CSS.flatMap((css) => embedFrom(css, codepoints)));
+  return parts.filter(Boolean).join('\n');
 }

@@ -247,8 +247,8 @@ ${pressFilter(`${uid}-press-logo`, 0.75)}
     <text x="66" y="634" fill="${INK.inkSoft}" font-family="${SANS}" font-weight="500" font-size="17" letter-spacing="-.3">포켓몬카드 · 원피스카드 · 문구</text>
     <path d="M66 666H${panel.x + panel.w - 26}" stroke="${INK.inkSoft}" stroke-opacity=".45" stroke-dasharray="2 5" stroke-linecap="round" stroke-width="1.4"/>
     <text x="66" y="700" fill="${INK.accent}" font-family="${SERIF}" font-weight="700" font-size="17">오시는 길</text>
-    <text x="66" y="738" fill="${INK.accent}" font-family="${SANS}" font-weight="700" font-size="23" letter-spacing="-.4">경북 포항시 ○○구 ○○로 00, 1층</text>
-    <text x="66" y="765" fill="${INK.inkSoft}" font-family="${SANS}" font-weight="500" font-size="14" letter-spacing="-.2">매일 10:00 – 21:00</text>
+    <text x="66" y="738" fill="${INK.accent}" font-family="${SANS}" font-weight="700" font-size="23" letter-spacing="-.4">포항시 북구 양학로32번길 11-23</text>
+    <text x="66" y="765" fill="${INK.inkSoft}" font-family="${SANS}" font-weight="500" font-size="14" letter-spacing="-.2">월–토 12:00 – 21:00 · 일요일 휴무</text>
   </g>
 
   <g data-layer="footer">

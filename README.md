@@ -4,7 +4,7 @@
 
 ## 프로젝트 상태
 
-카드 뽑기 연출과 전체 사용자 흐름이 완성되어 있고, 기본 실행은 백엔드 없이 체험하는 시연 모드입니다. 운영 모드의 경품·수량은 별도 백엔드 서버([moonbangoo-backend](https://github.com/jeondowon/moonbangoo-backend))와 연결되어 있습니다. 매장 기기 1대에서 플레이하고, 사장님은 백엔드의 어드민 페이지에서 경품과 수량을 관리합니다. 자세한 진행 기록은 [PROGRESS.md](PROGRESS.md), 어드민·추첨 규칙은 [ADMIN.md](ADMIN.md)에 있습니다.
+카드 뽑기 연출과 전체 사용자 흐름이 완성되어 있고, 기본 실행은 백엔드 없이 체험하는 시연 모드입니다. 운영 모드의 경품·수량은 별도 백엔드 서버([moonbangoo-backend](https://github.com/jeondowon/moonbangoo-backend))와 연결되어 있습니다. 매장 기기 1대에서 플레이하고, 사장님은 백엔드의 어드민 페이지에서 경품과 수량을 관리합니다. 자세한 진행 기록은 [PROGRESS.md](docs/PROGRESS.md), 어드민·추첨 규칙은 [ADMIN.md](docs/ADMIN.md)에 있습니다.
 
 현재 동작하는 부분:
 
@@ -18,7 +18,7 @@
 
 ## 사용자 흐름
 
-첫 페이지는 **게임 메뉴**입니다. 카드뽑기를 선택하면 `card.html`의 기존 게임으로 이동하고, Pinball을 선택하면 [핀볼 게임](https://prestige-kim.github.io/moonbangoo_PinBall/)으로 같은 탭에서 이동합니다. 핀볼은 [별도 저장소](https://github.com/prestige-kim/moonbangoo_PinBall)에서 관리·배포하며, 브라우저 뒤로가기로 게임 메뉴에 돌아올 수 있습니다. 카드뽑기 인트로와 결과 화면에서 게임 메뉴로 돌아올 수 있습니다.
+첫 페이지는 **게임 메뉴**입니다. 카드뽑기를 선택하면 `card.html`의 기존 게임으로 이동하고, Pinball을 선택하면 `pinball/`의 핀볼 게임으로 같은 탭에서 이동합니다. 핀볼은 [별도 저장소](https://github.com/prestige-kim/moonbangoo_PinBall)의 `7fb2a29`(2026-10-18) 실행 파일을 매장 PC에서 인터넷 없이 열리도록 `public/pinball/`에 복사한 것입니다. 복사하면서 결과 화면의 홈 링크를 게임 메뉴(`../`)로 바꾸고 쓰지 않는 이미지·문서를 뺐습니다. 원본이 바뀌면 다시 복사해야 합니다. 브라우저 뒤로가기나 결과 화면의 홈 링크로 게임 메뉴에 돌아올 수 있습니다. 카드뽑기 인트로와 결과 화면에서 게임 메뉴로 돌아올 수 있습니다.
 
 1. 인트로에서 터치해 이벤트를 시작합니다.
 2. 오리파 화면에서 남은 경품을 확인하고 팩을 고릅니다. 시연 모드는 브라우저에서, 운영 모드는 서버에서 카드 5장을 뽑습니다(수량은 아직 차감되지 않음).
@@ -58,10 +58,12 @@ src/
 design/         2D 시안 갤러리 + 팩·카드 SVG 생성기(lib/, 3D 텍스처 원본으로도 사용)
   concepts/     경품 일러스트 시안 원본 (카드 그림·카테고리 이미지의 원본)
   logo/         로고 SVG·원본 목업
+public/pinball/  핀볼 게임 (별도 저장소 복사본, 빌드 시 그대로 dist/pinball/로 복사)
 tests/          Node 회귀 테스트 (화면 흐름·API·안내, DOM 레이아웃은 대역 사용)
+docs/           기획 명세·어드민 규칙·진행 기록·성능 점검 문서
 ```
 
-상세 구현 요구사항과 검수 기준은 [PACK_OPENING_SPEC.md](PACK_OPENING_SPEC.md)를 참고하세요.
+상세 구현 요구사항과 검수 기준은 [PACK_OPENING_SPEC.md](docs/PACK_OPENING_SPEC.md)를 참고하세요.
 
 ## 디자인 자료
 
@@ -116,7 +118,7 @@ npm test           # 화면 흐름·API·안내 회귀 테스트
 - 렌더링 설정은 `src/gfx/rendering.ts`, 화면 흐름은 `src/ui`, CSS는 `src/style.css`에서 관리합니다.
 - 의존성 변경 시 `package.json`과 `package-lock.json`을 함께 커밋합니다. 명세·디자인 원본·테스트도 공유합니다.
 - 로컬 환경·IDE 설정과 산출물은 `.gitignore`로 제외합니다. 환경 변수 예제와 VS Code 공용 확장 추천·작업 설정은 허용합니다. 시연/운영 전환은 `.env.example`을 참고합니다.
-- PR 전 `npm test`와 `npm run build`를 실행합니다. PR 검사와 배포에서도 동일하게 실행합니다. 테스트는 DOM 대역을 사용하므로 실제 화면·모바일 조작·성능은 브라우저에서 별도 확인합니다. 성능(FPS) 점검 방법은 [PERFORMANCE.md](PERFORMANCE.md)를 봅니다.
+- PR 전 `npm test`와 `npm run build`를 실행합니다. PR 검사와 배포에서도 동일하게 실행합니다. 테스트는 DOM 대역을 사용하므로 실제 화면·모바일 조작·성능은 브라우저에서 별도 확인합니다. 성능(FPS) 점검 방법은 [PERFORMANCE.md](docs/PERFORMANCE.md)를 봅니다.
 
 테스트는 추가 라이브러리 없이 Node 내장 테스트 러너와 TypeScript 변환을 사용합니다. 실행 중 `Transform Types` 실험 기능 경고가 표시될 수 있습니다.
 
@@ -134,5 +136,5 @@ npm test           # 화면 흐름·API·안내 회귀 테스트
 - 포켓몬 캐릭터, 공식 로고, 카드 디자인 원본과 고유 디자인 요소는 사용하거나 복제하지 않습니다.
 - 5장의 후보를 모두 확인한 뒤 사용자가 원하는 1장을 직접 선택합니다.
 - 결과는 연출 시작 전에 확정하며, 연출은 결과를 보여주는 역할을 합니다.
-- 추첨은 서버가 합니다. 남은 수량에 비례해 5장을 뽑고, 손님이 확정한 1장만 차감합니다 ([ADMIN.md](ADMIN.md)).
+- 추첨은 서버가 합니다. 남은 수량에 비례해 5장을 뽑고, 손님이 확정한 1장만 차감합니다 ([ADMIN.md](docs/ADMIN.md)).
 - 매장 전용 운영이므로 쿠폰 발급·교환과 개인정보 수집은 하지 않습니다.

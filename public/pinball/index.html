@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#F4EDE0">
+  <meta name="description" content="어른뭉방구의 따뜻한 놀이판. 핀볼을 섞어 발사하고 당첨 결과를 확인하세요.">
+  <title>어른뭉방구 — 핀볼</title>
+  <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
+  <meta property="og:title" content="어른뭉방구 — 핀볼">
+  <meta property="og:description" content="핀볼을 섞어 발사하고 당첨 결과를 확인하세요.">
+  <meta property="og:image" content="https://prestige-kim.github.io/moonbangoo_PinBall/assets/logo.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="preload" as="font" href="./assets/fonts/PretendardVariable.woff2" type="font/woff2" crossorigin>
+  <link rel="preload" as="image" href="./assets/cannon-front.png">
+  <link rel="preload" as="image" href="./assets/cannon-barrel.png">
+  <link rel="preload" as="image" href="./assets/cannon-wheel.png">
+  <link rel="preload" as="image" href="./assets/cannon-bridge.png">
+  <link rel="stylesheet" href="./style.css?v=hand-8a0a7a792900">
+</head>
+<body class="scene-intro" data-scene="intro" data-theme="cosmic">
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7Z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 6h3c4 0 8 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 4-3 6-6s4-6 6-6h3m-4-4 4 4-4 4"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 9a8 8 0 1 1 1 9M4 3v6h6"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="m4 9 4 0 5-4v14l-5-4H4ZM17 8c2 2 2 6 0 8m3-11c4 4 4 10 0 14"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="m4 9 4 0 5-4v14l-5-4H4Zm13 0 5 6m0-6-5 6"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M8 4v6m8 4v6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 5 7 7-7 7"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5ZM20 2v4m-2-2h4"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2m1-16a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v2"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="m3 6 5 4 4-7 4 7 5-4-2 12H5Zm2 15h14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4 10-10"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></symbol>
+    <symbol id="i-mouse" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="6"/><path d="M12 6v4"/></symbol>
+
+    <symbol id="i-sun" viewBox="0 0 24 24"><path d="M4 17h16M7 17a5 5 0 0 1 10 0M12 2v4M4 6l3 3m13-3-3 3M2 13h3m14 0h3M5 21h14"/></symbol>
+    <symbol id="i-fish" viewBox="0 0 24 24"><path d="M3 12c4-7 12-7 16 0-4 7-12 7-16 0Zm16 0 3-4v8Z"/><circle cx="7.5" cy="10.5" r=".7" fill="currentColor" stroke="none"/></symbol>
+  </defs></svg>
+
+  <canvas id="game-canvas" tabindex="-1" aria-hidden="true" aria-label="핀볼이 장애물을 지나 결승선으로 향하는 핀볼 게임 화면">브라우저가 Canvas를 지원하지 않습니다.</canvas>
+  <canvas id="game-surface" aria-hidden="true"></canvas>
+  <div class="ambient-wash" aria-hidden="true"></div>
+  <div class="screen-vignette" aria-hidden="true"></div>
+
+  <canvas id="cinema-canvas" aria-hidden="true" tabindex="-1" aria-label="유리관을 기울여 공을 쏟고 섞은 뒤, 오른쪽 위 발사 구역으로 끌어 놓기"></canvas>
+  <section class="scene-welcome" id="scene-welcome" aria-label="어른뭉방구 시작 화면">
+    <div class="scene-brand">
+      <img class="scene-logo" src="./assets/logo.svg" alt="어른뭉방구" width="170" height="148" draggable="false">
+    </div>
+    <button class="intro-start-button" id="intro-start-button" type="button"><span>시작하기</span><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+  </section>
+  <div class="setup-backdrop" id="setup-backdrop" aria-hidden="true"></div>
+  <p class="scene-status" id="scene-status" role="status" aria-live="polite" tabindex="-1"></p>
+
+  <header class="masthead" inert aria-hidden="true">
+    <a class="brand" href="./index.html" aria-label="어른뭉방구 홈">
+      <img class="orbit-mark brand-logo" src="./assets/logo.svg" alt="" width="64" height="56">
+    </a>
+    <nav class="masthead-actions" aria-label="게임 설정">
+      <span class="fps-badge"><b id="fps">60</b> FPS</span>
+      <button class="icon-button" id="sound-toggle" type="button" aria-label="음악과 효과음 끄기" aria-pressed="true"><svg class="icon"><use href="#i-sound"/></svg></button>
+      <button class="icon-button" id="settings-toggle" type="button" aria-label="설정 패널 열기 또는 닫기" aria-expanded="true" aria-controls="setup-panel"><svg class="icon"><use href="#i-settings"/></svg></button>
+    </nav>
+  </header>
+
+  <main>
+    <aside class="setup-panel glass-panel" id="setup-panel" aria-label="추첨 설정" aria-hidden="true" inert>
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="panel-heading"><div><span class="eyebrow">어른뭉방구</span><h1 id="setup-title">핀볼</h1></div><button class="icon-button panel-close" id="panel-close" type="button" aria-label="설정 패널 닫기"><svg class="icon"><use href="#i-close"/></svg></button></div>
+      <form id="settings-form" novalidate>
+        <div class="panel-scroll">
+          <section class="settings-section map-section" aria-labelledby="map-label">
+            <div class="section-label"><span id="map-label">놀이판 선택</span><span class="tiny-label">4가지 코스</span></div>
+            <div id="map-grid" class="map-grid" role="group" aria-labelledby="map-label"></div>
+            <p id="map-policy" class="map-policy"></p>
+          </section>
+          <section class="settings-section participants-section">
+            <div class="section-label"><span id="groups-label">공 그룹 설정</span><span class="count-badge"><span id="participant-count">6</span> 핀볼</span></div>
+            <input id="names" type="hidden" value="빨강*2,초록*2,파랑*2">
+            <div id="color-groups" class="color-groups" role="group" aria-labelledby="groups-label"></div>
+            <div id="group-quantities" class="group-quantities"></div>
+            <button id="add-group" class="add-group" type="button">＋ 그룹 추가</button>
+            <p class="seed-note">그룹 이름을 직접 입력하고 색상과 공 개수를 정하세요.</p>
+            <div class="input-foot"><p id="names-help" aria-live="polite">3개 그룹 · 총 6개 / 최대 50개</p></div>
+            <p id="input-error" class="input-error" role="alert" hidden></p>
+          </section>
+
+          <section class="settings-section rule-section">
+            <div class="section-label"><span id="rule-label">당첨 방식</span><span class="tiny-label">당첨 방식</span></div>
+            <div class="segmented rule-segments" role="group" aria-labelledby="rule-label">
+              <button type="button" data-rule="first" class="active" aria-pressed="true">1등</button><button type="button" data-rule="last" aria-pressed="false">꼴등</button><button type="button" data-rule="nth" aria-pressed="false">N번째</button><button type="button" data-rule="top" aria-pressed="false">상위 N명</button>
+            </div>
+            <div id="rank-n-row" class="rank-n-row" hidden><label for="rank-n" id="rank-n-label">당첨 순위</label><div class="quantity-control"><button type="button" id="rank-minus" aria-label="당첨 숫자 줄이기">−</button><select id="rank-n" aria-label="당첨 순위 또는 인원"><option value="1">1</option></select><button type="button" id="rank-plus" aria-label="당첨 숫자 늘리기">+</button></div><span id="rank-n-unit">번째</span></div>
+          </section>
+
+
+
+          <details class="advanced-settings" id="advanced-settings"><summary><span><svg class="icon"><use href="#i-settings"/></svg>세부 설정</span><svg class="icon disclosure-chevron"><use href="#i-chevron"/></svg></summary>
+            <div class="advanced-content">
+          <section class="settings-section" aria-labelledby="recovery-label">
+            <div class="section-label"><span id="recovery-label">막힘 방지</span><span class="tiny-label" id="recovery-mode-label">모든 핀볼에 자동 적용</span></div>
+            <p class="recovery-note">약 3초 동안 앞으로 나아가지 못한 핀볼을 가볍게 밀어줍니다. 랜덤 스킬과 별도로 작동하며, 같은 시드에서는 동일하게 적용됩니다.</p>
+          </section>
+
+              <div class="range-setting"><label for="radius">핀볼 크기 <output id="radius-value">12</output></label><input type="range" id="radius" min="8" max="16" step="1" value="12" data-physical></div>
+              <div class="range-setting"><label for="gravity">중력 <output id="gravity-value">620</output></label><input type="range" id="gravity" min="350" max="1500" step="10" value="620" data-physical></div>
+              <div class="range-setting"><label for="restitution">반발력 <output id="restitution-value">0.72</output></label><input type="range" id="restitution" min="0.35" max="0.92" step="0.01" value="0.72" data-physical></div>
+              <div class="range-setting"><label for="speed">게임 속도 <output id="speed-value">1.0×</output></label><input type="range" id="speed" min="0.5" max="3" step="0.25" value="1"></div>
+              <div class="select-setting"><label for="quality">비주얼 품질</label><select id="quality"><option value="high">최고</option><option value="medium">보통</option><option value="low">절약</option></select></div>
+              <div class="range-setting"><label for="volume">음악 · 효과음 볼륨 <output id="volume-value">35%</output></label><input type="range" id="volume" min="0" max="1" step="0.05" value="0.35"></div>
+              <label class="switch-row" for="sound"><span>음악 · 효과음</span><span class="switch"><input type="checkbox" id="sound" checked><span></span></span></label>
+              <label class="switch-row" for="skills"><span>랜덤 스킬<small>가속 · 밀치기 · 크기 변화</small></span><span class="switch"><input type="checkbox" id="skills" data-physical><span></span></span></label>
+              <label class="switch-row" for="reduced-motion"><span>화면 효과 줄이기<small>흔들림 · 깜빡임을 줄입니다</small></span><span class="switch"><input type="checkbox" id="reduced-motion"><span></span></span></label>
+              <span class="seed-label" id="seed-label">출발 방식</span>
+              <input id="seed" type="hidden" value="">
+              <div class="segmented seed-modes" role="group" aria-labelledby="seed-label"><button type="button" id="seed-auto" aria-pressed="true">매번 새로 섞기</button><button type="button" id="seed-previous" aria-pressed="false" disabled>직전 게임 재현</button></div>
+              <p class="seed-note" id="seed-note">직전 게임을 시작하면 재현할 수 있습니다.</p>
+              <p><a href="./music-credits.html" target="_blank" rel="noopener">음악 크레딧 · 라이선스</a></p>
+            </div>
+          </details>
+        </div>
+        <div class="panel-footer">
+          <button class="start-button" id="start-button" type="submit"><span class="start-icon"><svg class="icon"><use href="#i-play"/></svg></span><span>게임 시작<small>핀볼을 섞고 발사합니다</small></span><svg class="icon start-arrow"><use href="#i-chevron"/></svg></button>
+          <div class="panel-bottom"><button class="text-button" id="reset-button" type="button"><svg class="icon"><use href="#i-reset"/></svg>초기화</button></div>
+        </div>
+      </form>
+    </aside>
+
+
+    <aside class="race-panel" aria-label="실시간 경기 정보">
+      <p id="hud-map-name" class="hud-map-name"></p><div class="race-stats glass-panel"><div><span class="eyebrow">굴러가는 핀볼</span><strong id="remaining">6<span> / 6</span></strong><small>남은 핀볼</small></div><div><span class="eyebrow">TIME</span><strong id="elapsed">00:00<small>.00</small></strong><small>경과 시간</small></div></div>
+      <div class="ranking-panel glass-panel"><div class="ranking-heading"><span class="eyebrow">지금의 순위</span><svg class="icon"><use href="#i-crown"/></svg></div><ol id="live-ranking" aria-label="실시간 상위 순위"><li class="ranking-empty"><span class="empty-rank-orbit" aria-hidden="true"></span><span>누가 먼저 도착할까요?<small>출발하면 순위가 표시됩니다</small></span></li></ol><div class="ranking-foot"><span class="live-dot"></span>한 알 한 알, 모두의 작은 가능성</div></div>
+      <div class="minimap-panel glass-panel"><div class="minimap-heading"><span class="eyebrow">놀이판 한눈에</span><span class="tiny-label">LIVE</span></div><canvas id="minimap" width="160" height="208" aria-label="놀이판 전체, 선두 핀볼과 카메라 위치를 보여 주는 미니맵"></canvas><button id="follow-button" class="follow-button active" type="button" aria-pressed="true"><svg class="icon"><use href="#i-target"/></svg>선두 따라가기</button><div class="camera-controls" role="group" aria-label="경기 화면 보기"><button id="camera-out" type="button" aria-label="축소">−</button><button id="camera-home" type="button">보기 초기화</button><button id="camera-in" type="button" aria-label="확대">+</button></div></div>
+    </aside>
+
+    <button id="mobile-setup-button" class="mobile-setup-button" type="button" aria-expanded="false" aria-controls="setup-panel"><svg class="icon"><use href="#i-settings"/></svg>추첨 설정<span id="mobile-count">6</span></button>
+
+    <button id="stop-button" class="game-stop-button" type="button" hidden>게임 정지</button>
+
+    <div class="countdown" id="countdown" aria-live="polite" hidden><span class="countdown-ring" aria-hidden="true"></span><span id="countdown-value">3</span><span class="countdown-label">곧 추첨을 시작합니다</span></div>
+    <div class="toast-stack" id="toast-stack" role="status" aria-live="polite"></div>
+  </main>
+
+  <footer class="system-footer" hidden aria-hidden="true"></footer>
+
+  <dialog id="results-dialog" class="results-dialog" aria-labelledby="winner-heading">
+    <div class="results-decoration" aria-hidden="true"><span></span><span></span><span></span></div>
+    <button class="icon-button results-close" id="results-close" type="button" aria-label="결과 화면 닫기"><svg class="icon"><use href="#i-close"/></svg></button>
+    <div class="result-logo" aria-hidden="true"><img src="./assets/logo.svg" alt="" width="80" height="70"></div>
+    <p class="eyebrow" id="result-rule">당첨 결과</p><h2 id="winner-heading">당첨 결과</h2><p class="winner-subtitle">축하드립니다!</p>
+    <div class="result-meta"><span>TIME <b id="result-time"></b></span></div>
+    <div class="result-ranking-heading"><span id="result-ranking-title">최종 순위</span><span id="result-total"></span></div>
+    <ol id="result-ranking" class="result-ranking"></ol><button type="button" id="show-all-results" class="text-button show-all-results" hidden>전체 순위 보기</button>
+    <p id="result-map" class="results-note"></p>
+    <p id="result-note" class="results-note" hidden></p>
+    <div class="result-actions"><button type="button" id="restart-button" class="start-button"><svg class="icon"><use href="#i-play"/></svg>같은 멤버로 다시 섞기</button><button type="button" id="replay-button" class="secondary-button"><svg class="icon"><use href="#i-reset"/></svg>다시 설정하기</button></div>
+    <a id="results-home-link" class="results-home-link" href="../"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/></svg>어른뭉방구 홈으로</a>
+  </dialog>
+
+  <script src="./js/themes.js?v=local-1719b27b8c26"></script><script src="./js/maps.js?v=local-79a9fa7c0003"></script><script src="./js/map-registry.js?v=hand-d7ef71bdcb70"></script><script src="./js/maps/twinfold.js?v=local-02302db9fd89"></script><script src="./js/maps/twinfold-style.js?v=local-a9811ed9571b"></script><script src="./js/maps/cascade.js?v=local-4e168b0350dd"></script><script src="./js/maps/cascade-style.js?v=local-be74db4b6b57"></script><script src="./js/maps/rhythm.js?v=local-d7ed7608f032"></script><script src="./js/maps/rhythm-style.js?v=local-abafc5dacf2f"></script><script src="./js/physics.js?v=hand-c6f9b7b0010b"></script><script src="./js/camera.js?v=local-f94d5a585527"></script><script src="./js/effects.js?v=local-fc19741e8634"></script><script src="./js/audio.js?v=local-72940855f7b6"></script><script src="./js/race-standing.js?v=local-cad6e28fe03f"></script><script src="./js/renderer.js?v=hand-f2f7dff90056"></script><script src="./js/cinematic.js?v=local-3c3eaf6323c3"></script><script src="./js/shuffle.js?v=local-89c28332289c"></script><script src="./js/hand-start.js?v=local-298e6c089a19"></script><script src="./js/shuffle-input.js?v=local-c53898379372"></script><script src="./js/throw-gate.js?v=hand-0b84c89e6eb6"></script><script src="./js/hand-scene.js?v=hand-568c5affa1bd"></script><script src="./js/hand-flight.js?v=local-6b56b6033e5c"></script><script src="./js/race-duration-data.js?v=local-96651f0797bb"></script><script src="./js/maps-duration-data.js?v=local-cfa59cb74812"></script><script src="./js/race-duration.js?v=local-7740c90c5de4"></script><script src="./js/ui.js?v=hand-18d70e36a7b9"></script><script src="./js/display-budget.js?v=local-d918720b9ecf"></script><script src="./js/main.js?v=hand-80d0fc2b9c12"></script>
+</body>
+</html>
