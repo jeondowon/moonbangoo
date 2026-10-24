@@ -6,6 +6,8 @@
     <meta name="theme-color" content="#f8f3e6" />
     <title>어른뭉방구 코인 플립</title>
     <link rel="stylesheet" href="/src/coin/coin.css" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
   </head>
   <body>
     <canvas id="stage" aria-label="코인. 위로 튕겨서 던지고, 떠 있는 동안 스와이프로 돌려요"></canvas>
@@ -17,5 +19,6 @@
     <p id="hint" class="coin-hint"></p>
     <div id="gauge" class="coin-gauge" aria-hidden="true" hidden><i></i><span>500m</span></div>
     <script type="module" src="/src/coin/main.ts"></script>
+    <script type="module" src="/fullscreen.js"></script>
   </body>
 </html>

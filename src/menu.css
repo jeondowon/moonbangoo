@@ -32,6 +32,11 @@ a.menu-option:hover .game-thumbnail img { transform: scale(1.035); }
 .game-caption { display: flex; align-items: center; gap: 20px; padding: clamp(20px, 1.8vw, 32px) 2px; border-bottom: 1px solid #dcd2bf; }
 .game-name { font-size: clamp(23px, 2vw, 38px); font-weight: 500; line-height: 1.4; letter-spacing: -.045em; }
 .menu-arrow { width: clamp(28px, 2.2vw, 40px); height: clamp(28px, 2.2vw, 40px); margin-left: auto; flex: none; stroke: #a08449; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+.fullscreen-toggle { position: fixed; top: max(16px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right)); display: grid; place-items: center; width: clamp(48px, 3.4vw, 72px); height: clamp(48px, 3.4vw, 72px); padding: 0; border: 1px solid #dcd2bf; border-radius: 50%; background: transparent; color: #a08449; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fullscreen-toggle[hidden] { display: none; }
+.fullscreen-toggle:focus-visible { outline: 2px solid #a08449; outline-offset: 4px; }
+.fullscreen-toggle svg { width: 50%; height: 50%; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.fullscreen-toggle[aria-pressed="true"] .icon-enter, .fullscreen-toggle[aria-pressed="false"] .icon-exit { display: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 640px) {
   .game-menu { padding-inline: max(24px, env(safe-area-inset-left)) max(24px, env(safe-area-inset-right)); }

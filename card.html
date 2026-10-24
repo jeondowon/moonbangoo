@@ -8,6 +8,8 @@
 <script>try { if (localStorage.getItem('theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch {}</script>
 <!-- 게임 모듈 실행 전부터 스타일을 적용해 기본 HTML이 노출되지 않게 한다. -->
 <link rel="stylesheet" href="/src/style.css">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 <body>
 <canvas id="stage"></canvas>
@@ -121,3 +123,4 @@
 <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
+<script type="module" src="/fullscreen.js"></script>
