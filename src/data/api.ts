@@ -1,6 +1,15 @@
 // 백엔드(moonbangoo-backend, docs/API.md) 연결. 매장 디스플레이는 사장님 컴퓨터에서 서버와 함께 돌린다.
 // 서버의 활성 팩 1개에 모든 경품이 섞여 있고(오리파), 경품마다 종류(icon)가 카드·오리파 화면의 카테고리가 된다.
-const API = 'http://localhost:8080/api/v1';
+
+/**
+ * 백엔드가 서빙한 페이지면 그 서버의 API를 쓴다 (TV·폰에서 노트북 주소로 열어도 동작).
+ * GitHub Pages·개발 서버·테스트에서는 같은 기기의 백엔드(localhost:8080)를 쓴다.
+ */
+function apiBase(): string {
+  const host = globalThis.location?.hostname;
+  const served = host !== undefined && !host.endsWith('github.io') && !import.meta.env?.DEV;
+  return served ? '/api/v1' : 'http://localhost:8080/api/v1';
+}
 
 export interface Prize {
   id: string;
@@ -52,7 +61,7 @@ const ICON_ALIAS: Record<string, string> = { drink: 'cafe', booster: 'pack', dis
 const category = (icon: string | null) => (icon ? ICON_ALIAS[icon] ?? icon : '');
 
 async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const res = await fetch(API + path, {
+  const res = await fetch(apiBase() + path, {
     method,
     headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),

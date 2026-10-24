@@ -39,7 +39,7 @@
 - 모든 움직임은 자체 스프링 솔버 기반
 - 터치와 마우스를 함께 지원하는 Pointer Events 입력
 - 모바일 웹 우선 설계와 데스크톱 브라우저 지원 (목표 60fps)
-- 경품·수량·추첨은 백엔드 API(`src/data/api.ts`, 주소 `http://localhost:8080/api/v1` 고정)
+- 경품·수량·추첨은 백엔드 API(`src/data/api.ts`, 백엔드가 서빙한 페이지는 그 서버의 `/api/v1`, GitHub Pages·개발 서버는 `http://localhost:8080/api/v1`)
 
 ## 폴더 구조
 
@@ -95,7 +95,7 @@ docs/           기획 명세·어드민 규칙·진행 기록·성능 점검 �
 
 Node.js 22.18 이상이 필요합니다. 로컬·CI는 Node.js 22를 기준으로 사용합니다.
 
-기본값은 **운영 모드**입니다. 같은 기기에서 백엔드 서버(`http://localhost:8080`)를 실행해야 하며, 게임은 로그인이 필요 없는 손님용 API(`/packs`, `/packs/{id}/prizes`, `/packs/{id}/draw`, `/draws/{id}/confirm`)만 사용합니다. 서버 오류가 나더라도 시연 모드로 자동 전환하지 않습니다.
+기본값은 **운영 모드**입니다. 백엔드가 서빙한 페이지는 그 서버를, GitHub Pages·개발 서버에서 연 페이지는 같은 기기의 백엔드(`http://localhost:8080`)를 사용하며, 게임은 로그인이 필요 없는 손님용 API(`/packs`, `/packs/{id}/prizes`, `/packs/{id}/draw`, `/draws/{id}/confirm`)만 사용합니다. 서버 오류가 나더라도 시연 모드로 자동 전환하지 않습니다.
 
 백엔드 없이 체험하려면 `.env.local`에 `VITE_GAME_MODE=demo`를 설정하고 개발 서버를 재시작하거나 다시 빌드하세요 (`.env.example` 참고). 시연 모드의 예시 경품·수량은 현재 페이지 메모리에만 있으며 새로고침하거나 메뉴에서 다시 들어오면 초기화됩니다.
 
@@ -124,12 +124,12 @@ npm test           # 화면 흐름·API·안내 회귀 테스트
 
 ## 배포
 
-매장에서는 매장 PC의 백엔드가 프론트 빌드 결과물을 함께 서빙합니다. `npm run build`로 만든 `dist/`를 백엔드 담당자에게 전달하면 백엔드의 `src/main/resources/front`에 넣어 `http://localhost:8080/moonbangoo/`로 제공합니다. 백엔드 실행기가 서버를 켜고 이 주소를 브라우저로 엽니다.
+매장에서는 매장 PC의 백엔드가 프론트 빌드 결과물을 함께 서빙합니다. `npm run build`로 만든 `dist/`를 백엔드 담당자에게 전달하면 백엔드의 `src/main/resources/front`에 넣어 `http://localhost:8080/moonbangoo/`로 제공합니다. 백엔드 실행기가 서버를 켜고 이 주소를 브라우저로 엽니다. 같은 와이파이의 TV·폰에서 `http://노트북IP:8080/moonbangoo/`로 열어도 게임이 그 서버의 API를 사용합니다.
 
 `main`에 푸시하면 GitHub Actions(`.github/workflows/deploy.yml`)가 같은 운영 모드로 빌드해 GitHub Pages에도 배포합니다.
 
 - 주소: https://jeondowon.github.io/moonbangoo/
-- 운영 모드이므로 이 주소도 접속한 기기의 `localhost:8080` 백엔드를 사용합니다. 백엔드가 없는 기기에서는 인트로에 연결 오류 안내가 나옵니다. 매장 PC에서 이 주소로 열면 Chrome이 로컬 네트워크 접근 허용을 한 번 물을 수 있습니다.
+- 운영 모드이므로 이 주소도 접속한 기기의 `localhost:8080` 백엔드를 사용합니다. https 페이지에서 다른 기기의 http 주소는 브라우저가 막으므로, TV·폰에서 카드 게임을 하려면 이 주소 대신 노트북 주소로 엽니다. 백엔드가 없는 기기에서는 인트로에 연결 오류 안내가 나옵니다. 매장 PC에서 이 주소로 열면 Chrome이 로컬 네트워크 접근 허용을 한 번 물을 수 있습니다.
 - 매장 서빙과 GitHub Pages 모두 하위 경로(`/moonbangoo/`)에서 서비스되므로 `vite.config.ts`에서 빌드 시 `base`를 맞춰 둡니다.
 
 ## 주요 결정과 주의사항

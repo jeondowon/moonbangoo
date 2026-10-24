@@ -7,7 +7,7 @@ function mockFetch(routes) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     calls.push({ url, method: init.method, body: init.body && JSON.parse(init.body) });
-    const [status, body] = routes[`${init.method ?? 'GET'} ${new URL(url).pathname}`] ?? [404, { message: '없음' }];
+    const [status, body] = routes[`${init.method ?? 'GET'} ${new URL(url, 'http://localhost').pathname}`] ?? [404, { message: '없음' }];
     return { ok: status < 400, status, json: async () => body };
   };
   return calls;
@@ -62,4 +62,17 @@ test('오류: 서버의 안내 문구를 그대로, 연결 실패는 연결 안�
   await assert.rejects(drawCards(3), { message: '팩에 남은 경품이 없습니다.' });
   globalThis.fetch = async () => { throw new TypeError('Failed to fetch'); };
   await assert.rejects(fetchShop(), { message: '서버에 연결하지 못했어요.' });
+});
+
+test('API 주소: 백엔드가 서빙한 페이지는 그 서버로, GitHub Pages는 같은 기기의 localhost:8080으로', async () => {
+  const calls = mockFetch({ 'GET /api/v1/packs': [200, { packs: [] }] });
+  try {
+    globalThis.location = { hostname: '192.168.0.10' };
+    await fetchShop();
+    globalThis.location = { hostname: 'jeondowon.github.io' };
+    await fetchShop();
+  } finally {
+    delete globalThis.location;
+  }
+  assert.deepEqual(calls.map((c) => c.url), ['/api/v1/packs', 'http://localhost:8080/api/v1/packs']);
 });
