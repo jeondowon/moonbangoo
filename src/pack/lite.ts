@@ -19,6 +19,7 @@ import {
   type WebGLRenderer,
   WebGLRenderTarget,
 } from 'three';
+import { extendShader } from '../gfx/shader';
 import { FILM, ROUGH } from './pack';
 import type { SideTextures } from './textures';
 
@@ -110,14 +111,10 @@ export function applyLiteShading(material: Material, t: SideTextures, matcaps: P
   const [from, to] = amount
     ? ['#include <opaque_fragment>', `if (uLiteMix > 0.0) outgoingLight = mix(outgoingLight, ${lite}, uLiteMix);\n#include <opaque_fragment>`]
     : ['vec3 outgoingLight = diffuseColor.rgb * matcapColor.rgb;', `vec3 outgoingLight = ${lite};`];
-  const compile = material.onBeforeCompile;
-  const cacheKey = material.customProgramCacheKey();
-  material.onBeforeCompile = (shader, renderer) => {
-    compile.call(material, shader, renderer);
+  extendShader(material, `-lite${amount ? '-mix' : ''}`, (shader) => {
     Object.assign(shader.uniforms, own);
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>\n${LITE_GLSL}\nuniform float uLiteMix;`)
       .replace(from, to);
-  };
-  material.customProgramCacheKey = () => `${cacheKey}-lite${amount ? '-mix' : ''}`;
+  });
 }

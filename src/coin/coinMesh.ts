@@ -1,5 +1,5 @@
 // 코인 모양과 재질. 면은 거울처럼 광낸 금색 바탕에 무광 처리한 로고만 크게 얹는다 (프루프 주화풍).
-// SVG와 투명 PNG의 알파만 써서 두 로고에 같은 금색·거칠기·양각을 입힌다.
+// SVG와 투명 WebP의 알파만 써서 두 로고에 같은 금색·거칠기·양각을 입힌다.
 import {
   CircleGeometry,
   CylinderGeometry,
@@ -13,12 +13,12 @@ import {
 } from 'three';
 import { createStudioEnv } from '../gfx/env';
 import { smooth } from '../core/math';
-import { boxBlur, HeightField, readChannel, valueNoise, whiteNoise } from '../gfx/surface';
+import { boxBlur, HeightField, readChannel } from '../gfx/surface';
 import { parseSvg, rasterize, toTexture } from '../gfx/svg';
 import { COIN_R, COIN_T } from './physics';
 
 const FRONT_LOGO = new URL('../../design/logo/logo-mono.svg', import.meta.url).href;
-const BACK_LOGO = new URL('../../design/logo/preem-mask.png', import.meta.url).href;
+const BACK_LOGO = new URL('../../design/logo/preem-mask.webp', import.meta.url).href;
 const SIZE = 1024;
 const LOGO_WIDTH = 0.72; // 지름 대비
 // 연한 샴페인 골드. 로고는 바탕보다 눈에 띄게 밝게
@@ -29,8 +29,6 @@ const RELIEF = 4.5; // 로고 가장자리 경사의 세기
 const RIM = 0.9; // 반지름 대비 테두리 턱이 시작하는 곳
 const DISH = 4; // 바탕이 테두리까지 올라가는 높이 (로고 높이 1 기준). 실제 주화처럼 눈으로는 평평해 보일 만큼만
 const RIM_H = 3;
-const SCRATCHES = 0; // 깔끔하게 보이도록 끔. 되살리려면 260
-const GRIME = 0; // 손때 세기. 깔끔하게 보이도록 끔. 0.4면 은은하게, 1이면 눈에 띄게 얼룩진다
 
 /** SIZE×SIZE 투명 캔버스에 모양만 그린다. 색·거칠기·높이 맵마다 tinted()로 칠해 겹친다 */
 function layer(draw: (ctx: CanvasRenderingContext2D) => void) {
@@ -57,46 +55,15 @@ function tinted(shape: HTMLCanvasElement, color: string) {
 }
 
 async function logoLayer(url: string, width: number) {
-  const png = new URL(url, location.href).pathname.endsWith('.png');
-  const svg = png ? null : parseSvg(await (await fetch(url)).text());
-  const source = png ? await new ImageLoader().loadAsync(url) : null;
+  const raster = new URL(url, location.href).pathname.endsWith('.webp');
+  const svg = raster ? null : parseSvg(await (await fetch(url)).text());
+  const source = raster ? await new ImageLoader().loadAsync(url) : null;
   const box = svg ? svg.viewBox.baseVal : { width: source!.naturalWidth, height: source!.naturalHeight };
   const scale = (SIZE * width) / Math.max(box.width, box.height);
   const w = Math.round(box.width * scale);
   const h = Math.round(box.height * scale);
   const image = source ?? await rasterize(svg!, w, h);
   return layer((ctx) => ctx.drawImage(image, (SIZE - w) / 2, (SIZE - h) / 2, w, h));
-}
-
-/** 넓은 얼룩(0~1). 손때로 색과 광택이 고르지 않은 곳 */
-function blotches() {
-  const out = new Float32Array(SIZE * SIZE);
-  for (let y = 0, i = 0; y < SIZE; y++) {
-    for (let x = 0; x < SIZE; x++, i++) out[i] = valueNoise(x / 110, y / 110, 3) * 0.6 + valueNoise(x / 28, y / 28, 5) * 0.4;
-  }
-  return out;
-}
-
-/** 사방으로 난 잔 긁힘 (흰 선, 0~1) */
-function scratches() {
-  const { c, ctx } = canvas2d();
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, SIZE, SIZE);
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 1;
-  const rand = (i: number, k: number) => whiteNoise(i, k, 11);
-  for (let i = 0; i < SCRATCHES; i++) {
-    const x = rand(i, 0) * SIZE;
-    const y = rand(i, 1) * SIZE;
-    const a = rand(i, 2) * Math.PI;
-    const len = 15 + rand(i, 3) ** 2 * 160;
-    ctx.globalAlpha = 0.15 + rand(i, 4) * 0.45;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.quadraticCurveTo(x + Math.cos(a + 0.3) * len * 0.5, y + Math.sin(a + 0.3) * len * 0.5, x + Math.cos(a) * len, y + Math.sin(a) * len);
-    ctx.stroke();
-  }
-  return readChannel(c);
 }
 
 function grayCanvas(values: (i: number) => number) {
@@ -110,13 +77,11 @@ function grayCanvas(values: (i: number) => number) {
   return c;
 }
 
-function colorMap(renderer: WebGLRenderer, logo: HTMLCanvasElement, grime: HTMLCanvasElement) {
+function colorMap(renderer: WebGLRenderer, logo: HTMLCanvasElement) {
   const color = canvas2d();
   color.ctx.fillStyle = GOLD.base;
   color.ctx.fillRect(0, 0, SIZE, SIZE);
   color.ctx.drawImage(tinted(logo, GOLD.raised), 0, 0);
-  color.ctx.globalCompositeOperation = 'multiply';
-  color.ctx.drawImage(grime, 0, 0);
   return toTexture(color.c, renderer);
 }
 
@@ -127,16 +92,10 @@ async function faceMaterial(renderer: WebGLRenderer, url: string, width = LOGO_W
   height.ctx.fillRect(0, 0, SIZE, SIZE);
   height.ctx.drawImage(tinted(logo, '#fff'), 0, 0);
   const mask = readChannel(height.c);
-  const scratch = scratches();
-  const blot = blotches();
-
-  // 색: 손때 묻은 곳이 아주 조금 어둡다
-  const grime = grayCanvas((i) => 1 - 0.07 * GRIME * blot[i]);
 
   // 거칠기(G 채널): 프루프 주화처럼 바탕은 광택, 로고는 무광이라 밝고 부드럽게 도드라진다.
   // 바탕을 완전한 거울로 하면 어두운 방 벽이 그대로 비쳐 금색이 어두워지므로 광택을 조금 풀어 조명이 퍼지게 한다.
-  // 손때와 잔 긁힘으로 광택이 고르지 않게 한다
-  const rough = grayCanvas((i) => 0.29 + 0.26 * mask[i] + 0.14 * GRIME * (blot[i] - 0.5) + 0.22 * scratch[i]);
+  const rough = grayCanvas((i) => 0.29 + 0.26 * mask[i]);
 
   // 높이: 로고만 살짝 솟게. 번지게 해 모서리가 둥글게 보이게 (좁으면 멈췄을 때 선이 계단처럼 깨진다). 바탕은 오목하게, 가장자리엔 테두리 턱.
   // bumpMap은 화면에서 8비트 높이를 미분해 가장자리가 계단처럼 지글거리므로 미리 노멀맵으로 굽는다
@@ -148,7 +107,7 @@ async function faceMaterial(renderer: WebGLRenderer, url: string, width = LOGO_W
   });
 
   return new MeshStandardMaterial({
-    map: colorMap(renderer, logo, grime),
+    map: colorMap(renderer, logo),
     roughnessMap: toTexture(rough, renderer, false),
     normalMap: toTexture(relief.toNormalCanvas(RELIEF), renderer, false),
     metalness: 1,
@@ -182,7 +141,7 @@ export type CoinMaterials = [front: Material, back: Material, edge: Material];
 export async function createCoinMaterials(renderer: WebGLRenderer): Promise<CoinMaterials> {
   const [front, back] = await Promise.all([faceMaterial(renderer, FRONT_LOGO), faceMaterial(renderer, BACK_LOGO, 0.86)]);
   const mats: CoinMaterials = [front, back, edgeMaterial(renderer)];
-  // 장면과 같은 베이지 방을 비춘다. 장면 환경(scene.environment)에 기대면 envMapIntensity가 듣지 않으므로 재질에 직접 단다
+  // 밝은 베이지 방을 비춰 금화가 밝은 노란 금색으로 보인다. 장면 환경(scene.environment)에 기대면 envMapIntensity가 듣지 않으므로 재질에 직접 단다
   const envMap = createStudioEnv(renderer, 'pack');
   for (const m of mats) Object.assign(m, { envMap, envMapIntensity: GOLD.light });
   return mats;

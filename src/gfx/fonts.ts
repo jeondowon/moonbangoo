@@ -8,6 +8,7 @@ import cormorant600 from '@fontsource/cormorant-garamond/600.css?raw';
 import cormorant700 from '@fontsource/cormorant-garamond/700.css?raw';
 import cormorant600Italic from '@fontsource/cormorant-garamond/600-italic.css?raw';
 import pretendard from 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css?raw';
+import { fetchDataUrl } from './svg';
 
 const FONT_CSS = [gowun400, gowun700, cormorant500, cormorant600, cormorant700, cormorant600Italic, pretendard];
 
@@ -38,16 +39,6 @@ function parseRanges(s: string | undefined): Range[] | null {
   });
 }
 
-async function toDataUrl(url: string): Promise<string> {
-  const blob = await (await fetch(url)).blob();
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(blob);
-  });
-}
-
 function embedFrom(css: string, codepoints: number[]): Promise<string>[] {
   const blocks = css.match(/@font-face\s*{[^}]*}/g) ?? [];
   return blocks.map(async (block) => {
@@ -56,7 +47,7 @@ function embedFrom(css: string, codepoints: number[]): Promise<string>[] {
     const src = block.match(/url\(\s*['"]?([^'")]+\.woff2)['"]?\s*\)/)?.[1];
     const url = src && FILES[src.slice(src.lastIndexOf('/') + 1)];
     if (!url) return '';
-    return block.replace(/src:[^;}]*/, `src: url(${await toDataUrl(url)})`);
+    return block.replace(/src:[^;}]*/, `src: url(${await fetchDataUrl(url)})`);
   });
 }
 

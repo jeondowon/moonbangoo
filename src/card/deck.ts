@@ -6,6 +6,7 @@ import { Group, Matrix4, Raycaster, Vector2, Vector3, type Camera, type Material
 import { clamp, smooth } from '../core/math';
 import { Spring } from '../core/spring';
 import type { Prize } from '../data/api';
+import { extendShader } from '../gfx/shader';
 import { PACK_H, PACK_W, packY } from '../pack/pack';
 import { TEAR_CURVE_GLSL, type TearUniforms } from '../pack/tearShader';
 import { Card, CARD_H, CARD_W } from './card';
@@ -45,10 +46,7 @@ function openingUniforms(tear: TearUniforms) {
 
 /** 카드 조각마다 팩 본체와 같은 픽셀 경계에서 가린다. 기존 홀로 셰이더는 유지한다. */
 function applyOpeningMask(material: Material, uniforms: ReturnType<typeof openingUniforms>) {
-  const compile = material.onBeforeCompile;
-  const cacheKey = material.customProgramCacheKey();
-  material.onBeforeCompile = (shader, renderer) => {
-    compile.call(material, shader, renderer);
+  extendShader(material, '-opening-mask', (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vOpeningWorldPos;')
@@ -68,8 +66,7 @@ function applyOpeningMask(material: Material, uniforms: ReturnType<typeof openin
         float bodyEdge = tearCurve(openingU) + texture2D(uCut, vec2(openingU, 0.5)).r * uGap;
         if (openingV >= bodyEdge) discard;
       }`);
-  };
-  material.customProgramCacheKey = () => `${cacheKey}-opening-mask`;
+  });
 }
 
 type State = 'packed' | 'rising' | 'presenting' | 'ready' | 'done';

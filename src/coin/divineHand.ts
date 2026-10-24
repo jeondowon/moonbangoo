@@ -5,9 +5,9 @@ import {
 } from 'three';
 import { HandMotion } from './handMotion';
 import { CEILING_Y, COIN_R } from './physics';
-import { pixelTexture, radialAlpha } from './scenery';
+import { pixelTexture, radialAlpha } from './pixelTexture';
 
-const ATLAS = new URL('./assets/divine-hand.png', import.meta.url).href;
+const ATLAS = new URL('./assets/divine-hand.webp', import.meta.url).href;
 const SIZE = 2.55;
 
 export async function createDivineHand() {

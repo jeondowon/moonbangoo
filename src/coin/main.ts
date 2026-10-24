@@ -21,12 +21,12 @@ import {
 } from "three";
 import { clamp, smooth } from "../core/math";
 import { Spring } from "../core/spring";
-import { createStudioEnv } from "../gfx/env";
-import { QUALITY } from "../gfx/quality";
+import { createFpsMeter, QUALITY } from "../gfx/quality";
 import { altitudeAt, formatAltitude, MAX_ALTITUDE, MILESTONES } from "./altitude";
 import { createCoin, createCoinMaterials, type CoinMaterials } from "./coinMesh";
 import { CoinSim, COIN_R, COIN_T, CEILING_Y, type CoinEvent, type Face } from "./physics";
-import { createScenery, pixelTexture, radialAlpha } from "./scenery";
+import { pixelTexture, radialAlpha } from "./pixelTexture";
+import { createScenery } from "./scenery";
 import { CoinSound } from "./sound";
 import { CoinRetry, VALID_M, VALID_HEIGHT } from "./retry";
 import { createDivineHand } from "./divineHand";
@@ -67,7 +67,6 @@ const scene = new Scene();
 // 바닥이 멀어질수록 하늘색(지평선 색)에 녹아 경계가 보이지 않는다. 색은 매 프레임 고도에 맞춘다
 const fog = new Fog("#ffffff", 9, 26);
 scene.fog = fog;
-scene.environment = createStudioEnv(renderer, "pack"); // 밝은 베이지 방을 비춰 금화가 밝은 노란 금색으로 보인다
 const camera = new PerspectiveCamera(30, 1, 0.1, 400);
 const scenery = createScenery(camera, renderer);
 scene.add(scenery.group);
@@ -320,23 +319,12 @@ async function start() {
   setHint("위로 튕겨서 던지기");
 
   let last = performance.now();
-  // ?fps: 실제로 그린 프레임 수를 1초마다 표시 (TV 브라우저에는 개발자 도구가 없어 화면에 띄운다).
   // 코인 화면에 적용되는 화질 옵션은 해상도 배율뿐이라 그것만 함께 적는다
-  const fpsMeter = QUALITY.showFps ? document.body.appendChild(document.createElement("div")) : null;
-  if (fpsMeter) fpsMeter.className = "fps-meter";
-  let fpsFrames = 0;
-  let fpsFrom = last;
+  const countFrame = createFpsMeter(`dpr ${renderer.getPixelRatio()}`);
   renderer.setAnimationLoop((now) => {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (fpsMeter) {
-      fpsFrames++;
-      if (now - fpsFrom >= 1000) {
-        fpsMeter.textContent = `${Math.round((fpsFrames * 1000) / (now - fpsFrom))} fps · dpr ${renderer.getPixelRatio()}`;
-        fpsFrames = 0;
-        fpsFrom = now;
-      }
-    }
+    countFrame(now);
     const wasRetrying = retry.active;
     const events = retry.step(sim, dt);
     if (!wasRetrying && retry.active) {

@@ -14,6 +14,7 @@ import {
 import { CARD } from '../../design/lib/card.js';
 import { Spring } from '../core/spring';
 import { QUALITY } from '../gfx/quality';
+import { extendShader } from '../gfx/shader';
 import { applyHoloFront, applyRimGlow, RARITY_STYLE, type RarityCode } from './holo';
 
 /** 월드 단위 카드 크기 (팩 안에 들어가는 크기 기준. 보여줄 때는 덱 전체를 키운다) */
@@ -110,16 +111,12 @@ const backMaterials = new Map<string, Material>();
 
 /** 반사·홀로까지 계산된 빛을 낮춘다. 재질 재컴파일 없이 유니폼만 갱신. */
 function dimmable(mat: Material, brightness: IUniform<number>) {
-  const compile = mat.onBeforeCompile;
-  const cacheKey = mat.customProgramCacheKey();
-  mat.onBeforeCompile = (shader, renderer) => {
-    compile.call(mat, shader, renderer);
+  extendShader(mat, '-brightness', (shader) => {
     shader.uniforms.uCardBrightness = brightness;
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform float uCardBrightness;')
       .replace('#include <opaque_fragment>', 'outgoingLight *= uCardBrightness;\n#include <opaque_fragment>');
-  };
-  mat.customProgramCacheKey = () => `${cacheKey}-brightness`;
+  });
   return mat;
 }
 

@@ -104,18 +104,23 @@ export function sumCounts(rows: readonly Counts[]): Counts {
   return counts;
 }
 
+/** 운영·시연 모드 공통: 경품별 재고를 전체·최고등급·카테고리별 수량으로 합친다 */
+export function toShop(packId: number | null, stock: readonly (Prize & Counts)[]): Shop {
+  return {
+    packId,
+    all: sumCounts(stock),
+    top: sumCounts(stock.filter((p) => p.rarity === 'UR')),
+    categories: CATEGORIES.map((c) => sumCounts(stock.filter((p) => p.category === c.id))),
+    prizes: stock.map(({ remaining: _remaining, total: _total, ...prize }) => prize),
+  };
+}
+
 export async function fetchShop(): Promise<Shop> {
   // 손님용 API만 쓴다 (어드민 API는 로그인이 필요). /packs는 활성 팩만 돌려준다
   const { packs } = await call<{ packs: { id: number }[] }>('GET', '/packs');
   const packId = packs[0]?.id ?? null;
   const prizes = packId === null ? [] : (await call<{ prizes: PrizeDto[] }>('GET', `/packs/${packId}/prizes`)).prizes;
-  return {
-    packId,
-    all: sumCounts(prizes),
-    top: sumCounts(prizes.filter((p) => p.rarity === 'UR')),
-    categories: CATEGORIES.map((c) => sumCounts(prizes.filter((p) => category(p.icon) === c.id))),
-    prizes: prizes.map(toPrize),
-  };
+  return toShop(packId, prizes.map((p) => ({ ...toPrize(p), remaining: p.remaining, total: p.total })));
 }
 
 /** 팩에서 카드 5장 (수량 차감 없음) */

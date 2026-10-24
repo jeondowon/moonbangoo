@@ -26,3 +26,22 @@ export function parseQuality(search: string) {
 }
 
 export const QUALITY = parseQuality(globalThis.location?.search ?? '');
+
+/**
+ * ?fps: 실제로 그린 프레임 수를 1초마다 표시 (TV 브라우저에는 개발자 도구가 없어 화면에 띄운다).
+ * 그린 프레임마다 돌려받은 함수를 부른다. label: 숫자 옆에 붙여 어떤 조건에서 잰 값인지 보이게 한다
+ */
+export function createFpsMeter(label: string) {
+  if (!QUALITY.showFps) return () => {};
+  const meter = document.body.appendChild(document.createElement('div'));
+  meter.className = 'fps-meter';
+  let frames = 0;
+  let from = performance.now();
+  return (now: number) => {
+    frames++;
+    if (now - from < 1000) return;
+    meter.textContent = `${Math.round((frames * 1000) / (now - from))} fps${label ? ` · ${label}` : ''}`;
+    frames = 0;
+    from = now;
+  };
+}

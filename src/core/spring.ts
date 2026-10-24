@@ -7,16 +7,14 @@ export class Spring {
   value: number;
   target: number;
   velocity = 0;
-  private k: number;
-  private c: number;
+  private k = 0;
+  private c = 0;
 
   /** freq: 고유 진동수(Hz), zeta: 감쇠비(1 = 임계감쇠, <1 = 살짝 튕김) */
   constructor(value = 0, freq = 2, zeta = 0.8) {
     this.value = value;
     this.target = value;
-    const w = 2 * Math.PI * freq;
-    this.k = w * w;
-    this.c = 2 * zeta * w;
+    this.set(freq, zeta);
   }
 
   set(freq: number, zeta: number) {

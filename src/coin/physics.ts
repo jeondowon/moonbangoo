@@ -13,7 +13,7 @@ export const COIN_T = 0.072; // 500원 동전 비율 (지름 26.5mm, 두께 1.92
 export const CEILING_Y = MAX_HEIGHT + COIN_T / 2;
 
 export type Face = 'front' | 'back';
-export type Phase = 'rest' | 'air' | 'settle';
+type Phase = 'rest' | 'air' | 'settle';
 export type CoinEvent =
   | { type: 'bounce'; strength: number }
   | { type: 'ceiling'; strength: number }

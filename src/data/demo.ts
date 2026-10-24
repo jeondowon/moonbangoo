@@ -1,4 +1,4 @@
-import { CATEGORIES, sumCounts, type DrawResult, type Prize, type Shop } from './api';
+import { sumCounts, toShop, type DrawResult, type Prize, type Shop } from './api';
 
 const PACK_ID = 1;
 const RARITIES = ['C', 'R', 'SR', 'UR'];
@@ -21,13 +21,7 @@ export function createDemoGame() {
 
   return {
     async fetchShop(): Promise<Shop> {
-      return {
-        packId: PACK_ID,
-        all: sumCounts(stock),
-        top: sumCounts(stock.filter((p) => p.rarity === 'UR')),
-        categories: CATEGORIES.map((c) => sumCounts(stock.filter((p) => p.category === c.id))),
-        prizes: stock.map(toPrize),
-      };
+      return toShop(PACK_ID, stock);
     },
     async drawCards(packId: number): Promise<DrawResult> {
       if (packId !== PACK_ID) throw new Error('존재하지 않는 팩이에요.');

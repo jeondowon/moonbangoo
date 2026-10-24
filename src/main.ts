@@ -13,7 +13,7 @@ import { createDemoGame } from './data/demo';
 import { CutFx } from './fx/cutFx';
 import { RevealFx } from './fx/revealFx';
 import { createShadow } from './gfx/backdrop';
-import { QUALITY } from './gfx/quality';
+import { createFpsMeter, QUALITY } from './gfx/quality';
 import { createRendering } from './gfx/rendering';
 import { PackCarousel } from './pack/carousel';
 import { bakePackMatcaps } from './pack/lite';
@@ -314,15 +314,14 @@ function setupDeck(d: Deck) {
     };
     requestAnimationFrame(afterFrontIsVisible);
   };
-  d.onAdvance = () => {
+  const swiped = () => {
     everSwiped = true;
     sound.swipe();
     reveal.stop();
   };
+  d.onAdvance = swiped;
   d.onFinish = () => {
-    everSwiped = true;
-    sound.swipe();
-    reveal.stop();
+    swiped();
     summaryAt = time + 0.7; // 마지막 카드가 화면 밖으로 나간 뒤 요약 카드들을 착지시킨다
   };
 }
@@ -504,21 +503,11 @@ function updateDeckShadow(d: Deck) {
 // 스프링은 고정 서브스텝이고 입력은 coalesced 이벤트라 프레임이 줄어도 움직임·절취 판정은 같다.
 const MIN_FRAME_MS = 10;
 let last = performance.now();
-// ?fps: 실제로 그린 프레임 수를 1초마다 표시 (TV 브라우저에는 개발자 도구가 없어 화면에 띄운다)
-const fpsMeter = QUALITY.showFps ? document.body.appendChild(document.createElement('div')) : null;
-if (fpsMeter) fpsMeter.className = 'fps-meter';
-let fpsFrames = 0;
-let fpsFrom = last;
+const countFrame = createFpsMeter(QUALITY.label);
 renderer.setAnimationLoop((now) => {
   if (now - last < MIN_FRAME_MS) return;
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
   frame(dt);
-  if (!fpsMeter) return;
-  fpsFrames++;
-  if (now - fpsFrom >= 1000) {
-    fpsMeter.textContent = `${Math.round((fpsFrames * 1000) / (now - fpsFrom))} fps${QUALITY.label ? ` · ${QUALITY.label}` : ''}`;
-    fpsFrames = 0;
-    fpsFrom = now;
-  }
+  countFrame(now);
 });

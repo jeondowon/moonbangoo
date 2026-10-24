@@ -5,7 +5,7 @@ import { CARD, STORE_PALETTES, cardBack, cardFront, cardStore } from '../../desi
 import { loadLogo } from '../../design/lib/logo.js';
 import type { Prize } from '../data/api';
 import { embeddedFontCss } from '../gfx/fonts';
-import { parseSvg, rasterize, svgText, toTexture } from '../gfx/svg';
+import { fetchDataUrl, parseSvg, rasterize, svgText, toTexture } from '../gfx/svg';
 
 /** 630×880 → 788×1100. 폰에서 카드가 화면 높이의 약 2/3 (DPR 2 기준 1000px 남짓) */
 const SCALE = 1.25;
@@ -29,16 +29,7 @@ function loadArtwork(category: string): Promise<string> {
   const url = ARTWORK[category];
   if (!url) return Promise.resolve(''); // 종류가 없거나 모르는 종류면 기존 빈 자리 표시
   let data = artworkData.get(category);
-  if (!data) {
-    data = fetch(url)
-      .then((res) => res.blob())
-      .then((blob) => new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(blob);
-      }));
-    artworkData.set(category, data);
-  }
+  if (!data) artworkData.set(category, (data = fetchDataUrl(url)));
   return data;
 }
 

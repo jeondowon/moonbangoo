@@ -6,7 +6,7 @@ import { Matrix3, Matrix4, Vector3 } from 'three';
 import { smooth } from '../core/math';
 
 /** 고도 a(m) 거리를 화면에서 이 거리(장면 단위)로 그린다 */
-export const VIEW = 100;
+const VIEW = 100;
 export const EARTH_R = 6.371e6;
 export const MOON_R = 1.737e6;
 export const SUN_R = 6.96e8;

@@ -11,6 +11,17 @@ export function parseSvg(markup: string): SVGSVGElement {
   return doc.documentElement as unknown as SVGSVGElement;
 }
 
+/** SVG를 이미지로 그릴 때는 외부 파일을 불러오지 않으므로 폰트·그림을 data URL로 넣는다 */
+export async function fetchDataUrl(url: string): Promise<string> {
+  const blob = await (await fetch(url)).blob();
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
 /** SVG 안의 모든 글자 (폰트 서브셋 추출용) */
 export function svgText(markup: string): string {
   return [...parseSvg(markup).querySelectorAll('text')].map((t) => t.textContent ?? '').join('');

@@ -1,4 +1,5 @@
 import { Group, Matrix4, Mesh, type MeshStandardMaterial, type Object3D } from 'three';
+import { extendShader } from '../gfx/shader';
 import { PACK_H } from './pack';
 
 export const PACK_FLOOR_Y = -PACK_H / 2 - 0.07 * PACK_H;
@@ -24,8 +25,7 @@ export class PackReflection {
       material.alphaToCoverage = false;
       material.alphaTest = 0;
       // clone()이 복사하지 않는 절취 셰이더와 공유 유니폼도 이어받는다.
-      material.onBeforeCompile = (shader, renderer) => {
-        original.onBeforeCompile(shader, renderer);
+      extendShader(material, '-floor-reflection', (shader) => {
         shader.uniforms.uReflectionFloor = this.floor;
         shader.uniforms.uReflectionHeight = this.height;
         shader.vertexShader = shader.vertexShader
@@ -36,8 +36,7 @@ export class PackReflection {
           .replace('#include <alphamap_fragment>', `#include <alphamap_fragment>
             if (vReflectionY > uReflectionFloor) discard;
             diffuseColor.a *= smoothstep(uReflectionFloor - uReflectionHeight * 0.76, uReflectionFloor, vReflectionY);`);
-      };
-      material.customProgramCacheKey = () => `${original.customProgramCacheKey()}-floor-reflection`;
+      }, original);
       const mirror = new Mesh(node.geometry, material);
       mirror.matrixAutoUpdate = false;
       this.surfaces.push({ source: node, mirror });

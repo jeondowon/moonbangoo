@@ -262,6 +262,7 @@
 - 루트의 문서(README·AGENTS 제외)를 `docs/`로 이동.
 - 핀볼 로컬 포함: 별도 저장소 `7fb2a29`의 실행 파일(index.html·style.css·js·assets·music-credits.html)을 `public/pinball/`에 복사. 결과 화면 홈 링크를 `../`로, 메뉴 링크를 `./pinball/`로 변경. 코드가 부르지 않는 배경 v1 4장·크롬/메탈 텍스처 2장·설명 문서를 빼 49MB → 33MB. 쓰는 에셋의 라이선스(음악 라이선스·`music-credits.html`)는 유지하고, 뺀 크롬 사진의 라이선스 파일은 함께 뺌. 원본 테스트·QA 도구는 복사하지 않음. 성능은 원본과 같은 조건에서 측정해 차이 없음을 확인.
 - `vite preview`도 `/moonbangoo/` base를 쓰도록 수정 (이전엔 미리보기에서 에셋 대신 HTML이 응답돼 흰 화면).
+- 리팩터링(동작 그대로): 재질 셰이더 겹쳐 끼우기를 `gfx/shader.ts`의 `extendShader`로 통일(카드 밝기·카드 가림·가벼운 팩·바닥 반사, 셰이더 결과와 캐시 키가 전과 같음을 비교 확인). data URL 변환(`gfx/svg.ts` `fetchDataUrl`), FPS 표시(`gfx/quality.ts` `createFpsMeter`), 재고 요약(`data/api.ts` `toShop`)의 중복을 하나로. 코인에서 꺼 둔 손때·긁힘(`GRIME`·`SCRATCHES` = 0) 코드를 지워 불러올 때 면마다 100만 픽셀 잡음 계산을 없앰(결과 화면 동일). `coin/scenery.ts`(930줄)에서 GPU로 굽는 지구·행성·은하 그림을 `coin/bake.ts`로, 픽셀 텍스처 도우미를 `coin/pixelTexture.ts`로 그대로 옮김. 핀볼은 별도 저장소 복사본이라 손대지 않음. 코인 손 아틀라스·뒷면 로고를 무손실 WebP로 바꿔(픽셀 동일) 1.57MB → 1.0MB, 쓰이지 않던 코인 장면 환경맵(`scene.environment`, 코인 재질은 자기 환경맵을 씀)을 지워 시작 때 환경맵 굽기 1회 감소.
 
 ## 다음 작업
 

@@ -8,6 +8,7 @@ test('시연: 서버 없이 7종 수량 조회 → 5장 추첨 → 1장 확정, 
   const game = createDemoGame();
   const shop = await game.fetchShop();
   assert.deepEqual(shop.prizes.map((p) => p.category), CATEGORIES.map((c) => c.id));
+  assert.ok(shop.prizes.every((p) => !('remaining' in p) && !('total' in p)), '경품 목록에는 수량을 싣지 않음');
   assert.equal(shop.all.remaining, shop.categories.reduce((n, c) => n + c.remaining, 0));
   assert.ok(shop.top.remaining > 0);
   const { drawId, cards } = await game.drawCards(shop.packId);
