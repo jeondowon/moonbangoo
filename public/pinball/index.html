@@ -19,6 +19,11 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <link rel="apple-touch-icon" href="../icon-192.png">
   <link rel="stylesheet" href="./style.css?v=hand-8a0a7a792900">
+  <style>
+    /* 게임 메뉴로 돌아가기: 시작·설정 화면에서만 보인다 (카드팩·코인 게임과 같은 모양) */
+    .menu-back { position: fixed; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); z-index: 40; display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 8px 12px; border-radius: 20px; background: rgba(255, 250, 240, .55); color: inherit; text-decoration: none; font-size: 12px; }
+    body:not([data-scene="intro"]):not([data-scene="setup"]) .menu-back { display: none; }
+  </style>
 </head>
 <body class="scene-intro" data-scene="intro" data-theme="cosmic">
   <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -42,6 +47,7 @@
     <symbol id="i-fish" viewBox="0 0 24 24"><path d="M3 12c4-7 12-7 16 0-4 7-12 7-16 0Zm16 0 3-4v8Z"/><circle cx="7.5" cy="10.5" r=".7" fill="currentColor" stroke="none"/></symbol>
   </defs></svg>
 
+  <a class="menu-back" href="../" aria-label="게임 메뉴로 돌아가기">← <span>게임 메뉴</span></a>
   <canvas id="game-canvas" tabindex="-1" aria-hidden="true" aria-label="핀볼이 장애물을 지나 결승선으로 향하는 핀볼 게임 화면">브라우저가 Canvas를 지원하지 않습니다.</canvas>
   <canvas id="game-surface" aria-hidden="true"></canvas>
   <div class="ambient-wash" aria-hidden="true"></div>
@@ -163,6 +169,6 @@
   </dialog>
 
   <script src="./js/themes.js?v=local-1719b27b8c26"></script><script src="./js/maps.js?v=local-79a9fa7c0003"></script><script src="./js/map-registry.js?v=hand-d7ef71bdcb70"></script><script src="./js/maps/twinfold.js?v=local-02302db9fd89"></script><script src="./js/maps/twinfold-style.js?v=local-a9811ed9571b"></script><script src="./js/maps/cascade.js?v=local-4e168b0350dd"></script><script src="./js/maps/cascade-style.js?v=local-be74db4b6b57"></script><script src="./js/maps/rhythm.js?v=local-d7ed7608f032"></script><script src="./js/maps/rhythm-style.js?v=local-abafc5dacf2f"></script><script src="./js/physics.js?v=hand-c6f9b7b0010b"></script><script src="./js/camera.js?v=local-f94d5a585527"></script><script src="./js/effects.js?v=local-fc19741e8634"></script><script src="./js/audio.js?v=local-72940855f7b6"></script><script src="./js/race-standing.js?v=local-cad6e28fe03f"></script><script src="./js/renderer.js?v=hand-f2f7dff90056"></script><script src="./js/cinematic.js?v=local-3c3eaf6323c3"></script><script src="./js/shuffle.js?v=local-89c28332289c"></script><script src="./js/hand-start.js?v=local-298e6c089a19"></script><script src="./js/shuffle-input.js?v=local-c53898379372"></script><script src="./js/throw-gate.js?v=hand-0b84c89e6eb6"></script><script src="./js/hand-scene.js?v=hand-568c5affa1bd"></script><script src="./js/hand-flight.js?v=local-6b56b6033e5c"></script><script src="./js/race-duration-data.js?v=local-96651f0797bb"></script><script src="./js/maps-duration-data.js?v=local-cfa59cb74812"></script><script src="./js/race-duration.js?v=local-7740c90c5de4"></script><script src="./js/ui.js?v=hand-18d70e36a7b9"></script><script src="./js/display-budget.js?v=local-d918720b9ecf"></script><script src="./js/main.js?v=hand-80d0fc2b9c12"></script>
+  <script type="module" src="../fullscreen.js"></script>
 </body>
 </html>
-  <script type="module" src="../fullscreen.js"></script>

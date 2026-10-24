@@ -432,8 +432,8 @@ button:focus-visible, a:focus-visible {
 .result-details .prize-description { margin-top: 14px; font-size: 14px; line-height: 1.7; word-break: keep-all; overflow-wrap: anywhere; }
 .result-condition { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid color-mix(in srgb, var(--gold) 20%, transparent); color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
 .result-menu {
-  display: inline-flex; align-items: center; gap: 6px;
-  min-height: 44px; margin-top: 20px;
+  display: flex; width: fit-content; align-items: center; gap: 6px;
+  min-height: 44px; margin: 20px auto 0;
   color: var(--gold); font-size: 15px; font-weight: 600;
   text-decoration: underline; text-underline-offset: 4px; -webkit-tap-highlight-color: transparent;
 }
@@ -441,6 +441,8 @@ button:focus-visible, a:focus-visible {
 .result-menu:focus-visible { outline: 2px solid var(--gold); outline-offset: 5px; }
 .result-menu:active { opacity: .7; }
 @media (hover: hover) { .result-menu:hover { opacity: .8; } }
+/* "다른 카드팩 개봉하기" 아래에 "메뉴로 돌아가기"를 붙여 쌓는다 */
+.result-menu + .result-menu { margin-top: 0; }
 @media (min-width: 760px) and (min-aspect-ratio: 6 / 5) {
   .result-content { padding-inline: max(48px, env(safe-area-inset-left)) max(48px, env(safe-area-inset-right)); }
   .result-heading { margin-bottom: 28px; }
@@ -450,7 +452,7 @@ button:focus-visible, a:focus-visible {
   .result-details h2 { font-size: clamp(32px, 3.4vw, 52px); }
   .result-details .prize-description { font-size: clamp(14px, 1.3vw, 18px); margin-top: 22px; }
   .result-condition { margin-top: 28px; padding-top: 20px; font-size: 14px; }
-  .result-menu { margin-top: 32px; font-size: 16px; }
+  .result-menu { margin-top: 32px; margin-left: 0; font-size: 16px; }
 }
 @media (max-height: 700px) {
   .result-content { padding-top: max(20px, env(safe-area-inset-top)); padding-bottom: max(20px, env(safe-area-inset-bottom)); }

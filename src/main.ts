@@ -147,7 +147,10 @@ function layoutCarousel() {
 new ResizeObserver(resize).observe(canvas);
 
 let ready = false;
-let wantsStart = false;
+// 결과 화면의 "다른 카드팩 개봉하기"로 다시 들어오면 인트로 터치 없이 바로 팩 고르기로 간다.
+// 소리는 새 페이지에서 첫 터치가 있어야 켤 수 있어 팩 고르기 화면의 첫 터치에서 켠다.
+let wantsStart = new URLSearchParams(location.search).has('again');
+if (wantsStart) window.addEventListener('pointerdown', () => void sound.unlock(), { once: true, capture: true });
 
 async function prepare() {
   // 카드 폰트·일러스트도 로딩 중에 미리 받아 둔다 (팩을 열 때 바로 그릴 수 있게)
