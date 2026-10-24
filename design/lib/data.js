@@ -67,5 +67,3 @@ export const PRIZES = [
     stock: 10,
   },
 ];
-
-export const VISIT_DAYS = 14; // 모든 경품 공통 고정

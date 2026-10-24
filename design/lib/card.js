@@ -7,7 +7,7 @@ import {
 } from './common.js';
 import { logoMarkup, LOGO_BOX } from './logo.js';
 import { icon, CATEGORY_LABEL } from './icons.js';
-import { RARITIES, VISIT_DAYS } from './data.js';
+import { RARITIES } from './data.js';
 
 export const CARD = { W: 630, H: 880, R: 26 };
 /** 일러스트 창 위치 (src/card/holo.ts에서 홀로 마스크 영역으로 재사용) */
@@ -169,7 +169,6 @@ ${pressFilter(`${uid}-press`, 0.7)}
     <path d="M66 666H${panel.x + panel.w - 26}" stroke="${INK.inkSoft}" stroke-opacity=".45" stroke-dasharray="2 5" stroke-linecap="round" stroke-width="1.4"/>
     <text x="66" y="700" fill="${INK.accent}" font-family="${SERIF}" font-weight="700" font-size="17">교환 조건</text>
     <text x="66" y="738" fill="${INK.accent}" font-family="${SANS}" font-weight="700" font-size="23" letter-spacing="-.4" data-maxw="${panel.w - 52}">${esc(prize.condition)}</text>
-    <text x="66" y="765" fill="${INK.inkSoft}" font-family="${SANS}" font-weight="500" font-size="14" letter-spacing="-.2">선택일로부터 ${VISIT_DAYS}일 이내 매장 방문 시 교환</text>
   </g>
 
   <g data-layer="footer">
