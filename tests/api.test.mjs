@@ -15,8 +15,8 @@ function mockFetch(routes) {
 
 test('수량: 첫 번째 활성 팩의 경품을 전체·최고등급·카테고리별로 합치고, 어드민 종류 이름은 카드 카테고리 키로', async () => {
   const calls = mockFetch({
-    'GET /api/v1/admin/packs': [200, { packs: [{ id: 2, active: false }, { id: 5, active: true }] }],
-    'GET /api/v1/admin/prizes': [200, { prizes: [
+    'GET /api/v1/packs': [200, { packs: [{ id: 5, available: true }, { id: 8, available: true }] }],
+    'GET /api/v1/packs/5/prizes': [200, { prizes: [
       { id: 1, name: '카드 1장', rarity: 'UR', icon: 'card', description: null, condition: '현장 즉시 증정', remaining: 9, total: 10 },
       { rarity: 'C', icon: 'discount', remaining: 400, total: 500 },
       { rarity: 'R', icon: 'drink', remaining: 50, total: 50 },
@@ -24,7 +24,7 @@ test('수량: 첫 번째 활성 팩의 경품을 전체·최고등급·카테고
     ] }],
   });
   const shop = await fetchShop();
-  assert.equal(calls[1].url, 'http://localhost:8080/api/v1/admin/prizes?packId=5');
+  assert.equal(calls[1].url, 'http://localhost:8080/api/v1/packs/5/prizes');
   assert.equal(shop.packId, 5);
   assert.deepEqual(shop.all, { remaining: 460, total: 561 });
   assert.deepEqual(shop.top, { remaining: 9, total: 10 });
@@ -38,7 +38,7 @@ test('수량: 첫 번째 활성 팩의 경품을 전체·최고등급·카테고
 });
 
 test('활성 팩이 없으면 수량 0, 뽑을 팩 없음', async () => {
-  mockFetch({ 'GET /api/v1/admin/packs': [200, { packs: [{ id: 2, active: false }] }] });
+  mockFetch({ 'GET /api/v1/packs': [200, { packs: [] }] });
   const shop = await fetchShop();
   assert.equal(shop.packId, null);
   assert.deepEqual(shop.all, { remaining: 0, total: 0 });

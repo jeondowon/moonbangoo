@@ -28,9 +28,8 @@ import { createThemeToggle } from './ui/theme';
 
 const MAX_TILT = (18 * Math.PI) / 180; // 명세 R10: 최대 ±15~20°
 const LITE_FADE = 1.2; // 바꿔 끼운 팩이 가벼운 팩 색에서 실사 재질로 넘어가는 시간(초)
-const isDemo = import.meta.env.VITE_GAME_MODE !== 'backend';
+const isDemo = import.meta.env.VITE_GAME_MODE === 'demo';
 const { confirmPrize, drawCards, fetchShop } = isDemo ? createDemoGame() : backend;
-document.querySelector<HTMLElement>('#demo-notice')!.hidden = !isDemo;
 const TAP_MOVE = 10; // px — 이보다 적게 움직이고
 const TAP_TIME = 350; // ms — 이보다 빨리 떼면 탭
 const RISE_MARGIN = 0.15; // 빠져나오는 카드 윗변과 화면 윗끝 사이 여백

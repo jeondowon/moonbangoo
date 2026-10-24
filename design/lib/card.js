@@ -243,8 +243,8 @@ ${pressFilter(`${uid}-press-logo`, 0.75)}
   <g data-layer="panel">
     <rect x="${panel.x}" y="${panel.y}" width="${panel.w}" height="${panel.h}" rx="12" fill="${cream}" fill-opacity=".84" stroke="${u('metal')}" stroke-width="1.5"/>
     <text x="66" y="570" fill="${INK.accent}" font-family="${SERIF}" font-weight="700" font-size="17">어서 오세요</text>
-    <text x="66" y="604" fill="${INK.ink}" font-family="${SANS}" font-weight="600" font-size="20" letter-spacing="-.3">포항 종합 문구·카드샵</text>
-    <text x="66" y="634" fill="${INK.inkSoft}" font-family="${SANS}" font-weight="500" font-size="17" letter-spacing="-.3">포켓몬카드 · 원피스카드 · 문구</text>
+    <text x="66" y="604" fill="${INK.ink}" font-family="${SANS}" font-weight="600" font-size="20" letter-spacing="-.3">포항 카드샵 &amp; 카페</text>
+    <text x="66" y="634" fill="${INK.inkSoft}" font-family="${SANS}" font-weight="500" font-size="17" letter-spacing="-.3">포켓몬카드 · 원피스카드 · 커피</text>
     <path d="M66 666H${panel.x + panel.w - 26}" stroke="${INK.inkSoft}" stroke-opacity=".45" stroke-dasharray="2 5" stroke-linecap="round" stroke-width="1.4"/>
     <text x="66" y="700" fill="${INK.accent}" font-family="${SERIF}" font-weight="700" font-size="17">오시는 길</text>
     <text x="66" y="738" fill="${INK.accent}" font-family="${SANS}" font-weight="700" font-size="23" letter-spacing="-.4">포항시 북구 양학로32번길 11-23</text>

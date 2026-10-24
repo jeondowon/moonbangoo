@@ -96,9 +96,10 @@ export function sumCounts(rows: readonly Counts[]): Counts {
 }
 
 export async function fetchShop(): Promise<Shop> {
-  const { packs } = await call<{ packs: { id: number; active: boolean }[] }>('GET', '/admin/packs');
-  const packId = packs.find((p) => p.active)?.id ?? null;
-  const prizes = packId === null ? [] : (await call<{ prizes: PrizeDto[] }>('GET', `/admin/prizes?packId=${packId}`)).prizes;
+  // 손님용 API만 쓴다 (어드민 API는 로그인이 필요). /packs는 활성 팩만 돌려준다
+  const { packs } = await call<{ packs: { id: number }[] }>('GET', '/packs');
+  const packId = packs[0]?.id ?? null;
+  const prizes = packId === null ? [] : (await call<{ prizes: PrizeDto[] }>('GET', `/packs/${packId}/prizes`)).prizes;
   return {
     packId,
     all: sumCounts(prizes),
